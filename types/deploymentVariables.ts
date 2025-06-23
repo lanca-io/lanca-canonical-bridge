@@ -6,14 +6,9 @@ type ProxyEnvPrefixes = {
 	[key in ProxyEnum]: string;
 };
 export type EnvPrefixes = {
-	router: string;
-	routerProxy: string;
-	routerProxyAdmin: string;
-	verifier: string;
-	verifierProxy: string;
-	verifierProxyAdmin: string;
-	lpToken: string;
-	create3Factory: string;
+	lcBridge: string;
+	lcBridgeProxy: string;
+	lcBridgeProxyAdmin: string;
 	pause: string;
 };
 /**
@@ -23,11 +18,4 @@ export type EnvPrefixes = {
  * @param envFileName The name of the .env file to update
  * usage: // updateEnvVariable("CLF_DON_SECRETS_VERSION_SEPOLIA", "1712841283", "../../../.env.clf");
  */
-export type EnvFileName =
-	| "cla"
-	| "clf"
-	| "ccip"
-	| "deployments.mainnet"
-	| "deployments.testnet"
-	| "apikeys"
-	| "tokens";
+export type EnvFileName = "deployments.mainnet" | "deployments.testnet" | "tokens";

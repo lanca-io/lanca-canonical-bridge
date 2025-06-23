@@ -5,8 +5,7 @@ import { ConceroNetwork } from "../types/ConceroNetwork";
 import { EnvPrefixes } from "../types/deploymentVariables";
 
 enum ProxyEnum {
-	routerProxy = "routerProxy",
-	verifierProxy = "verifierProxy",
+	lcBridgeProxy = "lcBridgeProxy",
 }
 
 const viemReceiptConfig: WaitForTransactionReceiptParameters = {
@@ -26,15 +25,10 @@ function getViemReceiptConfig(chain: ConceroNetwork): Partial<WaitForTransaction
 }
 
 const envPrefixes: EnvPrefixes = {
-	router: "CONCERO_ROUTER",
-	routerProxy: "CONCERO_ROUTER_PROXY",
-	routerProxyAdmin: "CONCERO_ROUTER_PROXY_ADMIN",
-	verifier: "CONCERO_VERIFIER",
-	verifierProxy: "CONCERO_VERIFIER_PROXY",
-	verifierProxyAdmin: "CONCERO_VERIFIER_PROXY_ADMIN",
-	lpToken: "LPTOKEN",
-	create3Factory: "CREATE3_FACTORY",
-	pause: "CONCERO_PAUSE",
+	lcBridge: "LANCA_CANONICAL_BRIDGE",
+	lcBridgeProxy: "LANCA_CANONICAL_BRIDGE_PROXY",
+	lcBridgeProxyAdmin: "LANCA_CANONICAL_BRIDGE_PROXY_ADMIN",
+	pause: "LANCA_CANONICAL_BRIDGE_PAUSE",
 };
 
 export { viemReceiptConfig, writeContractConfig, ProxyEnum, envPrefixes, getViemReceiptConfig };

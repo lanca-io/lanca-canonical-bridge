@@ -6,41 +6,35 @@
  */
 pragma solidity 0.8.28;
 
-import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
-
-import {LancaCanonicalBridgeBase, ConceroClient, ConceroTypes, IConceroRouter} from "./LancaCanonicalBridgeBase.sol";
+import {Storage as s} from "./libraries/Storage.sol";
+import {LancaCanonicalBridgeBase, ConceroClient, CommonErrors, ConceroTypes, IConceroRouter} from "./LancaCanonicalBridgeBase.sol";
 import {ILancaCanonicalBridgePool} from "../interfaces/ILancaCanonicalBridgePool.sol";
 
 contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase {
+    using s for s.L1Bridge;
+
     error PoolNotFound(uint24 dstChainSelector);
     error PoolAlreadyExists(uint24 dstChainSelector);
-
-    uint24 private s_migratePoolDstChainSelector;
-    address private s_poolImplementation;
-
-    mapping(uint24 dstChainSelector => address pool) public s_pools;
 
     constructor(
         address conceroRouter,
         uint24 chainSelector,
-        address usdcAddress,
-        address poolImplementation
-    ) LancaCanonicalBridgeBase(chainSelector, usdcAddress) ConceroClient(conceroRouter) {
-        s_poolImplementation = poolImplementation;
-    }
+        address usdcAddress
+    ) LancaCanonicalBridgeBase(chainSelector, usdcAddress) ConceroClient(conceroRouter) {}
 
     function sendToken(
         address dstBridgeAddress,
         uint24 dstChainSelector,
-        uint256 amount
+        uint256 amount,
+        uint256 gasLimit
     ) private returns (bytes32 messageId) {
         bytes memory message = abi.encode(msg.sender, amount);
 
-        uint256 fee = IConceroRouter(i_conceroRouter).getMessageFee(
+        uint256 fee = getMessageFee(
             dstChainSelector,
             false,
             address(0),
-            ConceroTypes.EvmDstChainData({receiver: dstBridgeAddress, gasLimit: 100_000})
+            ConceroTypes.EvmDstChainData({receiver: dstBridgeAddress, gasLimit: gasLimit})
         );
 
         if (msg.value < fee) {
@@ -51,13 +45,13 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase {
             dstChainSelector,
             false,
             address(0),
-            ConceroTypes.EvmDstChainData({receiver: dstBridgeAddress, gasLimit: 100_000}),
+            ConceroTypes.EvmDstChainData({receiver: dstBridgeAddress, gasLimit: gasLimit}),
             message
         );
 
         i_usdc.transferFrom(msg.sender, address(this), amount);
 
-        address pool = s_pools[dstChainSelector];
+        address pool = s.l1Bridge().pools[dstChainSelector];
         require(pool != address(0), PoolNotFound(dstChainSelector));
 
         bool success = i_usdc.transfer(pool, amount);
@@ -76,7 +70,7 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase {
     ) internal override {
         (address tokenSender, uint256 amount) = abi.decode(message, (address, uint256));
 
-        address pool = s_pools[srcChainSelector];
+        address pool = s.l1Bridge().pools[srcChainSelector];
         require(pool != address(0), PoolNotFound(srcChainSelector));
 
         bool success = ILancaCanonicalBridgePool(pool).withdraw(tokenSender, amount);
@@ -93,26 +87,20 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase {
         );
     }
 
-    function createPool(uint24 dstChainSelector) external onlyOwner {
-        require(s_pools[dstChainSelector] == address(0), PoolAlreadyExists(dstChainSelector));
+    function addPools(
+        uint24[] calldata dstChainSelectors,
+        address[] calldata pools
+    ) external onlyOwner {
+        require(dstChainSelectors.length == pools.length, CommonErrors.LengthMismatch());
 
-        address pool = Clones.clone(s_poolImplementation);
-        s_pools[dstChainSelector] = pool;
+        s.L1Bridge storage l1BridgeStorage = s.l1Bridge();
 
-        ILancaCanonicalBridgePool(pool).initialize(address(i_usdc), dstChainSelector);
-    }
-
-    function migratePool(uint24 dstChainSelector) external onlyOwner {
-        s_migratePoolDstChainSelector = dstChainSelector;
-    }
-
-    function burnLockedUSDC() external onlyOwner {
-        address pool = s_pools[s_migratePoolDstChainSelector];
-        require(pool != address(0), PoolNotFound(s_migratePoolDstChainSelector));
-
-        delete s_pools[s_migratePoolDstChainSelector];
-        s_migratePoolDstChainSelector = 0;
-
-        ILancaCanonicalBridgePool(pool).burnLockedUSDC();
+        for (uint256 i = 0; i < dstChainSelectors.length; i++) {
+            require(
+                l1BridgeStorage.pools[dstChainSelectors[i]] == address(0),
+                PoolAlreadyExists(dstChainSelectors[i])
+            );
+            l1BridgeStorage.pools[dstChainSelectors[i]] = pools[i];
+        }
     }
 }

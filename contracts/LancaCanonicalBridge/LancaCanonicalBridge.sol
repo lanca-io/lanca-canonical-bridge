@@ -18,15 +18,16 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase {
     function sendToken(
         address dstBridgeAddress,
         uint24 dstChainSelector,
-        uint256 amount
+        uint256 amount,
+        uint256 gasLimit
     ) private returns (bytes32 messageId) {
         bytes memory message = abi.encode(msg.sender, amount);
 
-        uint256 fee = IConceroRouter(i_conceroRouter).getMessageFee(
+        uint256 fee = getMessageFee(
             dstChainSelector,
             false,
             address(0),
-            ConceroTypes.EvmDstChainData({receiver: dstBridgeAddress, gasLimit: 100_000})
+            ConceroTypes.EvmDstChainData({receiver: dstBridgeAddress, gasLimit: gasLimit})
         );
 
         if (msg.value < fee) {
@@ -37,7 +38,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase {
             dstChainSelector,
             false,
             address(0),
-            ConceroTypes.EvmDstChainData({receiver: dstBridgeAddress, gasLimit: 100_000}),
+            ConceroTypes.EvmDstChainData({receiver: dstBridgeAddress, gasLimit: gasLimit}),
             message
         );
 

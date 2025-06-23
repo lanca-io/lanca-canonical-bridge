@@ -59,7 +59,7 @@ const config: HardhatUserConfig = {
 			default: 0,
 		},
 		proxyDeployer: {
-			default: 1,
+			default: 0,
 		},
 	},
 	networks: conceroNetworks,

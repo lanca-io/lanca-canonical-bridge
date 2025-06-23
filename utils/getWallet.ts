@@ -3,7 +3,7 @@ import { warn } from "./log";
 
 export function getWallet(
 	chainType: ConceroNetworkType,
-	accountType: "proxyDeployer" | "deployer" | "operator",
+	accountType: "proxyDeployer" | "deployer",
 	walletType: "privateKey" | "address",
 ) {
 	let prefix;
@@ -14,9 +14,6 @@ export function getWallet(
 			break;
 		case "deployer":
 			prefix = "DEPLOYER";
-			break;
-		case "operator":
-			prefix = "OPERATOR";
 			break;
 		default:
 			throw new Error(`Unknown account type: ${accountType}`);

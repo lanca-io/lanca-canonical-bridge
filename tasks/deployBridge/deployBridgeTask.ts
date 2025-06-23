@@ -1,8 +1,12 @@
 import { task } from "hardhat/config";
 import { type HardhatRuntimeEnvironment } from "hardhat/types";
 
-import { deployLancaCanonicalBridge } from "../../deploy";
+import { ProxyEnum } from "../../constants";
+import { deployLancaCanonicalBridge } from "../../deploy/LancaCanonicalBridge";
+import { deployLancaCanonicalBridgeProxy } from "../../deploy/LancaCanonicalBridgeProxy";
+import { deployLancaCanonicalBridgeProxyAdmin } from "../../deploy/LancaCanonicalBridgeProxyAdmin";
 import { compileContracts } from "../../utils";
+import { upgradeLancaProxyImplementation } from "../utils";
 
 async function deployBridgeTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	compileContracts({ quiet: true });
@@ -11,15 +15,19 @@ async function deployBridgeTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 		await deployLancaCanonicalBridge(hre);
 	}
 
-	// TODO: Proxy support can be added later if needed
-	// if (taskArgs.proxy) {
-	// 	console.log("Proxy deployment not implemented yet");
-	// }
+	if (taskArgs.proxy) {
+		await deployLancaCanonicalBridgeProxyAdmin(hre, ProxyEnum.lcBridgeProxy);
+		await deployLancaCanonicalBridgeProxy(hre, ProxyEnum.lcBridgeProxy);
+	}
+
+	if (taskArgs.implementation) {
+		await upgradeLancaProxyImplementation(hre, ProxyEnum.lcBridgeProxy, false);
+	}
 }
 
 task("deploy-bridge", "Deploy LancaCanonicalBridge")
 	.addFlag("implementation", "Deploy implementation")
-	.addFlag("proxy", "Deploy proxy (not implemented yet)")
+	.addFlag("proxy", "Deploy proxy and proxy admin")
 	.setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
 		await deployBridgeTask(taskArgs, hre);
 	});

@@ -1,6 +1,8 @@
 export { compileContracts } from "./compileContracts";
 export { configureDotEnv } from "./configureDotEnv";
 export { createViemChain } from "./createViemChain";
+export { getGasParameters } from "./getGasParameters";
+export { getViemAccount } from "./getViemClients";
 export { getEnvVar, getEnvAddress } from "./getEnvVar";
 export { getWallet } from "./getWallet";
 export {

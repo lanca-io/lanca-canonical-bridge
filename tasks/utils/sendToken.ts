@@ -30,9 +30,11 @@ export async function sendToken(
 	}
 	const dstChainSelector = dstNetwork.chainSelector;
 
-	log(`Sending tokens from ${srcChain} to ${dstChain}`, "sendToken", srcChain);
-	log(`Source chain selector: ${srcChainSelector}`, "sendToken", srcChain);
-	log(`Destination chain selector: ${dstChainSelector}`, "sendToken", srcChain);
+	log(
+		`Sending tokens from ${srcChain} (${srcChainSelector}) to ${dstChain} (${dstChainSelector})`,
+		"sendToken",
+		srcChain,
+	);
 
 	const bridgeAddress = getEnvVar(`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(srcChain)}`);
 	if (!bridgeAddress) return;
@@ -108,13 +110,7 @@ export async function sendToken(
 			hash: sendTxHash,
 		});
 
-		log(`🎉 Token transfer successful!`, "sendToken", srcChain);
-		log(`Transaction hash: ${sendTxHash}`, "sendToken", srcChain);
-		log(`Gas used: ${receipt.cumulativeGasUsed}`, "sendToken", srcChain);
-		log(`Message fee paid: ${messageFee} wei`, "sendToken", srcChain);
-		log(`Amount sent: ${amount} USDC`, "sendToken", srcChain);
-		log(`From: ${srcChain} (${srcChainSelector})`, "sendToken", srcChain);
-		log(`To: ${dstChain} (${dstChainSelector})`, "sendToken", srcChain);
+		log(`🎉 Token transfer successful! Transaction hash: ${sendTxHash} \n`, "sendToken", srcChain);
 	} catch (error) {
 		err(`Failed to send tokens: ${error}`, "sendToken", srcChain);
 		throw error;

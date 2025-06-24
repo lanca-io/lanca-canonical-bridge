@@ -17,8 +17,17 @@ export async function addPool(
 	);
 	if (!l1BridgeAddress) return;
 
+    const targetNetworkName = Object.keys(conceroNetworks).find(
+		name => conceroNetworks[name].chainSelector.toString() === targetChainSelector,
+	);
+    if (!targetNetworkName) {
+        throw new Error(
+            `Target network not found for chain selector ${targetChainSelector}`,
+        );
+    }
+
 	const poolAddress = getEnvVar(
-		`LANCA_CANONICAL_BRIDGE_POOL_PROXY_${getNetworkEnvKey(chainName)}`,
+		`LANCA_CANONICAL_BRIDGE_POOL_PROXY_${getNetworkEnvKey(targetNetworkName)}`,
 	);
 	if (!poolAddress) return;
 

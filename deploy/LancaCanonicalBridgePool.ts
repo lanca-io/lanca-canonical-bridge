@@ -14,11 +14,13 @@ type DeployArgs = {
 
 type DeploymentFunction = (
 	hre: HardhatRuntimeEnvironment,
+	dstChainSelector: string,
 	overrideArgs?: Partial<DeployArgs>,
 ) => Promise<Deployment>;
 
 const deployLancaCanonicalBridgePool: DeploymentFunction = async function (
 	hre: HardhatRuntimeEnvironment,
+	dstChainSelector: string,
 	overrideArgs?: Partial<DeployArgs>,
 ): Promise<Deployment> {
 	const { deployer } = await hre.getNamedAccounts();
@@ -40,15 +42,24 @@ const deployLancaCanonicalBridgePool: DeploymentFunction = async function (
 
 	const usdcAddress = getEnvVar(`FIAT_TOKEN_PROXY_${getNetworkEnvKey(name)}`);
     if (!usdcAddress) {
-        throw new Error(
+		throw new Error(
 			`USDC address not found. Set FIAT_TOKEN_PROXY_${getNetworkEnvKey(name)} in environment variables.`,
 		);
+	}
+
+	const targetNetworkName = Object.keys(conceroNetworks).find(
+		name => conceroNetworks[name].chainSelector.toString() === dstChainSelector,
+	);
+    if (!targetNetworkName) {
+        throw new Error(
+            `Target network not found for chain selector ${dstChainSelector}`,
+        );
     }
 
 	const defaultArgs: DeployArgs = {
 		usdcAddress: usdcAddress,
 		lancaCanonicalBridgeAddress: lancaCanonicalBridgeAddress,
-		dstChainSelector: chain.chainSelector,
+		dstChainSelector: BigInt(dstChainSelector),
 	};
 
 	const args: DeployArgs = {
@@ -75,7 +86,7 @@ const deployLancaCanonicalBridgePool: DeploymentFunction = async function (
 	log(`Deployed at: ${deployment.address}`, "deployLancaCanonicalBridgePool", name);
 
 	updateEnvVariable(
-		`LANCA_CANONICAL_BRIDGE_POOL_${getNetworkEnvKey(name)}`,
+		`LANCA_CANONICAL_BRIDGE_POOL_${getNetworkEnvKey(targetNetworkName)}`,
 		deployment.address,
 		`deployments.${networkType}`,
 	);

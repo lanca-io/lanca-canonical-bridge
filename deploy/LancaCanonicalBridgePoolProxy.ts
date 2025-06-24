@@ -2,7 +2,7 @@ import { Deployment } from "hardhat-deploy/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { conceroNetworks } from "../constants";
-import { getEnvAddress, log, updateEnvAddress } from "../utils";
+import { getEnvAddress, log, updateEnvVariable } from "../utils";
 
 const deployLancaCanonicalBridgePoolProxy: (hre: HardhatRuntimeEnvironment) => Promise<void> =
 	async function (hre: HardhatRuntimeEnvironment) {
@@ -10,7 +10,7 @@ const deployLancaCanonicalBridgePoolProxy: (hre: HardhatRuntimeEnvironment) => P
 		const { deploy } = hre.deployments;
 		const { name, live } = hre.network;
 		const chain = conceroNetworks[name];
-		const { type } = chain;
+		const { type: networkType } = chain;
 
 		const [initialImplementation, initialImplementationAlias] = getEnvAddress(
 			"lcBridgePool",
@@ -31,11 +31,10 @@ const deployLancaCanonicalBridgePoolProxy: (hre: HardhatRuntimeEnvironment) => P
 			"deployLancaCanonicalBridgePoolProxy",
 			name,
 		);
-		updateEnvAddress(
-			"lcBridgePoolProxy",
-			name,
+		updateEnvVariable(
+			`LANCA_CANONICAL_BRIDGE_POOL_PROXY`,
 			lancaPoolProxyDeployment.address,
-			`deployments.${type}`,
+			`deployments.${networkType}`,
 		);
 	};
 

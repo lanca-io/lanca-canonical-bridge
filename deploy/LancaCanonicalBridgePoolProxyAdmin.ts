@@ -2,7 +2,7 @@ import { Deployment } from "hardhat-deploy/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { conceroNetworks } from "../constants";
-import { getWallet, log, updateEnvAddress } from "../utils";
+import { getWallet, log, updateEnvVariable } from "../utils";
 
 const deployLancaCanonicalBridgePoolProxyAdmin: (hre: HardhatRuntimeEnvironment) => Promise<void> =
 	async function (hre: HardhatRuntimeEnvironment) {
@@ -26,9 +26,8 @@ const deployLancaCanonicalBridgePoolProxyAdmin: (hre: HardhatRuntimeEnvironment)
 			"deployLancaCanonicalBridgePoolProxyAdmin",
 			name,
 		);
-		updateEnvAddress(
-			"lcBridgePoolProxyAdmin",
-			name,
+		updateEnvVariable(
+			`LANCA_CANONICAL_BRIDGE_POOL_PROXY_ADMIN`,
 			deployProxyAdmin.address,
 			`deployments.${networkType}`,
 		);

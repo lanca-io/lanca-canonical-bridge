@@ -12,7 +12,7 @@ async function deployPoolTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	compileContracts({ quiet: true });
 
 	if (taskArgs.implementation) {
-		await deployLancaCanonicalBridgePool(hre);
+		await deployLancaCanonicalBridgePool(hre, taskArgs.chainid);
 	}
 
 	if (taskArgs.proxy) {

@@ -16,6 +16,8 @@ import {IFiatTokenV1} from "../interfaces/IFiatTokenV1.sol";
 
 abstract contract LancaCanonicalBridgeBase is ConceroClient, ConceroOwnable {
     error TransferFailed();
+    error LaneNotFound(uint24 dstChainSelector);
+    error LaneAlreadyExists(uint24 dstChainSelector);
 
     event TokenSent(
         bytes32 messageId,

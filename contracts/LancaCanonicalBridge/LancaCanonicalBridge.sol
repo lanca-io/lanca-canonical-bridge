@@ -12,9 +12,6 @@ import {LancaCanonicalBridgeBase, ConceroClient, CommonErrors, ConceroTypes, ICo
 contract LancaCanonicalBridge is LancaCanonicalBridgeBase {
     using s for s.Bridge;
 
-    error LaneNotFound(uint24 dstChainSelector);
-    error LaneAlreadyExists(uint24 dstChainSelector);
-
     constructor(
         address conceroRouter,
         uint24 chainSelector,
@@ -22,7 +19,6 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase {
     ) LancaCanonicalBridgeBase(chainSelector, usdcAddress) ConceroClient(conceroRouter) {}
 
     function sendToken(
-        address dstBridgeAddress,
         uint24 dstChainSelector,
         uint256 amount,
         uint256 gasLimit
@@ -36,7 +32,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase {
             dstChainSelector,
             false,
             address(0),
-            ConceroTypes.EvmDstChainData({receiver: dstBridgeAddress, gasLimit: gasLimit})
+            ConceroTypes.EvmDstChainData({receiver: lane, gasLimit: gasLimit})
         );
 
         if (msg.value < fee) {
@@ -47,7 +43,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase {
             dstChainSelector,
             false,
             address(0),
-            ConceroTypes.EvmDstChainData({receiver: dstBridgeAddress, gasLimit: gasLimit}),
+            ConceroTypes.EvmDstChainData({receiver: lane, gasLimit: gasLimit}),
             message
         );
 
@@ -57,7 +53,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase {
         }
         i_usdc.burn(amount);
 
-        emit TokenSent(messageId, dstBridgeAddress, dstChainSelector, msg.sender, amount, fee);
+        emit TokenSent(messageId, lane, dstChainSelector, msg.sender, amount, fee);
     }
 
     function _conceroReceive(

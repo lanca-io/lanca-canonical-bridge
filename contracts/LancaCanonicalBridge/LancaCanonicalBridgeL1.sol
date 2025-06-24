@@ -23,13 +23,14 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase {
     ) LancaCanonicalBridgeBase(chainSelector, usdcAddress) ConceroClient(conceroRouter) {}
 
     function sendToken(
-        address dstBridgeAddress,
         uint24 dstChainSelector,
         uint256 amount,
         uint256 gasLimit
     ) external payable returns (bytes32 messageId) {
         address pool = s.l1Bridge().pools[dstChainSelector];
+        address lane = s.l1Bridge().lanes[dstChainSelector];
         require(pool != address(0), PoolNotFound(dstChainSelector));
+        require(lane != address(0), LaneNotFound(dstChainSelector));
 
         bytes memory message = abi.encode(msg.sender, amount);
 
@@ -37,7 +38,7 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase {
             dstChainSelector,
             false,
             address(0),
-            ConceroTypes.EvmDstChainData({receiver: dstBridgeAddress, gasLimit: gasLimit})
+            ConceroTypes.EvmDstChainData({receiver: lane, gasLimit: gasLimit})
         );
 
         if (msg.value < fee) {
@@ -48,7 +49,7 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase {
             dstChainSelector,
             false,
             address(0),
-            ConceroTypes.EvmDstChainData({receiver: dstBridgeAddress, gasLimit: gasLimit}),
+            ConceroTypes.EvmDstChainData({receiver: lane, gasLimit: gasLimit}),
             message
         );
 
@@ -59,7 +60,7 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase {
             revert TransferFailed();
         }
 
-        emit TokenSent(messageId, dstBridgeAddress, dstChainSelector, msg.sender, amount, fee);
+        emit TokenSent(messageId, lane, dstChainSelector, msg.sender, amount, fee);
     }
 
     function _conceroReceive(
@@ -101,6 +102,23 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase {
                 PoolAlreadyExists(dstChainSelectors[i])
             );
             l1BridgeStorage.pools[dstChainSelectors[i]] = pools[i];
+        }
+    }
+
+    function addLanes(
+        uint24[] calldata dstChainSelectors,
+        address[] calldata lanes
+    ) external onlyOwner {
+        require(dstChainSelectors.length == lanes.length, CommonErrors.LengthMismatch());
+
+        s.L1Bridge storage l1BridgeStorage = s.l1Bridge();
+
+        for (uint256 i = 0; i < dstChainSelectors.length; i++) {
+            require(
+                l1BridgeStorage.lanes[dstChainSelectors[i]] == address(0),
+                LaneAlreadyExists(dstChainSelectors[i])
+            );
+            l1BridgeStorage.lanes[dstChainSelectors[i]] = lanes[i];
         }
     }
 }

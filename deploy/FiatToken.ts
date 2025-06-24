@@ -61,7 +61,7 @@ const deployFiatToken = async function (
 		autoMine: true,
 	});
 
-	log(`Deployed at: ${deployment.address}`, "deployFiatToken", name);
+	log(`Deployed at: ${deployment.address} \n`, "deployFiatToken", name);
 
 	updateEnvVariable(
 		`FIAT_TOKEN_IMPLEMENTATION_${getNetworkEnvKey(name)}`,

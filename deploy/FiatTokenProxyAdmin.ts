@@ -42,7 +42,7 @@ const deployFiatTokenProxyAdmin = async function (
 		autoMine: true,
 	});
 
-	log(`Deployment completed: ${deployment.address}`, "deployFiatTokenProxyAdmin", name);
+	log(`Deployment completed: ${deployment.address} \n`, "deployFiatTokenProxyAdmin", name);
 
 	updateEnvVariable(
 		`FIAT_TOKEN_PROXY_ADMIN_${getNetworkEnvKey(name)}`,

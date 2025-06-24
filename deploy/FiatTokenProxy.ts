@@ -37,7 +37,7 @@ const deployFiatTokenProxy = async function (hre: HardhatRuntimeEnvironment): Pr
 		autoMine: true,
 	});
 
-	log(`Deployment completed: ${deployment.address}`, "deployFiatTokenProxy", name);
+	log(`Deployment completed: ${deployment.address} \n`, "deployFiatTokenProxy", name);
 
 	updateEnvVariable(
 		`FIAT_TOKEN_PROXY_${getNetworkEnvKey(name)}`,

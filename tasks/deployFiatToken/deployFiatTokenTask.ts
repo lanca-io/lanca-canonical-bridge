@@ -4,11 +4,13 @@ import { type HardhatRuntimeEnvironment } from "hardhat/types";
 import { deployFiatToken } from "../../deploy/FiatToken";
 import { deployFiatTokenProxy } from "../../deploy/FiatTokenProxy";
 import { deployFiatTokenProxyAdmin } from "../../deploy/FiatTokenProxyAdmin";
+import { initializeDefaultFiatToken } from "../utils/initializeDefaultFiatToken";
 import { initializeFiatToken } from "../utils/initializeFiatToken";
 
 async function deployFiatTokenTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	if (taskArgs.implementation) {
 		await deployFiatToken(hre);
+		await initializeDefaultFiatToken(hre);
 	}
 
 	if (taskArgs.proxy) {

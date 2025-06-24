@@ -6,13 +6,12 @@
 Deploy LancaCanonicalBridge contracts with flexible options.
 
 ```bash
-yarn hardhat deploy-bridge [--implementation] [--proxy] [--pool] --network <network_name>
+yarn hardhat deploy-bridge [--implementation] [--proxy] --network <network_name>
 ```
 
 **Flags:**
 - `--implementation` - Deploy bridge implementation contract
 - `--proxy` - Deploy proxy and proxy admin contracts  
-- `--pool` - Deploy bridge pool contract (if you have USDC address)
 
 **Examples:**
 ```bash
@@ -24,9 +23,56 @@ yarn hardhat deploy-bridge --proxy --network arbitrum
 
 # Deploy implementation + proxy (with automatic upgrade)
 yarn hardhat deploy-bridge --implementation --proxy --network arbitrum
+```
 
-# Deploy all components
-yarn hardhat deploy-bridge --implementation --proxy --pool --network arbitrum
+### Bridge L1 Deployment
+Deploy LancaCanonicalBridge L1 specific components.
+
+```bash
+yarn hardhat deploy-bridge-l1 [--implementation] [--proxy] --network <network_name>
+```
+
+**Flags:**
+- `--implementation` - Deploy L1 bridge implementation contract
+- `--proxy` - Deploy proxy and proxy admin contracts
+
+**Examples:**
+```bash
+# Deploy L1 implementation only
+yarn hardhat deploy-bridge-l1 --implementation --network ethereum
+
+# Deploy L1 complete setup
+yarn hardhat deploy-bridge-l1 --implementation --proxy --network ethereum
+```
+
+### Pool Deployment
+Deploy LancaCanonicalBridgePool contracts with proxy setup and pool configuration.
+
+```bash
+yarn hardhat deploy-pool [--implementation] [--proxy] [--addpool] --chainid <destination_chain_id> --network <network_name>
+```
+
+**Flags:**
+- `--implementation` - Deploy pool implementation contract
+- `--proxy` - Deploy proxy and proxy admin contracts for pool
+- `--addpool` - Add pool to L1 Bridge contract
+
+**Parameters:**
+- `--chainid` - Destination chain id for the pool (required)
+
+**Examples:**
+```bash
+# Deploy pool implementation only
+yarn hardhat deploy-pool --implementation --chainid 42161 --network arbitrum
+
+# Deploy proxy and admin only
+yarn hardhat deploy-pool --proxy --chainid 42161 --network arbitrum
+
+# Deploy implementation + proxy with automatic upgrade
+yarn hardhat deploy-pool --implementation --proxy --chainid 42161 --network arbitrum
+
+# Deploy complete setup and add pool to L1 Bridge
+yarn hardhat deploy-pool --implementation --proxy --addpool --chainid 42161 --network arbitrum
 ```
 
 ### Fiat Token Deployment
@@ -47,6 +93,54 @@ yarn hardhat deploy-fiat-token --implementation --network arbitrum
 
 # Deploy complete setup with configuration
 yarn hardhat deploy-fiat-token --implementation --proxy --network arbitrum
+```
+
+### Configure Fiat Token
+
+```bash
+yarn hardhat configure-minter [--bridge] [--test] --network <network_name>
+```
+
+**Flags:**
+- `--bridge` - Configure Minter for bridge
+- `--test` - Configure Minter for test
+
+### Send Tokens
+Send tokens from one network to another via bridge.
+
+```bash
+yarn hardhat send-token --dstChain <destination_network> --amount <amount> --gasLimit <gas_limit> --network <source_network>
+```
+
+**Parameters:**
+- `--dstChain` - Destination network name (e.g., 'arbitrumSepolia', 'baseSepolia')
+- `--amount` - Amount of USDC to send (e.g., '10.5')
+- `--gasLimit` - Gas limit for destination transaction (e.g., '200000')
+
+**Examples:**
+```bash
+# Send 10.5 USDC from Ethereum Sepolia to Arbitrum Sepolia
+yarn hardhat send-token --dstChain arbitrumSepolia --amount 10.5 --gasLimit 200000 --network ethereumSepolia
+
+# Send 5 USDC from Arbitrum Sepolia to Base Sepolia
+yarn hardhat send-token --dstChain baseSepolia --amount 5 --gasLimit 150000 --network arbitrumSepolia
+```
+
+### Mint Test USDC
+Mint Test USDC tokens to a specified address.
+
+```bash
+yarn hardhat mint-test-usdc --to <recipient_address> --amount <amount> --network <network_name>
+```
+
+**Parameters:**
+- `--to` - The address to mint USDC to
+- `--amount` - The amount of USDC to mint
+
+**Examples:**
+```bash
+# Mint 1000 USDC to specific address
+yarn hardhat mint-test-usdc --to 0x1234567890123456789012345678901234567890 --amount 1000000000 --network arbitrumSepolia
 ```
 
 ## Alternative: Using Hardhat Deploy Tags
@@ -75,4 +169,10 @@ Make sure to configure your environment variables:
 After deployment, addresses are saved to environment variables:
 - `LANCA_CANONICAL_BRIDGE_<NETWORK_NAME>` - Implementation address
 - `LANCA_CANONICAL_BRIDGE_PROXY_<NETWORK_NAME>` - Proxy address
-- `LANCA_CANONICAL_BRIDGE_PROXY_ADMIN_<NETWORK_NAME>` - Proxy admin address 
+- `LANCA_CANONICAL_BRIDGE_PROXY_ADMIN_<NETWORK_NAME>` - Proxy admin address
+- `LANCA_CANONICAL_BRIDGE_POOL_<NETWORK_NAME>` - Pool implementation address
+- `LANCA_CANONICAL_BRIDGE_POOL_PROXY_<NETWORK_NAME>` - Pool proxy address
+- `LANCA_CANONICAL_BRIDGE_POOL_PROXY_ADMIN_<NETWORK_NAME>` - Pool proxy admin address
+- `FIAT_TOKEN_<NETWORK_NAME>` - FiatToken implementation address
+- `FIAT_TOKEN_PROXY_<NETWORK_NAME>` - FiatToken proxy address
+- `FIAT_TOKEN_PROXY_ADMIN_<NETWORK_NAME>` - FiatToken proxy admin address 

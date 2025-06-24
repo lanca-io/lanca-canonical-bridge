@@ -20,7 +20,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase {
         uint24 dstChainSelector,
         uint256 amount,
         uint256 gasLimit
-    ) private returns (bytes32 messageId) {
+    ) external payable returns (bytes32 messageId) {
         bytes memory message = abi.encode(msg.sender, amount);
 
         uint256 fee = getMessageFee(

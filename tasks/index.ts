@@ -4,6 +4,7 @@ import { deployBridgeTask } from "./deployBridge/deployBridgeTask";
 import { deployFiatTokenTask } from "./deployFiatToken/deployFiatTokenTask";
 import { deployPoolTask } from "./deployPool/deployPoolTask";
 import { mintTestUsdcTask } from "./mintTestUsdc/mintTestUsdcTask";
+import { sendTokenTask } from "./sendToken/sendTokenTask";
 
 export default {
 	deployBridgeTask,
@@ -12,4 +13,5 @@ export default {
 	deployFiatTokenTask,
 	configureMinterTask,
 	mintTestUsdcTask,
+	sendTokenTask,
 };

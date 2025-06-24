@@ -4,3 +4,4 @@ export { initializeFiatToken } from "./initializeFiatToken";
 export { configureMinter } from "./configureMinter";
 export { configureMinterTest } from "./configureMinterTest";
 export { addPool } from "./addPool";
+export { sendToken } from "./sendToken";

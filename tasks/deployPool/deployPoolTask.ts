@@ -24,15 +24,16 @@ async function deployPoolTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 		await upgradeLancaProxyImplementation(hre, ProxyEnum.lcBridgePoolProxy, false);
 	}
 
-	if (taskArgs.addPool) {
-		await addPool(hre);
+	if (taskArgs.addpool) {
+		await addPool(hre, taskArgs.chainid);
 	}
 }
 
 task("deploy-pool", "Deploy LancaCanonicalBridgePool with proxy")
 	.addFlag("implementation", "Deploy pool implementation")
 	.addFlag("proxy", "Deploy proxy and proxy admin for pool")
-	.addFlag("addPool", "Add pool to L1 Bridge contract")
+	.addFlag("addpool", "Add pool to L1 Bridge contract")
+	.addParam("chainid", "Destination chain id for the pool")
 	.setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
 		await deployPoolTask(taskArgs, hre);
 	});

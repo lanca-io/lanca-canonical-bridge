@@ -5,9 +5,12 @@ import { getNetworkEnvKey } from "@concero/contract-utils";
 import { conceroNetworks, getViemReceiptConfig } from "../../constants";
 import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils";
 
-export async function addPool(hre: HardhatRuntimeEnvironment): Promise<void> {
+export async function addPool(
+	hre: HardhatRuntimeEnvironment,
+	targetChainSelector: string,
+): Promise<void> {
 	const { name: chainName } = hre.network;
-	const { viemChain, type, chainSelector } = conceroNetworks[chainName];
+	const { viemChain, type } = conceroNetworks[chainName];
 
 	const l1BridgeAddress = getEnvVar(
 		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(chainName)}`,
@@ -31,7 +34,7 @@ export async function addPool(hre: HardhatRuntimeEnvironment): Promise<void> {
 
 	try {
 		log(
-			`Adding pool ${poolAddress} to L1 Bridge for chain ${chainSelector}`,
+			`Adding pool ${poolAddress} to L1 Bridge for chain ${targetChainSelector}`,
 			"addPool",
 			chainName,
 		);
@@ -41,7 +44,7 @@ export async function addPool(hre: HardhatRuntimeEnvironment): Promise<void> {
 			abi: l1BridgeAbi,
 			functionName: "addPools",
 			account: viemAccount,
-			args: [[chainSelector], [poolAddress]],
+			args: [[BigInt(targetChainSelector)], [poolAddress]],
 			chain: viemChain,
 		});
 

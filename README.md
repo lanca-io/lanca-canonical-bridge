@@ -10,8 +10,8 @@ yarn hardhat deploy-bridge [--implementation] [--proxy] --network <network_name>
 ```
 
 **Flags:**
-- `--implementation` - Deploy bridge implementation contract
-- `--proxy` - Deploy proxy and proxy admin contracts  
+- `--implementation` - Deploy implementation
+- `--proxy` - Deploy proxy and proxy admin
 
 **Examples:**
 ```bash
@@ -33,8 +33,8 @@ yarn hardhat deploy-bridge-l1 [--implementation] [--proxy] --network <network_na
 ```
 
 **Flags:**
-- `--implementation` - Deploy L1 bridge implementation contract
-- `--proxy` - Deploy proxy and proxy admin contracts
+- `--implementation` - Deploy L1 bridge implementation
+- `--proxy` - Deploy proxy and proxy admin
 
 **Examples:**
 ```bash
@@ -53,8 +53,8 @@ yarn hardhat deploy-pool [--implementation] [--proxy] [--addpool] --chainid <des
 ```
 
 **Flags:**
-- `--implementation` - Deploy pool implementation contract
-- `--proxy` - Deploy proxy and proxy admin contracts for pool
+- `--implementation` - Deploy pool implementation
+- `--proxy` - Deploy proxy and proxy admin for pool
 - `--addpool` - Add pool to L1 Bridge contract
 
 **Parameters:**
@@ -83,8 +83,8 @@ yarn hardhat deploy-fiat-token [--implementation] [--proxy] --network <network_n
 ```
 
 **Flags:**
-- `--implementation` - Deploy token implementation contract
-- `--proxy` - Deploy proxy contract
+- `--implementation` - Deploy implementation
+- `--proxy` - Deploy proxy
 
 **Examples:**
 ```bash
@@ -105,25 +105,41 @@ yarn hardhat configure-minter [--bridge] [--test] --network <network_name>
 - `--bridge` - Configure Minter for bridge
 - `--test` - Configure Minter for test
 
+### Add Lane
+Add lane to LancaCanonicalBridge contract.
+
+```bash
+yarn hardhat add-lane --chainid <destination_chain_id> --network <network_name>
+```
+
+**Parameters:**
+- `--chainid` - Destination chain id for the lane (required)
+
+**Examples:**
+```bash
+# Add lane for Arbitrum chain
+yarn hardhat add-lane --chainid 42161 --network ethereum
+```
+
 ### Send Tokens
 Send tokens from one network to another via bridge.
 
 ```bash
-yarn hardhat send-token --dstChain <destination_network> --amount <amount> --gasLimit <gas_limit> --network <source_network>
+yarn hardhat send-token --dstchain <destination_network> --amount <amount> --gaslimit <gas_limit> --network <source_network>
 ```
 
 **Parameters:**
-- `--dstChain` - Destination network name (e.g., 'arbitrumSepolia', 'baseSepolia')
+- `--dstchain` - Destination network name (e.g., 'arbitrumSepolia', 'baseSepolia')
 - `--amount` - Amount of USDC to send (e.g., '10.5')
-- `--gasLimit` - Gas limit for destination transaction (e.g., '200000')
+- `--gaslimit` - Gas limit for destination transaction (e.g., '200000')
 
 **Examples:**
 ```bash
 # Send 10.5 USDC from Ethereum Sepolia to Arbitrum Sepolia
-yarn hardhat send-token --dstChain arbitrumSepolia --amount 10.5 --gasLimit 200000 --network ethereumSepolia
+yarn hardhat send-token --dstchain arbitrumSepolia --amount 10.5 --gaslimit 200000 --network ethereumSepolia
 
 # Send 5 USDC from Arbitrum Sepolia to Base Sepolia
-yarn hardhat send-token --dstChain baseSepolia --amount 5 --gasLimit 150000 --network arbitrumSepolia
+yarn hardhat send-token --dstchain baseSepolia --amount 5 --gaslimit 150000 --network arbitrumSepolia
 ```
 
 ### Mint Test USDC

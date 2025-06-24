@@ -28,6 +28,9 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase {
         uint256 amount,
         uint256 gasLimit
     ) external payable returns (bytes32 messageId) {
+        address pool = s.l1Bridge().pools[dstChainSelector];
+        require(pool != address(0), PoolNotFound(dstChainSelector));
+
         bytes memory message = abi.encode(msg.sender, amount);
 
         uint256 fee = getMessageFee(
@@ -50,9 +53,6 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase {
         );
 
         i_usdc.transferFrom(msg.sender, address(this), amount);
-
-        address pool = s.l1Bridge().pools[dstChainSelector];
-        require(pool != address(0), PoolNotFound(dstChainSelector));
 
         bool success = i_usdc.transfer(pool, amount);
         if (!success) {

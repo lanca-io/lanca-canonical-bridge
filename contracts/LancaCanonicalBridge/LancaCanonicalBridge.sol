@@ -6,9 +6,15 @@
  */
 pragma solidity 0.8.28;
 
-import {LancaCanonicalBridgeBase, ConceroClient, ConceroTypes, IConceroRouter} from "./LancaCanonicalBridgeBase.sol";
+import {Storage as s} from "./libraries/Storage.sol";
+import {LancaCanonicalBridgeBase, ConceroClient, CommonErrors, ConceroTypes, IConceroRouter} from "./LancaCanonicalBridgeBase.sol";
 
 contract LancaCanonicalBridge is LancaCanonicalBridgeBase {
+    using s for s.Bridge;
+
+    error LaneNotFound(uint24 dstChainSelector);
+    error LaneAlreadyExists(uint24 dstChainSelector);
+
     constructor(
         address conceroRouter,
         uint24 chainSelector,
@@ -21,6 +27,9 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase {
         uint256 amount,
         uint256 gasLimit
     ) external payable returns (bytes32 messageId) {
+        address lane = s.bridge().lanes[dstChainSelector];
+        require(lane != address(0), LaneNotFound(dstChainSelector));
+
         bytes memory message = abi.encode(msg.sender, amount);
 
         uint256 fee = getMessageFee(
@@ -71,5 +80,19 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase {
             tokenSender,
             amount
         );
+    }
+
+    function addLanes(
+        uint24[] calldata dstChainSelectors,
+        address[] calldata lanes
+    ) external onlyOwner {
+        require(dstChainSelectors.length == lanes.length, CommonErrors.LengthMismatch());
+
+        s.Bridge storage bridgeStorage = s.bridge();
+
+        for (uint256 i = 0; i < dstChainSelectors.length; i++) {
+            require(bridgeStorage.lanes[dstChainSelectors[i]] == address(0), LaneAlreadyExists(dstChainSelectors[i]));
+            bridgeStorage.lanes[dstChainSelectors[i]] = lanes[i];
+        }
     }
 }

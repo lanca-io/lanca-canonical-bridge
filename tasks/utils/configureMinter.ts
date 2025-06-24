@@ -4,10 +4,11 @@ import path from "path";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { getNetworkEnvKey } from "@concero/contract-utils";
+
 import { conceroNetworks, getViemReceiptConfig } from "../../constants";
 import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils";
 
-export async function configureFiatToken(hre: HardhatRuntimeEnvironment): Promise<void> {
+export async function configureMinter(hre: HardhatRuntimeEnvironment): Promise<void> {
 	const { name: chainName } = hre.network;
 	const { viemChain, type } = conceroNetworks[chainName];
 
@@ -18,10 +19,10 @@ export async function configureFiatToken(hre: HardhatRuntimeEnvironment): Promis
 	const fiatTokenArtifact = JSON.parse(fs.readFileSync(fiatTokenArtifactPath, "utf8"));
 
 	const fiatTokenProxyAddress = getEnvVar(`FIAT_TOKEN_PROXY_${getNetworkEnvKey(chainName)}`);
-    if (!fiatTokenProxyAddress) return;
+	if (!fiatTokenProxyAddress) return;
 
 	// viemAccount should be master minter address
-	const viemAccount = getViemAccount(type, "proxyDeployer");
+	const viemAccount = getViemAccount(type, "deployer");
 	const { walletClient, publicClient } = getFallbackClients(
 		conceroNetworks[chainName],
 		viemAccount,

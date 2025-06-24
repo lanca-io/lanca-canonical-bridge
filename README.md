@@ -12,7 +12,7 @@ yarn hardhat deploy-bridge [--implementation] [--proxy] [--pool] --network <netw
 **Flags:**
 - `--implementation` - Deploy bridge implementation contract
 - `--proxy` - Deploy proxy and proxy admin contracts  
-- `--pool` - Deploy bridge pool contract
+- `--pool` - Deploy bridge pool contract (if you have USDC address)
 
 **Examples:**
 ```bash
@@ -33,13 +33,12 @@ yarn hardhat deploy-bridge --implementation --proxy --pool --network arbitrum
 Deploy USDC-compatible FiatToken contracts.
 
 ```bash
-yarn hardhat deploy-fiat-token [--implementation] [--proxy] [--settings] --network <network_name>
+yarn hardhat deploy-fiat-token [--implementation] [--proxy] --network <network_name>
 ```
 
 **Flags:**
 - `--implementation` - Deploy token implementation contract
 - `--proxy` - Deploy proxy contract
-- `--settings` - Configure token settings
 
 **Examples:**
 ```bash
@@ -47,7 +46,7 @@ yarn hardhat deploy-fiat-token [--implementation] [--proxy] [--settings] --netwo
 yarn hardhat deploy-fiat-token --implementation --network arbitrum
 
 # Deploy complete setup with configuration
-yarn hardhat deploy-fiat-token --implementation --proxy --settings --network arbitrum
+yarn hardhat deploy-fiat-token --implementation --proxy --network arbitrum
 ```
 
 ## Alternative: Using Hardhat Deploy Tags

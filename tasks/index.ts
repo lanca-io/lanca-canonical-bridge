@@ -1,9 +1,9 @@
 import { deployBridgeTask } from "./deployBridge/deployBridgeTask";
 import { deployFiatTokenTask } from "./deployFiatToken/deployFiatTokenTask";
-import testTask from "./testTask";
+import { configureMinterTask } from "./configureMinter/configureMinterTask";
 
 export default {
-	testTask,
 	deployBridgeTask,
 	deployFiatTokenTask,
+	configureMinterTask,
 };

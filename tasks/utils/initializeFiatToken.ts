@@ -5,6 +5,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { conceroNetworks, getViemReceiptConfig } from "../../constants";
 import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils";
+import { getNetworkEnvKey } from "@concero/contract-utils";
 
 export async function initializeFiatToken(hre: HardhatRuntimeEnvironment): Promise<void> {
 	const { name: chainName } = hre.network;
@@ -16,20 +17,14 @@ export async function initializeFiatToken(hre: HardhatRuntimeEnvironment): Promi
 	);
 	const fiatTokenArtifact = JSON.parse(fs.readFileSync(fiatTokenArtifactPath, "utf8"));
 
-	const viemAccount = getViemAccount(type, "proxyDeployer");
+	const viemAccount = getViemAccount(type, "deployer");
 	const { walletClient, publicClient } = getFallbackClients(
 		conceroNetworks[chainName],
 		viemAccount,
 	);
 
-	const fiatTokenProxy = getEnvVar(`FIAT_TOKEN_PROXY_${chainName.toUpperCase()}`);
-	if (!fiatTokenProxy) {
-		err(
-			`FIAT_TOKEN_PROXY_${chainName.toUpperCase()} not found in environment variables`,
-			"initializeFiatToken",
-		);
-		return;
-	}
+	const fiatTokenProxy = getEnvVar(`FIAT_TOKEN_PROXY_${getNetworkEnvKey(chainName)}`);
+	if (!fiatTokenProxy) return;
 
 	const defaultArgs = {
 		tokenName: "USD Coin",
@@ -51,16 +46,13 @@ export async function initializeFiatToken(hre: HardhatRuntimeEnvironment): Promi
 		!ownerAddress ||
 		!lostAndFoundAddress
 	) {
-		err(
-			"Required: fiat token initialization addresses",
-			"initializeFiatToken",
-		);
+		err("Required: fiat token initialization addresses", "initializeFiatToken");
 		return;
 	}
 
 	try {
 		// 1. Main initialization (V1)
-        log("Executing initialization V1...", "initializeFiatToken", chainName);
+		log("Executing initialization V1...", "initializeFiatToken", chainName);
 		const initTxHash = await walletClient.writeContract({
 			address: fiatTokenProxy as `0x${string}`,
 			abi: fiatTokenArtifact.abi,

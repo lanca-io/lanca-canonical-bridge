@@ -4,5 +4,6 @@ export { deployLancaCanonicalBridgeProxyAdmin } from "./LancaCanonicalBridgeProx
 export { deployFiatToken } from "./FiatToken";
 export { deployFiatTokenProxy } from "./FiatTokenProxy";
 export { deployFiatTokenProxyAdmin } from "./FiatTokenProxyAdmin";
+export { deployLancaCanonicalBridgePool } from "./LancaCanonicalBridgePool";
 
 export { default as deployPauseDummy } from "./PauseDummy";

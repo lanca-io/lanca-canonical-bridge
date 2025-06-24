@@ -1,6 +1,7 @@
 import { EnvTokens } from "./env.tokens";
+import { EnvUsdc } from "./env.usdc";
 
-export interface env extends EnvTokens {
+export interface env extends EnvTokens, EnvUsdc {
 	// .env.wallets
 	TESTNET_PROXY_DEPLOYER_ADDRESS: string;
 	TESTNET_PROXY_DEPLOYER_PRIVATE_KEY: string;

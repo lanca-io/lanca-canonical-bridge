@@ -18,4 +18,8 @@ export type EnvPrefixes = {
  * @param envFileName The name of the .env file to update
  * usage: // updateEnvVariable("CLF_DON_SECRETS_VERSION_SEPOLIA", "1712841283", "../../../.env.clf");
  */
-export type EnvFileName = "deployments.mainnet" | "deployments.testnet" | "tokens";
+export type EnvFileName =
+	| "deployments.mainnet"
+	| "deployments.testnet"
+	| "deployments.localhost"
+	| "tokens";

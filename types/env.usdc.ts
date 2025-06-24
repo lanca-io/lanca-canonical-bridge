@@ -1,0 +1,8 @@
+export interface EnvUsdc {
+	// env.usdc
+	FIAT_TOKEN_OWNER_ADDRESS: string;
+	FIAT_TOKEN_BLACKLISTER_ADDRESS: string;
+	FIAT_TOKEN_PAUSER_ADDRESS: string;
+	FIAT_TOKEN_MASTER_MINTER_ADDRESS: string;
+	FIAT_TOKEN_LOST_AND_FOUND_ADDRESS: string;
+}

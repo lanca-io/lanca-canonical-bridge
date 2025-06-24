@@ -9,16 +9,8 @@ import { getNetworkEnvKey } from "@concero/contract-utils";
 import { conceroNetworks } from "../constants";
 import { log, updateEnvVariable } from "../utils";
 
-type DeployArgs = {
-	tokenName: string;
-	tokenSymbol: string;
-	tokenCurrency: string;
-	tokenDecimals: number;
-};
-
 const deployFiatToken = async function (
 	hre: HardhatRuntimeEnvironment,
-	overrideArgs?: Partial<DeployArgs>,
 ): Promise<Deployment> {
 	const { deployer } = await hre.getNamedAccounts();
 	const { deploy } = hre.deployments;
@@ -27,23 +19,7 @@ const deployFiatToken = async function (
 	const chain = conceroNetworks[name];
 	const { type: networkType } = chain;
 
-	const defaultArgs: DeployArgs = {
-		tokenName: "USD Coin",
-		tokenSymbol: "USDC.e",
-		tokenCurrency: "USD",
-		tokenDecimals: 6,
-	};
-
-	const args: DeployArgs = {
-		...defaultArgs,
-		...overrideArgs,
-	};
-
-	log(`Deploying FiatToken with parameters:`, "deployFiatToken", name);
-	log(`  tokenName: ${args.tokenName}`, "deployFiatToken", name);
-	log(`  tokenSymbol: ${args.tokenSymbol}`, "deployFiatToken", name);
-	log(`  tokenCurrency: ${args.tokenCurrency}`, "deployFiatToken", name);
-	log(`  tokenDecimals: ${args.tokenDecimals}`, "deployFiatToken", name);
+	log(`Deploying FiatToken implementation:`, "deployFiatToken", name);
 
 	const signatureCheckerArtifactPath = path.resolve(
 		__dirname,

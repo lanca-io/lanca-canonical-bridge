@@ -36,11 +36,11 @@ const deployLancaCanonicalBridge: DeploymentFunction = async function (
 		);
 	}
 
-	const usdcAddress = getEnvVar(`USDC_${getNetworkEnvKey(name)}`);
+	const usdcAddress = getEnvVar(`FIAT_TOKEN_PROXY_${getNetworkEnvKey(name)}`);
 
 	if (!usdcAddress) {
 		throw new Error(
-			`USDC address not found. Set USDC_${getNetworkEnvKey(name)} in environment variables.`,
+			`USDC address not found. Set FIAT_TOKEN_PROXY_${getNetworkEnvKey(name)} in environment variables.`,
 		);
 	}
 

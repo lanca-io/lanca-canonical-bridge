@@ -6,7 +6,7 @@ import { deployLancaCanonicalBridgeL1 } from "../../deploy/LancaCanonicalBridgeL
 import { deployLancaCanonicalBridgeProxy } from "../../deploy/LancaCanonicalBridgeProxy";
 import { deployLancaCanonicalBridgeProxyAdmin } from "../../deploy/LancaCanonicalBridgeProxyAdmin";
 import { compileContracts } from "../../utils";
-import { upgradeLancaProxyImplementation } from "../utils";
+import { addLane, upgradeLancaProxyImplementation } from "../utils";
 
 async function deployBridgeL1Task(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	compileContracts({ quiet: true });
@@ -23,11 +23,17 @@ async function deployBridgeL1Task(taskArgs: any, hre: HardhatRuntimeEnvironment)
 	if (taskArgs.implementation) {
 		await upgradeLancaProxyImplementation(hre, ProxyEnum.lcBridgeProxy, false);
 	}
+
+	if (taskArgs.addlane) {
+		await addLane(hre, taskArgs.chainid);
+	}
 }
 
 task("deploy-bridge-l1", "Deploy LancaCanonicalBridge L1 components")
 	.addFlag("implementation", "Deploy L1 bridge implementation")
 	.addFlag("proxy", "Deploy proxy and proxy admin")
+	.addFlag("addlane", "Add lane to LancaCanonicalBridgeL1")
+	.addParam("chainid", "Destination chain id for the lane")
 	.setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
 		await deployBridgeL1Task(taskArgs, hre);
 	});

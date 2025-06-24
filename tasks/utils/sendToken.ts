@@ -35,14 +35,7 @@ export async function sendToken(
 	log(`Destination chain selector: ${dstChainSelector}`, "sendToken", srcChain);
 
 	const bridgeAddress = getEnvVar(`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(srcChain)}`);
-
 	if (!bridgeAddress) return;
-
-	const dstBridgeAddress = getEnvVar(
-		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChain)}`,
-	);
-
-	if (!dstBridgeAddress) return;
 
 	const usdcAddress = getEnvVar(`FIAT_TOKEN_PROXY_${getNetworkEnvKey(srcChain)}`);
 	if (!usdcAddress) return;
@@ -72,7 +65,7 @@ export async function sendToken(
 				false, // shouldFinaliseSrc
 				"0x0000000000000000000000000000000000000000", // feeToken (ETH)
 				{
-					receiver: dstBridgeAddress,
+					receiver: "0x0000000000000000000000000000000000000000",
 					gasLimit: gasLimitBigInt,
 				},
 			],
@@ -105,7 +98,7 @@ export async function sendToken(
 			abi: bridgeAbi,
 			functionName: "sendToken",
 			account: viemAccount,
-			args: [dstBridgeAddress, dstChainSelector, amountInWei, gasLimitBigInt],
+			args: [dstChainSelector, amountInWei, gasLimitBigInt],
 			value: messageFee as bigint,
 			chain: viemChain,
 		});

@@ -5,7 +5,6 @@ import { ProxyEnum } from "../../constants";
 import { deployLancaCanonicalBridge } from "../../deploy/LancaCanonicalBridge";
 import { deployLancaCanonicalBridgeProxy } from "../../deploy/LancaCanonicalBridgeProxy";
 import { deployLancaCanonicalBridgeProxyAdmin } from "../../deploy/LancaCanonicalBridgeProxyAdmin";
-import { deployLancaCanonicalBridgePool } from "../../deploy/LancaCanonicalBridgePool";
 import { compileContracts } from "../../utils";
 import { upgradeLancaProxyImplementation } from "../utils";
 
@@ -24,16 +23,11 @@ async function deployBridgeTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	if (taskArgs.implementation) {
 		await upgradeLancaProxyImplementation(hre, ProxyEnum.lcBridgeProxy, false);
 	}
-
-	if (taskArgs.pool) {
-		await deployLancaCanonicalBridgePool(hre);
-	}
 }
 
 task("deploy-bridge", "Deploy LancaCanonicalBridge")
 	.addFlag("implementation", "Deploy implementation")
 	.addFlag("proxy", "Deploy proxy and proxy admin")
-	.addFlag("pool", "Deploy pool")
 	.setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
 		await deployBridgeTask(taskArgs, hre);
 	});

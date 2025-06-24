@@ -18,6 +18,8 @@ export async function upgradeLancaProxyImplementation(
 		implementationKey = "pause";
 	} else if (proxyType === ProxyEnum.lcBridgeProxy) {
 		implementationKey = "lcBridge";
+	} else if (proxyType === ProxyEnum.lcBridgePoolProxy) {
+		implementationKey = "lcBridgePool";
 	} else {
 		err(`Proxy type ${proxyType} not found`, "upgradeProxyImplementation", chainName);
 		return;
@@ -35,7 +37,7 @@ export async function upgradeLancaProxyImplementation(
 
 	const [lcBridgeProxy, lcBridgeProxyAlias] = getEnvAddress(proxyType, chainName);
 	const [proxyAdmin, proxyAdminAlias] = getEnvAddress(`${proxyType}Admin`, chainName);
-	const [newImplementation, newImplementationAlias] = getEnvAddress("lcBridge", chainName);
+	const [newImplementation, newImplementationAlias] = getEnvAddress(implementationKey, chainName);
 
 	log(
 		`Upgrading ${lcBridgeProxyAlias} to implementation ${newImplementationAlias}`,

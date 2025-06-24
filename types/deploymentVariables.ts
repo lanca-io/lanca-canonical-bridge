@@ -9,6 +9,9 @@ export type EnvPrefixes = {
 	lcBridge: string;
 	lcBridgeProxy: string;
 	lcBridgeProxyAdmin: string;
+	lcBridgePool: string;
+	lcBridgePoolProxy: string;
+	lcBridgePoolProxyAdmin: string;
 	pause: string;
 };
 /**

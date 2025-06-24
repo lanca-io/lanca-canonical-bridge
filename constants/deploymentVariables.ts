@@ -6,6 +6,7 @@ import { EnvPrefixes } from "../types/deploymentVariables";
 
 enum ProxyEnum {
 	lcBridgeProxy = "lcBridgeProxy",
+	lcBridgePoolProxy = "lcBridgePoolProxy",
 }
 
 const viemReceiptConfig: WaitForTransactionReceiptParameters = {
@@ -28,6 +29,9 @@ const envPrefixes: EnvPrefixes = {
 	lcBridge: "LANCA_CANONICAL_BRIDGE",
 	lcBridgeProxy: "LANCA_CANONICAL_BRIDGE_PROXY",
 	lcBridgeProxyAdmin: "LANCA_CANONICAL_BRIDGE_PROXY_ADMIN",
+	lcBridgePool: "LANCA_CANONICAL_BRIDGE_POOL",
+	lcBridgePoolProxy: "LANCA_CANONICAL_BRIDGE_POOL_PROXY",
+	lcBridgePoolProxyAdmin: "LANCA_CANONICAL_BRIDGE_POOL_PROXY_ADMIN",
 	pause: "LANCA_CANONICAL_BRIDGE_PAUSE",
 };
 

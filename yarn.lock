@@ -1089,12 +1089,11 @@
 
 "@concero/v2-networks@github:concero/v2-networks":
   version "1.0.0"
-  uid f3f2ade3d797ce8f8aa0b1ae96e648cd778ce6f2
   resolved "https://codeload.github.com/concero/v2-networks/tar.gz/f3f2ade3d797ce8f8aa0b1ae96e648cd778ce6f2"
 
 "@concero/v2-networks@https://github.com/concero/v2-networks":
   version "1.0.0"
-  resolved "https://github.com/concero/v2-networks#f3f2ade3d797ce8f8aa0b1ae96e648cd778ce6f2"
+  resolved "https://github.com/concero/v2-networks#ec816d5d6a2a88b4500f849c3cf18f22ffce5229"
 
 "@concero/v2-operators@https://github.com/concero/v2-operators#feature/stage-updates":
   version "1.0.0"

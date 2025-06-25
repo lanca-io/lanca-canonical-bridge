@@ -5,29 +5,18 @@ import { getNetworkEnvKey } from "@concero/contract-utils";
 import { conceroNetworks, getViemReceiptConfig } from "../../constants";
 import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils";
 
-export async function addPool(
-	hre: HardhatRuntimeEnvironment,
-	targetChainSelector: string,
-): Promise<void> {
+export async function addPool(hre: HardhatRuntimeEnvironment, dstChainName: string): Promise<void> {
 	const { name: chainName } = hre.network;
 	const { viemChain, type } = conceroNetworks[chainName];
+	const dstChain = conceroNetworks[dstChainName];
 
 	const l1BridgeAddress = getEnvVar(
 		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(chainName)}`,
 	);
 	if (!l1BridgeAddress) return;
 
-    const targetNetworkName = Object.keys(conceroNetworks).find(
-		name => conceroNetworks[name].chainSelector.toString() === targetChainSelector,
-	);
-    if (!targetNetworkName) {
-        throw new Error(
-            `Target network not found for chain selector ${targetChainSelector}`,
-        );
-    }
-
 	const poolAddress = getEnvVar(
-		`LANCA_CANONICAL_BRIDGE_POOL_PROXY_${getNetworkEnvKey(targetNetworkName)}`,
+		`LC_BRIDGE_POOL_PROXY_${getNetworkEnvKey(chainName)}_${getNetworkEnvKey(dstChainName)}`,
 	);
 	if (!poolAddress) return;
 
@@ -43,7 +32,7 @@ export async function addPool(
 
 	try {
 		log(
-			`Adding pool ${poolAddress} to L1 Bridge for chain ${targetChainSelector}`,
+			`Adding pool ${poolAddress} to L1 Bridge for chain ${dstChainName} (${dstChain.chainId})`,
 			"addPool",
 			chainName,
 		);
@@ -53,7 +42,7 @@ export async function addPool(
 			abi: l1BridgeAbi,
 			functionName: "addPools",
 			account: viemAccount,
-			args: [[BigInt(targetChainSelector)], [poolAddress]],
+			args: [[BigInt(dstChain.chainId)], [poolAddress]],
 			chain: viemChain,
 		});
 
@@ -62,11 +51,7 @@ export async function addPool(
 			hash: txHash,
 		});
 
-		log(
-			`Pool successfully added! Transaction: ${txHash}, Gas used: ${receipt.cumulativeGasUsed}`,
-			"addPool",
-			chainName,
-		);
+		log(`Pool successfully added! Transaction: ${txHash}`, "addPool", chainName);
 	} catch (error) {
 		err(`Failed to add pool: ${error}`, "addPool", chainName);
 		throw error;

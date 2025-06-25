@@ -3,19 +3,23 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { conceroNetworks } from "../constants";
 import { IProxyType } from "../types/deploymentVariables";
-import { getGasParameters, getWallet, log, updateEnvAddress } from "../utils";
+import { getWallet, log, updateEnvAddress } from "../utils";
 
-const deployLancaCanonicalBridgeProxyAdmin: (
+type DeploymentFunction = (
 	hre: HardhatRuntimeEnvironment,
 	proxyType: IProxyType,
-) => Promise<void> = async function (hre: HardhatRuntimeEnvironment, proxyType: IProxyType) {
+) => Promise<Deployment>;
+
+const deployLancaCanonicalBridgeProxyAdmin: DeploymentFunction = async function (
+	hre: HardhatRuntimeEnvironment,
+	proxyType: IProxyType,
+): Promise<Deployment> {
 	const { proxyDeployer } = await hre.getNamedAccounts();
 	const { deploy } = hre.deployments;
 	const { name } = hre.network;
 	const networkType = conceroNetworks[name].type;
 
 	const initialOwner = getWallet(networkType, "proxyDeployer", "address");
-	const { maxFeePerGas, maxPriorityFeePerGas } = await getGasParameters(conceroNetworks[name]);
 
 	log("Deploying...", `deployLancaCanonicalBridgeProxyAdmin: ${proxyType}`, name);
 	const deployProxyAdmin = (await deploy("LancaCanonicalBridgeProxyAdmin", {
@@ -23,8 +27,6 @@ const deployLancaCanonicalBridgeProxyAdmin: (
 		args: [initialOwner],
 		log: true,
 		autoMine: true,
-		skipIfAlreadyDeployed: false,
-		gasLimit: 3000000,
 	})) as Deployment;
 
 	log(
@@ -38,6 +40,8 @@ const deployLancaCanonicalBridgeProxyAdmin: (
 		deployProxyAdmin.address,
 		`deployments.${networkType}`,
 	);
+
+	return deployProxyAdmin;
 };
 
 // Assign tags to the function

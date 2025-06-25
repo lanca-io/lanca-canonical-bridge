@@ -12,12 +12,12 @@ async function deployPoolTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	compileContracts({ quiet: true });
 
 	if (taskArgs.implementation) {
-		await deployLancaCanonicalBridgePool(hre, taskArgs.chainid);
+		await deployLancaCanonicalBridgePool(hre, taskArgs.chain);
 	}
 
 	if (taskArgs.proxy) {
-		await deployLancaCanonicalBridgePoolProxyAdmin(hre);
-		await deployLancaCanonicalBridgePoolProxy(hre);
+		await deployLancaCanonicalBridgePoolProxyAdmin(hre, taskArgs.chain);
+		await deployLancaCanonicalBridgePoolProxy(hre, taskArgs.chain);
 	}
 
 	if (taskArgs.implementation) {
@@ -33,7 +33,7 @@ task("deploy-pool", "Deploy LancaCanonicalBridgePool with proxy")
 	.addFlag("implementation", "Deploy pool implementation")
 	.addFlag("proxy", "Deploy proxy and proxy admin for pool")
 	.addFlag("addpool", "Add pool to L1 Bridge contract")
-	.addParam("chainid", "Destination chain id for the pool")
+	.addParam("chain", "Destination chain name for the pool")
 	.setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
 		await deployPoolTask(taskArgs, hre);
 	});

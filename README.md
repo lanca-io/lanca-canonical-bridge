@@ -6,23 +6,26 @@
 Deploy LancaCanonicalBridge contracts with flexible options.
 
 ```bash
-yarn hardhat deploy-bridge [--implementation] [--proxy] --network <network_name>
+yarn hardhat deploy-bridge [--implementation] [--proxy] --chain <chain_name> --network <network_name>
 ```
 
 **Flags:**
 - `--implementation` - Deploy implementation
 - `--proxy` - Deploy proxy and proxy admin
 
+**Parameters:**
+- `--chain` - Destination chain name (required)
+
 **Examples:**
 ```bash
 # Deploy implementation only
-yarn hardhat deploy-bridge --implementation --network arbitrum
+yarn hardhat deploy-bridge --implementation --chain arbitrum --network arbitrum
 
 # Deploy proxy and admin only
-yarn hardhat deploy-bridge --proxy --network arbitrum
+yarn hardhat deploy-bridge --proxy --chain arbitrum --network arbitrum
 
 # Deploy implementation + proxy (with automatic upgrade)
-yarn hardhat deploy-bridge --implementation --proxy --network arbitrum
+yarn hardhat deploy-bridge --implementation --proxy --chain arbitrum --network arbitrum
 ```
 
 ### Bridge L1 Deployment
@@ -49,7 +52,7 @@ yarn hardhat deploy-bridge-l1 --implementation --proxy --network ethereum
 Deploy LancaCanonicalBridgePool contracts with proxy setup and pool configuration.
 
 ```bash
-yarn hardhat deploy-pool [--implementation] [--proxy] [--addpool] --chainid <destination_chain_id> --network <network_name>
+yarn hardhat deploy-pool [--implementation] [--proxy] [--addpool] --chain <chain_name> --network <network_name>
 ```
 
 **Flags:**
@@ -58,21 +61,21 @@ yarn hardhat deploy-pool [--implementation] [--proxy] [--addpool] --chainid <des
 - `--addpool` - Add pool to L1 Bridge contract
 
 **Parameters:**
-- `--chainid` - Destination chain id for the pool (required)
+- `--chain` - Destination chain name for the pool (required)
 
 **Examples:**
 ```bash
 # Deploy pool implementation only
-yarn hardhat deploy-pool --implementation --chainid 42161 --network arbitrum
+yarn hardhat deploy-pool --implementation --chain arbitrum --network arbitrum
 
 # Deploy proxy and admin only
-yarn hardhat deploy-pool --proxy --chainid 42161 --network arbitrum
+yarn hardhat deploy-pool --proxy --chain arbitrum --network arbitrum
 
 # Deploy implementation + proxy with automatic upgrade
-yarn hardhat deploy-pool --implementation --proxy --chainid 42161 --network arbitrum
+yarn hardhat deploy-pool --implementation --proxy --chain arbitrum --network arbitrum
 
 # Deploy complete setup and add pool to L1 Bridge
-yarn hardhat deploy-pool --implementation --proxy --addpool --chainid 42161 --network arbitrum
+yarn hardhat deploy-pool --implementation --proxy --addpool --chain arbitrum --network arbitrum
 ```
 
 ### Fiat Token Deployment

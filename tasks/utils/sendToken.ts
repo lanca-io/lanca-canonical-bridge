@@ -1,11 +1,21 @@
 import { parseUnits } from "viem";
 
+
+
 import { HardhatRuntimeEnvironment } from "hardhat/types";
+
+
 
 import { getNetworkEnvKey } from "@concero/contract-utils";
 
+
+
 import { conceroNetworks, getViemReceiptConfig } from "../../constants";
 import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils";
+
+
+
+
 
 interface SendTokenParams {
 	dstChain: string;
@@ -42,6 +52,9 @@ export async function sendToken(
 	const usdcAddress = getEnvVar(`FIAT_TOKEN_PROXY_${getNetworkEnvKey(srcChain)}`);
 	if (!usdcAddress) return;
 
+	const laneAddress = getEnvVar(`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChain)}`);
+	if (!laneAddress) return;
+
 	const { abi: bridgeAbi } = await import(
 		"../../artifacts/contracts/LancaCanonicalBridge/LancaCanonicalBridge.sol/LancaCanonicalBridge.json"
 	);
@@ -56,6 +69,11 @@ export async function sendToken(
 	const amountInWei = parseUnits(amount, 6);
 	const gasLimitBigInt = BigInt(gasLimit);
 
+	const dstChainData = {
+		receiver: laneAddress as `0x${string}`,
+		gasLimit: gasLimitBigInt,
+	};
+
 	try {
 		log("Getting message fee...", "sendToken", srcChain);
 		const messageFee = await publicClient.readContract({
@@ -66,16 +84,13 @@ export async function sendToken(
 				dstChainSelector,
 				false, // shouldFinaliseSrc
 				"0x0000000000000000000000000000000000000000", // feeToken (ETH)
-				{
-					receiver: "0x0000000000000000000000000000000000000000",
-					gasLimit: gasLimitBigInt,
-				},
+				dstChainData,
 			],
 		});
 
 		log(`Message fee: ${messageFee} wei`, "sendToken", srcChain);
 
-		// 2. Approve USDC for bridge contract
+		// Approve USDC for bridge contract
 		log(`Approving ${amount} USDC to bridge...`, "sendToken", srcChain);
 		const approveTxHash = await walletClient.writeContract({
 			address: usdcAddress as `0x${string}`,
@@ -93,14 +108,24 @@ export async function sendToken(
 
 		log(`Approval successful: ${approveTxHash}`, "sendToken", srcChain);
 
-		// 3. Send token
-		log(`Sending ${amount} USDC to ${dstChain}...`, "sendToken", srcChain);
+		// Send token
+		log(
+			`Sending ${amount} USDC to ${dstChain} (lane: ${laneAddress})...`,
+			"sendToken",
+			srcChain,
+		);
 		const sendTxHash = await walletClient.writeContract({
 			address: bridgeAddress as `0x${string}`,
 			abi: bridgeAbi,
 			functionName: "sendToken",
 			account: viemAccount,
-			args: [dstChainSelector, amountInWei, gasLimitBigInt],
+			args: [
+				amountInWei,
+				dstChainSelector,
+				false,
+				"0x0000000000000000000000000000000000000000",
+				dstChainData,
+			],
 			value: messageFee as bigint,
 			chain: viemChain,
 		});
@@ -110,7 +135,11 @@ export async function sendToken(
 			hash: sendTxHash,
 		});
 
-		log(`🎉 Token transfer successful! Transaction hash: ${sendTxHash} \n`, "sendToken", srcChain);
+		log(
+			`🎉 Token transfer successful! Transaction hash: ${sendTxHash} \n`,
+			"sendToken",
+			srcChain,
+		);
 	} catch (error) {
 		err(`Failed to send tokens: ${error}`, "sendToken", srcChain);
 		throw error;

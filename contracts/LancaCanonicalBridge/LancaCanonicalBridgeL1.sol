@@ -15,50 +15,48 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase {
 
     error PoolNotFound(uint24 dstChainSelector);
     error PoolAlreadyExists(uint24 dstChainSelector);
+    error LaneAlreadyExists(uint24 dstChainSelector);
 
     constructor(
         address conceroRouter,
-        uint24 chainSelector,
         address usdcAddress
-    ) LancaCanonicalBridgeBase(chainSelector, usdcAddress) ConceroClient(conceroRouter) {}
+    ) LancaCanonicalBridgeBase(usdcAddress) ConceroClient(conceroRouter) {}
 
     function sendToken(
-        uint24 dstChainSelector,
         uint256 amount,
-        uint256 gasLimit
+        uint24 dstChainSelector,
+        bool shouldFinaliseSrc,
+        address /* feeToken */,
+        ConceroTypes.EvmDstChainData memory dstChainData
     ) external payable returns (bytes32 messageId) {
         address pool = s.l1Bridge().pools[dstChainSelector];
         address lane = s.l1Bridge().lanes[dstChainSelector];
-        require(pool != address(0), PoolNotFound(dstChainSelector));
-        require(lane != address(0), LaneNotFound(dstChainSelector));
 
-        bytes memory message = abi.encode(msg.sender, amount);
+        require(pool != address(0), PoolNotFound(dstChainSelector));
+        require(lane != address(0) && dstChainData.receiver == lane, InvalidLane());
 
         uint256 fee = getMessageFee(
             dstChainSelector,
-            false,
+            shouldFinaliseSrc,
             address(0),
-            ConceroTypes.EvmDstChainData({receiver: lane, gasLimit: gasLimit})
+            dstChainData
         );
 
-        if (msg.value < fee) {
-            revert InsufficientFee(msg.value, fee);
-        }
+        require(msg.value >= fee, CommonErrors.InsufficientFee(msg.value, fee));
 
+        bytes memory message = abi.encode(msg.sender, amount);
         messageId = IConceroRouter(i_conceroRouter).conceroSend{value: msg.value}(
             dstChainSelector,
-            false,
+            shouldFinaliseSrc,
             address(0),
-            ConceroTypes.EvmDstChainData({receiver: lane, gasLimit: gasLimit}),
+            dstChainData,
             message
         );
 
         i_usdc.transferFrom(msg.sender, address(this), amount);
 
         bool success = i_usdc.transfer(pool, amount);
-        if (!success) {
-            revert TransferFailed();
-        }
+        require(success, CommonErrors.TransferFailed());
 
         emit TokenSent(messageId, lane, dstChainSelector, msg.sender, amount, fee);
     }
@@ -75,9 +73,7 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase {
         require(pool != address(0), PoolNotFound(srcChainSelector));
 
         bool success = ILancaCanonicalBridgePool(pool).withdraw(tokenSender, amount);
-        if (!success) {
-            revert TransferFailed();
-        }
+        require(success, CommonErrors.TransferFailed());
 
         emit TokenReceived(
             messageId,

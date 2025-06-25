@@ -15,9 +15,9 @@ import {ConceroTypes} from "@concero/messaging-contracts-v2/contracts/ConceroCli
 import {IFiatTokenV1} from "../interfaces/IFiatTokenV1.sol";
 
 abstract contract LancaCanonicalBridgeBase is ConceroClient, ConceroOwnable {
-    error TransferFailed();
-    error LaneNotFound(uint24 dstChainSelector);
-    error LaneAlreadyExists(uint24 dstChainSelector);
+    IFiatTokenV1 internal immutable i_usdc;
+
+    error InvalidLane();
 
     event TokenSent(
         bytes32 messageId,
@@ -36,11 +36,7 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, ConceroOwnable {
         uint256 amount
     );
 
-    uint24 internal immutable i_chainSelector;
-    IFiatTokenV1 internal immutable i_usdc;
-
-    constructor(uint24 chainSelector, address usdcAddress) ConceroOwnable() {
-        i_chainSelector = chainSelector;
+    constructor(address usdcAddress) ConceroOwnable() {
         i_usdc = IFiatTokenV1(usdcAddress);
     }
 

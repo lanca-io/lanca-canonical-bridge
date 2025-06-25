@@ -12,7 +12,7 @@ async function deployBridgeTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	compileContracts({ quiet: true });
 
 	if (taskArgs.implementation) {
-		await deployLancaCanonicalBridge(hre);
+		await deployLancaCanonicalBridge(hre, taskArgs.chain);
 	}
 
 	if (taskArgs.proxy) {
@@ -28,6 +28,7 @@ async function deployBridgeTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 task("deploy-bridge", "Deploy LancaCanonicalBridge")
 	.addFlag("implementation", "Deploy implementation")
 	.addFlag("proxy", "Deploy proxy and proxy admin")
+	.addParam("chain", "Destination chain name")
 	.setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
 		await deployBridgeTask(taskArgs, hre);
 	});

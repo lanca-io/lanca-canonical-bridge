@@ -8,7 +8,6 @@ import { getEnvVar, log, updateEnvVariable } from "../utils/";
 
 type DeployArgs = {
 	conceroRouter: string;
-	chainSelector: bigint;
 	usdcAddress: string;
 };
 
@@ -46,7 +45,6 @@ const deployLancaCanonicalBridgeL1: DeploymentFunction = async function (
 
 	const defaultArgs: DeployArgs = {
 		conceroRouter: conceroRouterAddress,
-		chainSelector: chain.chainSelector,
 		usdcAddress: usdcAddress,
 	};
 
@@ -57,12 +55,11 @@ const deployLancaCanonicalBridgeL1: DeploymentFunction = async function (
 
 	log(`Deploying LancaCanonicalBridgeL1 with args:`, "deployLancaCanonicalBridgeL1", name);
 	log(`  conceroRouter: ${args.conceroRouter}`, "deployLancaCanonicalBridgeL1", name);
-	log(`  chainSelector: ${args.chainSelector}`, "deployLancaCanonicalBridgeL1", name);
 	log(`  usdcAddress: ${args.usdcAddress}`, "deployLancaCanonicalBridgeL1", name);
 
 	const deployment = await deploy("LancaCanonicalBridgeL1", {
 		from: deployer,
-		args: [args.conceroRouter, args.chainSelector, args.usdcAddress],
+		args: [args.conceroRouter, args.usdcAddress],
 		log: true,
 		autoMine: true,
 	});

@@ -1,29 +1,21 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-import { ProxyEnum, conceroNetworks, getViemReceiptConfig } from "../../constants";
-import { EnvPrefixes, IProxyType } from "../../types/deploymentVariables";
-import { err, getEnvAddress, getFallbackClients, getViemAccount, log } from "../../utils";
+import { getNetworkEnvKey } from "@concero/contract-utils";
+
+import { conceroNetworks, getViemReceiptConfig } from "../../constants";
+import { EnvPrefixes } from "../../types/deploymentVariables";
+import { getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils";
 
 export async function upgradeLancaProxyImplementation(
 	hre: HardhatRuntimeEnvironment,
-	proxyType: IProxyType,
-	shouldPause: boolean,
+	dstChainName: string,
 ): Promise<void> {
 	const { name: chainName } = hre.network;
 	const { viemChain, type } = conceroNetworks[chainName];
 
-	let implementationKey: keyof EnvPrefixes;
+	const dstChain = conceroNetworks[dstChainName];
 
-	if (shouldPause) {
-		implementationKey = "pause";
-	} else if (proxyType === ProxyEnum.lcBridgeProxy) {
-		implementationKey = "lcBridge";
-	} else if (proxyType === ProxyEnum.lcBridgePoolProxy) {
-		implementationKey = "lcBridgePool";
-	} else {
-		err(`Proxy type ${proxyType} not found`, "upgradeProxyImplementation", chainName);
-		return;
-	}
+	let implementationKey: keyof EnvPrefixes;
 
 	const { abi: proxyAdminAbi } = await import(
 		"../../artifacts/contracts/Proxy/LancaCanonicalBridgeProxyAdmin.sol/LancaCanonicalBridgeProxyAdmin.json"
@@ -35,12 +27,23 @@ export async function upgradeLancaProxyImplementation(
 		viemAccount,
 	);
 
-	const [lcBridgeProxy, lcBridgeProxyAlias] = getEnvAddress(proxyType, chainName);
-	const [proxyAdmin, proxyAdminAlias] = getEnvAddress(`${proxyType}Admin`, chainName);
-	const [newImplementation, newImplementationAlias] = getEnvAddress(implementationKey, chainName);
+	const lcBridgeProxy = getEnvVar(
+		`LC_BRIDGE_POOL_PROXY_${getNetworkEnvKey(chainName)}_${getNetworkEnvKey(dstChainName)}`,
+	);
+	if (!lcBridgeProxy) return;
+
+	const proxyAdmin = getEnvVar(
+		`LC_BRIDGE_POOL_PROXY_ADMIN_${getNetworkEnvKey(chainName)}_${getNetworkEnvKey(dstChainName)}`,
+	);
+	if (!proxyAdmin) return;
+
+	const newImplementation = getEnvVar(
+		`LC_BRIDGE_POOL_${getNetworkEnvKey(chainName)}_${getNetworkEnvKey(dstChainName)}`,
+	);
+	if (!newImplementation) return;
 
 	log(
-		`Upgrading ${lcBridgeProxyAlias} to implementation ${newImplementationAlias}`,
+		`Upgrading pool proxy to implementation ${newImplementation}`,
 		"upgradeLancaProxy",
 		chainName,
 	);
@@ -60,8 +63,8 @@ export async function upgradeLancaProxyImplementation(
 	});
 
 	log(
-		`Upgraded via ${proxyAdminAlias}: ${lcBridgeProxyAlias}.implementation -> ${newImplementationAlias}. Gas: ${cumulativeGasUsed}, hash: ${txHash}`,
-		`upgradeLancaProxy: ${proxyType}`,
+		`Upgraded via lcBridgeProxyAdmin: ${newImplementation}`,
+		`upgradeLancaProxy`,
 		chainName,
 	);
 }

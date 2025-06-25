@@ -21,7 +21,7 @@ async function deployPoolTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	}
 
 	if (taskArgs.implementation) {
-		await upgradeLancaProxyImplementation(hre, ProxyEnum.lcBridgePoolProxy, false);
+		await upgradeLancaProxyImplementation(hre, taskArgs.chain);
 	}
 
 	if (taskArgs.addpool) {

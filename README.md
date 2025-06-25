@@ -1,5 +1,32 @@
 # Hardhat Tasks
 
+## Add new chain process
+1. [ ] Add Concero Router address to environment variables
+2. [ ] (L2) Deploy USDC.e to a new chain
+```bash
+yarn hardhat deploy-fiat-token [--implementation] [--proxy] --network <network_name>
+```
+3. [ ] (L2) Deploy LancaCanonicalBridge to a new network
+```bash
+yarn hardhat deploy-bridge [--implementation] [--proxy] --chain <chain_name> --network <network_name>
+```
+4. [ ] (L2) Configure minter for USDC.e -> LancaCanonicalBridge
+```bash
+yarn hardhat configure-minter [--bridge] [--test] --network <network_name>
+```
+5. [ ] (L1) Deploy pool for new network and add pool to L1
+```bash
+yarn hardhat deploy-pool [--implementation] [--proxy] [--addpool] --chain <chain_name> --network <network_name>
+```
+6. [ ] (L1) Add lane for new network in L1
+```bash
+yarn hardhat add-lane --chain <destination_chain_name> --network <network_name>
+```
+7. [ ] (L1, L2) Ready, transactions can be sent
+```bash
+yarn hardhat send-token --dstchain <destination_network> --amount <amount> --gaslimit <gas_limit> --network <source_network>
+```
+
 ## Available Tasks
 
 ### Bridge Deployment

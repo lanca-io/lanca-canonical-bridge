@@ -1,21 +1,27 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-import { getNetworkEnvKey } from "@concero/contract-utils";
-
-import { conceroNetworks, getViemReceiptConfig } from "../../constants";
-import { EnvPrefixes } from "../../types/deploymentVariables";
-import { getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils";
+import { ProxyEnum, conceroNetworks, getViemReceiptConfig } from "../../constants";
+import { EnvPrefixes, IProxyType } from "../../types/deploymentVariables";
+import { err, getEnvAddress, getFallbackClients, getViemAccount, log } from "../../utils";
 
 export async function upgradeLancaProxyImplementation(
 	hre: HardhatRuntimeEnvironment,
-	dstChainName: string,
+	proxyType: IProxyType,
+	shouldPause: boolean,
 ): Promise<void> {
 	const { name: chainName } = hre.network;
 	const { viemChain, type } = conceroNetworks[chainName];
 
-	const dstChain = conceroNetworks[dstChainName];
-
 	let implementationKey: keyof EnvPrefixes;
+
+	if (shouldPause) {
+		implementationKey = "pause";
+	} else if (proxyType === ProxyEnum.lcBridgeProxy) {
+		implementationKey = "lcBridge";
+	} else {
+		err(`Proxy type ${proxyType} not found`, "upgradeProxyImplementation", chainName);
+		return;
+	}
 
 	const { abi: proxyAdminAbi } = await import(
 		"../../artifacts/contracts/Proxy/LancaCanonicalBridgeProxyAdmin.sol/LancaCanonicalBridgeProxyAdmin.json"
@@ -27,23 +33,12 @@ export async function upgradeLancaProxyImplementation(
 		viemAccount,
 	);
 
-	const lcBridgeProxy = getEnvVar(
-		`LC_BRIDGE_POOL_PROXY_${getNetworkEnvKey(chainName)}_${getNetworkEnvKey(dstChainName)}`,
-	);
-	if (!lcBridgeProxy) return;
-
-	const proxyAdmin = getEnvVar(
-		`LC_BRIDGE_POOL_PROXY_ADMIN_${getNetworkEnvKey(chainName)}_${getNetworkEnvKey(dstChainName)}`,
-	);
-	if (!proxyAdmin) return;
-
-	const newImplementation = getEnvVar(
-		`LC_BRIDGE_POOL_${getNetworkEnvKey(chainName)}_${getNetworkEnvKey(dstChainName)}`,
-	);
-	if (!newImplementation) return;
+	const [lcBridgeProxy, lcBridgeProxyAlias] = getEnvAddress(proxyType, chainName);
+	const [proxyAdmin, proxyAdminAlias] = getEnvAddress(`${proxyType}Admin`, chainName);
+	const [newImplementation, newImplementationAlias] = getEnvAddress(implementationKey, chainName);
 
 	log(
-		`Upgrading pool proxy to implementation ${newImplementation}`,
+		`Upgrading ${lcBridgeProxyAlias} to implementation ${newImplementationAlias}`,
 		"upgradeLancaProxy",
 		chainName,
 	);
@@ -63,8 +58,8 @@ export async function upgradeLancaProxyImplementation(
 	});
 
 	log(
-		`Upgraded via lcBridgeProxyAdmin: ${newImplementation}`,
-		`upgradeLancaProxy`,
+		`Upgraded via ${proxyAdminAlias}: ${lcBridgeProxyAlias}.implementation -> ${newImplementationAlias}. Gas: ${cumulativeGasUsed}, hash: ${txHash}`,
+		`upgradeLancaProxy: ${proxyType}`,
 		chainName,
 	);
 }

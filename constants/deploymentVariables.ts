@@ -6,6 +6,7 @@ import { EnvPrefixes } from "../types/deploymentVariables";
 
 enum ProxyEnum {
 	lcBridgeProxy = "lcBridgeProxy",
+	lcBridgePoolProxy = "lcBridgePoolProxy",
 }
 
 const viemReceiptConfig: WaitForTransactionReceiptParameters = {

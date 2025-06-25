@@ -4,7 +4,8 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { getNetworkEnvKey } from "@concero/contract-utils";
 
 import { conceroNetworks } from "../constants";
-import { getEnvAddress, log, updateEnvVariable } from "../utils";
+import { getEnvVar, log, updateEnvVariable } from "../utils";
+
 
 type DeploymentFunction = (
 	hre: HardhatRuntimeEnvironment,
@@ -17,28 +18,43 @@ const deployLancaCanonicalBridgePoolProxy: DeploymentFunction = async function (
 ): Promise<Deployment> {
 	const { proxyDeployer } = await hre.getNamedAccounts();
 	const { deploy } = hre.deployments;
-	const { name } = hre.network;
-	const chain = conceroNetworks[name];
+	const { name: chainName } = hre.network;
+	const chain = conceroNetworks[chainName];
 	const { type: networkType } = chain;
 
-	const [initialImplementation, initialImplementationAlias] = getEnvAddress("lcBridgePool", name);
-	const [proxyAdmin, proxyAdminAlias] = getEnvAddress("lcBridgePoolProxyAdmin", name);
+	const proxyAdmin = getEnvVar(
+		`LC_BRIDGE_POOL_PROXY_ADMIN_${getNetworkEnvKey(chainName)}_${getNetworkEnvKey(dstChainName)}`,
+	);
+	if (!proxyAdmin) {
+		throw new Error(
+			`Pool proxy admin address not found. Set LC_BRIDGE_POOL_PROXY_ADMIN_${getNetworkEnvKey(chainName)}_${getNetworkEnvKey(dstChainName)} in environment variables.`,
+		);
+	}
 
-	log("Deploying...", "deployLancaCanonicalBridgePoolProxy", name);
+	const newImplementation = getEnvVar(
+		`LC_BRIDGE_POOL_${getNetworkEnvKey(chainName)}_${getNetworkEnvKey(dstChainName)}`,
+	);
+	if (!newImplementation) {
+		throw new Error(
+			`Pool implementation address not found. Set LC_BRIDGE_POOL_${getNetworkEnvKey(chainName)}_${getNetworkEnvKey(dstChainName)} in environment variables.`,
+		);
+	}
+
+	log("Deploying...", "deployLancaCanonicalBridgePoolProxy", chainName);
 	const lancaPoolProxyDeployment = (await deploy("TransparentUpgradeableProxy", {
 		from: proxyDeployer,
-		args: [initialImplementation, proxyAdmin, "0x"],
+		args: [newImplementation, proxyAdmin, "0x"],
 		log: true,
 		autoMine: true,
 	})) as Deployment;
 
 	log(
-		`Deployed at: ${lancaPoolProxyDeployment.address}. Initial impl: ${initialImplementationAlias}, Proxy admin: ${proxyAdminAlias}`,
+		`Deployed at: ${lancaPoolProxyDeployment.address}. Initial impl: ${newImplementation}, Proxy admin: ${proxyDeployer}`,
 		"deployLancaCanonicalBridgePoolProxy",
-		name,
+		chainName,
 	);
 	updateEnvVariable(
-		`LANCA_CANONICAL_BRIDGE_POOL_PROXY_${getNetworkEnvKey(name)}_${getNetworkEnvKey(dstChainName)}`,
+		`LC_BRIDGE_POOL_PROXY_${getNetworkEnvKey(chainName)}_${getNetworkEnvKey(dstChainName)}`,
 		lancaPoolProxyDeployment.address,
 		`deployments.${networkType}`,
 	);

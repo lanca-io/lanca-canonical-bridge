@@ -25,6 +25,7 @@ async function deployBridgeTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	}
 }
 
+// yarn hardhat deploy-bridge --implementation --proxy --chain ethereumSepolia --network sonicBlaze
 task("deploy-bridge", "Deploy LancaCanonicalBridge")
 	.addFlag("implementation", "Deploy implementation")
 	.addFlag("proxy", "Deploy proxy and proxy admin")

@@ -4,11 +4,12 @@ import { type HardhatRuntimeEnvironment } from "hardhat/types";
 import { addLane } from "../utils";
 
 async function addLaneTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
-	await addLane(hre, taskArgs.chainid);
+	await addLane(hre, taskArgs.chain);
 }
 
+// yarn hardhat add-lane --chain <destination_chain_name> --network <network_name>
 task("add-lane", "Add lane to LancaCanonicalBridge")
-	.addParam("chainid", "Destination chain id for the lane")
+	.addParam("chain", "Destination chain name for the lane")
 	.setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
 		await addLaneTask(taskArgs, hre);
 	});

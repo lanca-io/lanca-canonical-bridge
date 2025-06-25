@@ -7,30 +7,17 @@ import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../u
 
 export async function addLane(
 	hre: HardhatRuntimeEnvironment,
-	targetChainSelector: string,
+	dstChainName: string,
 ): Promise<void> {
 	const { name: chainName } = hre.network;
 	const { viemChain, type } = conceroNetworks[chainName];
 
+    const dstChain = conceroNetworks[dstChainName];
+
 	const bridgeAddress = getEnvVar(`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(chainName)}`);
 	if (!bridgeAddress) return;
 
-	const targetNetworkName = Object.keys(conceroNetworks).find(
-		name => conceroNetworks[name].chainSelector.toString() === targetChainSelector,
-	);
-
-	if (!targetNetworkName) {
-		err(
-			`Target network not found for chain selector ${targetChainSelector}`,
-			"addLane",
-			chainName,
-		);
-		return;
-	}
-
-	const laneAddress = getEnvVar(
-		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(targetNetworkName)}`,
-	);
+	const laneAddress = getEnvVar(`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChainName)}`);
 	if (!laneAddress) return;
 
 	const { abi: bridgeAbi } = await import(
@@ -44,18 +31,14 @@ export async function addLane(
 	);
 
 	try {
-		log(
-			`Adding lane ${laneAddress} to Bridge for chain ${targetChainSelector}`,
-			"addLane",
-			chainName,
-		);
+		log(`Adding lane ${laneAddress} to Bridge for chain ${dstChainName}`, "addLane", chainName);
 
 		const txHash = await walletClient.writeContract({
 			address: bridgeAddress as `0x${string}`,
 			abi: bridgeAbi,
 			functionName: "addLanes",
 			account: viemAccount,
-			args: [[BigInt(targetChainSelector)], [laneAddress]],
+			args: [[BigInt(dstChain.chainId)], [laneAddress]],
 			chain: viemChain,
 		});
 

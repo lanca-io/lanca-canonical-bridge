@@ -33,12 +33,12 @@ export async function configureMinter(hre: HardhatRuntimeEnvironment): Promise<v
 	);
 	if (!lancaCanonicalBridgeAddress) return;
 
-	const minterAllowedAmount = 100000e6;
+	const minterAllowedAmount = 1000000e6;
 
 	try {
 		log("Executing configuration of FiatToken...", "configureFiatToken", chainName);
 		log(
-			`Setting lancaCanonicalBridgeAddress to ${lancaCanonicalBridgeAddress} with minterAllowedAmount: ${minterAllowedAmount}`,
+			`Setting lancaCanonicalBridgeAddress ${lancaCanonicalBridgeAddress} as minter with minterAllowedAmount: ${minterAllowedAmount}`,
 			"configureFiatToken",
 			chainName,
 		);

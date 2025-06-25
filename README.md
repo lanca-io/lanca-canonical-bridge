@@ -112,16 +112,16 @@ yarn hardhat configure-minter [--bridge] [--test] --network <network_name>
 Add lane to LancaCanonicalBridge contract.
 
 ```bash
-yarn hardhat add-lane --chainid <destination_chain_id> --network <network_name>
+yarn hardhat add-lane --chain <destination_chain_name> --network <network_name>
 ```
 
 **Parameters:**
-- `--chainid` - Destination chain id for the lane (required)
+- `--chain` - Destination chain name for the lane (required)
 
 **Examples:**
 ```bash
 # Add lane for Arbitrum chain
-yarn hardhat add-lane --chainid 42161 --network ethereum
+yarn hardhat add-lane --chain arbitrum --network ethereum
 ```
 
 ### Send Tokens

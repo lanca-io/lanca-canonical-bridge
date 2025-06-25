@@ -14,6 +14,7 @@ async function configureMinterTask(taskArgs: any, hre: HardhatRuntimeEnvironment
     }
 }
 
+// yarn hardhat configure-minter [--bridge] [--test] --network <network_name>
 task("configure-minter", "Configure Minter")
     .addFlag("bridge", "Configure Minter for bridge")
     .addFlag("test", "Configure Minter for test")

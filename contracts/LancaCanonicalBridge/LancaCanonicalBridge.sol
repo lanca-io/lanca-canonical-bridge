@@ -43,7 +43,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase {
             dstChainData
         );
 
-        require(msg.value >= fee, CommonErrors.InsufficientFee(msg.value, fee));
+        require(msg.value >= fee, InsufficientFee(msg.value, fee));
 
         messageId = IConceroRouter(i_conceroRouter).conceroSend{value: msg.value}(
             dstChainSelector,

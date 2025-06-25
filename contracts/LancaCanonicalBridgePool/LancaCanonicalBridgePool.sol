@@ -6,27 +6,30 @@
  */
 pragma solidity 0.8.28;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {CommonErrors} from "@concero/messaging-contracts-v2/contracts/common/CommonErrors.sol";
 
 import {IFiatTokenV1} from "../interfaces/IFiatTokenV1.sol";
 import {ILancaCanonicalBridgePool} from "../interfaces/ILancaCanonicalBridgePool.sol";
 
-contract LancaCanonicalBridgePool is ILancaCanonicalBridgePool, Ownable {
+contract LancaCanonicalBridgePool is ILancaCanonicalBridgePool {
+    address public immutable i_owner;
     IFiatTokenV1 private immutable i_usdc;
     uint24 private immutable i_dstChainSelector;
 
-    constructor(
-        address usdcAddress,
-        address lancaCanonicalBridge,
-        uint24 dstChainSelector
-    ) Ownable(lancaCanonicalBridge) {
-        i_usdc = IFiatTokenV1(usdcAddress);
-        i_dstChainSelector = dstChainSelector;
+    modifier onlyOwner() {
+        require(msg.sender == i_owner, CommonErrors.Unauthorized());
+        _;
     }
 
-    function withdraw(address to, uint256 amount) external onlyOwner returns (bool) {
+    constructor(address usdcAddress, address lancaCanonicalBridge, uint24 dstChainSelector) {
+        i_usdc = IFiatTokenV1(usdcAddress);
+        i_dstChainSelector = dstChainSelector;
+        i_owner = lancaCanonicalBridge;
+    }
+
+    function withdraw(address to, uint256 amount) external onlyOwner returns (bool success) {
         // TODO: add limit?
-        return i_usdc.transfer(to, amount);
+        success = i_usdc.transfer(to, amount);
     }
 
     function getPoolInfo() external view returns (uint24 dstChainSelector, uint256 lockedUSDC) {

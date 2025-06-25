@@ -32,12 +32,12 @@ const deployLancaCanonicalBridgePool: DeploymentFunction = async function (
     const dstChain = conceroNetworks[dstChainName];
 
 	const lancaCanonicalBridgeAddress = getEnvVar(
-		`LANCA_CANONICAL_BRIDGE_${getNetworkEnvKey(name)}`,
+		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(name)}`,
 	);
 
 	if (!lancaCanonicalBridgeAddress) {
 		throw new Error(
-			`LancaCanonicalBridge address not found. Set LANCA_CANONICAL_BRIDGE_${getNetworkEnvKey(name)} in environment variables.`,
+			`LancaCanonicalBridge address not found. Set LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(name)} in environment variables.`,
 		);
 	}
 

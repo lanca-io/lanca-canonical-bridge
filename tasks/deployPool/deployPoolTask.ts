@@ -1,12 +1,12 @@
 import { task } from "hardhat/config";
 import { type HardhatRuntimeEnvironment } from "hardhat/types";
 
-import { ProxyEnum } from "../../constants";
 import { deployLancaCanonicalBridgePool } from "../../deploy/LancaCanonicalBridgePool";
 import { deployLancaCanonicalBridgePoolProxy } from "../../deploy/LancaCanonicalBridgePoolProxy";
 import { deployLancaCanonicalBridgePoolProxyAdmin } from "../../deploy/LancaCanonicalBridgePoolProxyAdmin";
 import { compileContracts } from "../../utils";
-import { addPool, upgradeLancaProxyImplementation } from "../utils";
+import { addPool, upgradeLancaPoolProxyImplementation } from "../utils";
+
 
 async function deployPoolTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	compileContracts({ quiet: true });
@@ -21,7 +21,7 @@ async function deployPoolTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	}
 
 	if (taskArgs.implementation) {
-		await upgradeLancaProxyImplementation(hre, taskArgs.chain);
+		await upgradeLancaPoolProxyImplementation(hre, taskArgs.chain);
 	}
 
 	if (taskArgs.addpool) {
@@ -29,6 +29,7 @@ async function deployPoolTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	}
 }
 
+// yarn hardhat deploy-pool [--implementation] [--proxy] [--addpool] --chain <chain_name> --network <network_name>
 task("deploy-pool", "Deploy LancaCanonicalBridgePool with proxy")
 	.addFlag("implementation", "Deploy pool implementation")
 	.addFlag("proxy", "Deploy proxy and proxy admin for pool")

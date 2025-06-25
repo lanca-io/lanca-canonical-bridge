@@ -1,21 +1,11 @@
-import { parseUnits } from "viem";
-
-
+import { formatEther, parseUnits } from "viem";
 
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-
-
 import { getNetworkEnvKey } from "@concero/contract-utils";
-
-
 
 import { conceroNetworks, getViemReceiptConfig } from "../../constants";
 import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils";
-
-
-
-
 
 interface SendTokenParams {
 	dstChain: string;
@@ -88,7 +78,11 @@ export async function sendToken(
 			],
 		});
 
-		log(`Message fee: ${messageFee} wei`, "sendToken", srcChain);
+		log(
+			`Message fee: ${formatEther(messageFee as bigint)} ETH (${messageFee} wei)`,
+			"sendToken",
+			srcChain,
+		);
 
 		// Approve USDC for bridge contract
 		log(`Approving ${amount} USDC to bridge...`, "sendToken", srcChain);

@@ -25,7 +25,7 @@ async function deployPoolTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	}
 
 	if (taskArgs.addpool) {
-		await addPool(hre, taskArgs.chainid);
+		await addPool(hre, taskArgs.chain);
 	}
 }
 

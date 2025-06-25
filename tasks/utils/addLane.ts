@@ -34,7 +34,7 @@ export async function addLane(
 	if (!laneAddress) return;
 
 	const { abi: bridgeAbi } = await import(
-		"../../artifacts/contracts/LancaCanonicalBridge/LancaCanonicalBridge.sol/LancaCanonicalBridge.json"
+		"../../artifacts/contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol/LancaCanonicalBridgeL1.json"
 	);
 
 	const viemAccount = getViemAccount(type, "deployer");

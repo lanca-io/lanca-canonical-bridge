@@ -23,13 +23,18 @@ async function deployBridgeTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	if (taskArgs.implementation) {
 		await upgradeLancaProxyImplementation(hre, ProxyEnum.lcBridgeProxy, false);
 	}
+
+	if (taskArgs.pause) {
+		await upgradeLancaProxyImplementation(hre, ProxyEnum.lcBridgeProxy, true);
+	}
 }
 
-// yarn hardhat deploy-bridge --implementation --proxy --chain ethereumSepolia --network sonicBlaze
+// yarn hardhat deploy-bridge [--implementation] [--proxy] [--pause] --chain <chain_name> --network <network_name>
 task("deploy-bridge", "Deploy LancaCanonicalBridge")
 	.addFlag("implementation", "Deploy implementation")
 	.addFlag("proxy", "Deploy proxy and proxy admin")
-	.addParam("chain", "Destination chain name")
+	.addFlag("pause", "Pause bridge")
+	.addParam("chain", "Destination chain name (L1)")
 	.setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
 		await deployBridgeTask(taskArgs, hre);
 	});

@@ -8,6 +8,7 @@ import { getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils"
 export async function upgradeLancaPoolProxyImplementation(
 	hre: HardhatRuntimeEnvironment,
 	dstChainName: string,
+	shouldPause: boolean = false,
 ): Promise<void> {
 	const { name: chainName } = hre.network;
 	const { viemChain, type } = conceroNetworks[chainName];
@@ -32,14 +33,24 @@ export async function upgradeLancaPoolProxyImplementation(
 	);
 	if (!proxyAdmin) return;
 
-	const newImplementation = getEnvVar(
-		`LC_BRIDGE_POOL_${getNetworkEnvKey(chainName)}_${getNetworkEnvKey(dstChainName)}`,
-	);
+	let newImplementation: string | undefined;
+	let implementationDescription: string;
+
+	if (shouldPause) {
+		newImplementation = getEnvVar(`CONCERO_PAUSE_${getNetworkEnvKey(chainName)}` as any);
+		implementationDescription = "pause implementation";
+	} else {
+		newImplementation = getEnvVar(
+			`LC_BRIDGE_POOL_${getNetworkEnvKey(chainName)}_${getNetworkEnvKey(dstChainName)}` as any,
+		);
+		implementationDescription = "pool implementation";
+	}
+
 	if (!newImplementation) return;
 
 	log(
-		`Upgrading pool proxy to implementation ${newImplementation}`,
-		"upgradeLancaProxy",
+		`Upgrading pool proxy to ${implementationDescription} ${newImplementation}`,
+		"upgradeLancaPoolProxy",
 		chainName,
 	);
 
@@ -57,5 +68,9 @@ export async function upgradeLancaPoolProxyImplementation(
 		hash: txHash,
 	});
 
-	log(`Upgraded via lcBridgeProxyAdmin: ${newImplementation}`, `upgradeLancaProxy`, chainName);
+	log(
+		`Upgraded pool: ${lcBridgeProxy} (${dstChainName} -> ${chainName}) to impl: ${newImplementation}. Hash: ${txHash}`,
+		`upgradeLancaPoolProxy`,
+		chainName,
+	);
 }

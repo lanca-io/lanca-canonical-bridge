@@ -23,7 +23,7 @@ const deployPauseDummy: (hre: HardhatRuntimeEnvironment) => Promise<void> = asyn
 	if (live) {
 		log(`Deployed at: ${deployment.address}`, "deployPauseDummy", name);
 		updateEnvVariable(
-			`LANCA_CANONICAL_BRIDGE_PAUSE_${getNetworkEnvKey(name)}`,
+			`CONCERO_PAUSE_${getNetworkEnvKey(name)}`,
 			deployment.address,
 			`deployments.${networkType}`,
 		);

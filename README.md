@@ -8,7 +8,7 @@ yarn hardhat deploy-fiat-token [--implementation] [--proxy] --network <network_n
 ```
 3. [ ] (L2) Deploy LancaCanonicalBridge to a new network
 ```bash
-yarn hardhat deploy-bridge [--implementation] [--proxy] --chain <chain_name> --network <network_name>
+yarn hardhat deploy-bridge [--implementation] [--proxy] [--pause] --chain <chain_name> --network <network_name>
 ```
 4. [ ] (L2) Configure minter for USDC.e -> LancaCanonicalBridge
 ```bash
@@ -16,7 +16,7 @@ yarn hardhat configure-minter [--bridge] [--test] --network <network_name>
 ```
 5. [ ] (L1) Deploy pool for new network and add pool to L1
 ```bash
-yarn hardhat deploy-pool [--implementation] [--proxy] [--addpool] --chain <chain_name> --network <network_name>
+yarn hardhat deploy-pool [--implementation] [--proxy] [--addpool] [--pause] --chain <chain_name> --network <network_name>
 ```
 6. [ ] (L1) Add lane for new network in L1
 ```bash
@@ -33,38 +33,43 @@ yarn hardhat send-token --dstchain <destination_network> --amount <amount> --gas
 Deploy LancaCanonicalBridge contracts with flexible options.
 
 ```bash
-yarn hardhat deploy-bridge [--implementation] [--proxy] --chain <chain_name> --network <network_name>
+yarn hardhat deploy-bridge [--implementation] [--proxy] [--pause] --chain <l1-chain_name> --network <network_name>
 ```
 
 **Flags:**
 - `--implementation` - Deploy implementation
 - `--proxy` - Deploy proxy and proxy admin
+- `--pause` - Pause bridge
 
 **Parameters:**
-- `--chain` - Destination chain name (required)
+- `--chain` - Destination chain name (required) (L1 chain name)
 
 **Examples:**
 ```bash
 # Deploy implementation only
-yarn hardhat deploy-bridge --implementation --chain arbitrum --network arbitrum
+yarn hardhat deploy-bridge --implementation --chain ethereum --network base
 
 # Deploy proxy and admin only
-yarn hardhat deploy-bridge --proxy --chain arbitrum --network arbitrum
+yarn hardhat deploy-bridge --proxy --chain ethereum --network base
 
 # Deploy implementation + proxy (with automatic upgrade)
-yarn hardhat deploy-bridge --implementation --proxy --chain arbitrum --network arbitrum
+yarn hardhat deploy-bridge --implementation --proxy --chain ethereum --network base
+
+# Pause bridge
+yarn hardhat deploy-bridge --pause --chain ethereum --network base
 ```
 
 ### Bridge L1 Deployment
 Deploy LancaCanonicalBridge L1 specific components.
 
 ```bash
-yarn hardhat deploy-bridge-l1 [--implementation] [--proxy] --network <network_name>
+yarn hardhat deploy-bridge-l1 [--implementation] [--proxy] [--pause] --network <network_name>
 ```
 
 **Flags:**
 - `--implementation` - Deploy L1 bridge implementation
 - `--proxy` - Deploy proxy and proxy admin
+- `--pause` - Pause L1 bridge
 
 **Examples:**
 ```bash
@@ -73,19 +78,23 @@ yarn hardhat deploy-bridge-l1 --implementation --network ethereum
 
 # Deploy L1 complete setup
 yarn hardhat deploy-bridge-l1 --implementation --proxy --network ethereum
+
+# Pause L1 bridge
+yarn hardhat deploy-bridge-l1 --pause --network ethereum
 ```
 
 ### Pool Deployment
 Deploy LancaCanonicalBridgePool contracts with proxy setup and pool configuration.
 
 ```bash
-yarn hardhat deploy-pool [--implementation] [--proxy] [--addpool] --chain <chain_name> --network <network_name>
+yarn hardhat deploy-pool [--implementation] [--proxy] [--addpool] [--pause] --chain <dst_chain_name> --network <network_name>
 ```
 
 **Flags:**
 - `--implementation` - Deploy pool implementation
 - `--proxy` - Deploy proxy and proxy admin for pool
 - `--addpool` - Add pool to L1 Bridge contract
+- `--pause` - Pause pool
 
 **Parameters:**
 - `--chain` - Destination chain name for the pool (required)
@@ -93,16 +102,19 @@ yarn hardhat deploy-pool [--implementation] [--proxy] [--addpool] --chain <chain
 **Examples:**
 ```bash
 # Deploy pool implementation only
-yarn hardhat deploy-pool --implementation --chain arbitrum --network arbitrum
+yarn hardhat deploy-pool --implementation --chain base --network ethereum
 
 # Deploy proxy and admin only
-yarn hardhat deploy-pool --proxy --chain arbitrum --network arbitrum
+yarn hardhat deploy-pool --proxy --chain base --network ethereum
 
 # Deploy implementation + proxy with automatic upgrade
-yarn hardhat deploy-pool --implementation --proxy --chain arbitrum --network arbitrum
+yarn hardhat deploy-pool --implementation --proxy --chain base --network ethereum
 
 # Deploy complete setup and add pool to L1 Bridge
-yarn hardhat deploy-pool --implementation --proxy --addpool --chain arbitrum --network arbitrum
+yarn hardhat deploy-pool --implementation --proxy --addpool --chain base --network ethereum
+
+# Pause pool
+yarn hardhat deploy-pool --pause --chain base --network ethereum
 ```
 
 ### Fiat Token Deployment
@@ -148,7 +160,7 @@ yarn hardhat add-lane --chain <destination_chain_name> --network <network_name>
 **Examples:**
 ```bash
 # Add lane for Arbitrum chain
-yarn hardhat add-lane --chain arbitrum --network ethereum
+yarn hardhat add-lane --chain base --network ethereum
 ```
 
 ### Send Tokens

@@ -29,7 +29,10 @@ const envPrefixes: EnvPrefixes = {
 	lcBridge: "LANCA_CANONICAL_BRIDGE",
 	lcBridgeProxy: "LANCA_CANONICAL_BRIDGE_PROXY",
 	lcBridgeProxyAdmin: "LANCA_CANONICAL_BRIDGE_PROXY_ADMIN",
-	pause: "LANCA_CANONICAL_BRIDGE_PAUSE",
+	lcBridgePool: "LC_BRIDGE_POOL",
+	lcBridgePoolProxy: "LC_BRIDGE_POOL_PROXY",
+	lcBridgePoolProxyAdmin: "LC_BRIDGE_POOL_PROXY_ADMIN",
+	pause: "CONCERO_PAUSE",
 };
 
 export { viemReceiptConfig, writeContractConfig, ProxyEnum, envPrefixes, getViemReceiptConfig };

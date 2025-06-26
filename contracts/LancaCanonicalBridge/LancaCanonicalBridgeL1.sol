@@ -53,9 +53,7 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase {
             message
         );
 
-        i_usdc.transferFrom(msg.sender, address(this), amount);
-
-        bool success = i_usdc.transfer(pool, amount);
+        bool success = ILancaCanonicalBridgePool(pool).deposit(msg.sender, amount);
         require(success, CommonErrors.TransferFailed());
 
         emit TokenSent(messageId, lane, dstChainSelector, msg.sender, amount, fee);
@@ -117,4 +115,8 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase {
             l1BridgeStorage.lanes[dstChainSelectors[i]] = lanes[i];
         }
     }
+	
+	function getPool(uint24 dstChainSelector) external view returns (address pool) {
+		pool = s.l1Bridge().pools[dstChainSelector];
+	}
 }

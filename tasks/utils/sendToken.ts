@@ -45,6 +45,25 @@ export async function sendToken(
 	const laneAddress = getEnvVar(`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChain)}`);
 	if (!laneAddress) return;
 
+	// Determine if we need to approve to pool or bridge
+	const isEthereumChain = srcChain.startsWith("ethereum");
+	let approvalTarget: string;
+
+	if (isEthereumChain) {
+		// For Ethereum chains, approve to the pool
+		const poolAddress = getEnvVar(
+			`LC_BRIDGE_POOL_PROXY_${getNetworkEnvKey(srcChain)}_${getNetworkEnvKey(dstChain)}` as any,
+		);
+		if (!poolAddress) return;
+
+		approvalTarget = poolAddress;
+		log(`Using pool address for approval: ${poolAddress}`, "sendToken", srcChain);
+	} else {
+		// For non-Ethereum chains, approve to the bridge
+		approvalTarget = bridgeAddress;
+		log(`Using bridge address for approval: ${bridgeAddress}`, "sendToken", srcChain);
+	}
+
 	const { abi: bridgeAbi } = await import(
 		"../../artifacts/contracts/LancaCanonicalBridge/LancaCanonicalBridge.sol/LancaCanonicalBridge.json"
 	);
@@ -84,14 +103,15 @@ export async function sendToken(
 			srcChain,
 		);
 
-		// Approve USDC for bridge contract
-		log(`Approving ${amount} USDC to bridge...`, "sendToken", srcChain);
+		// Approve USDC for bridge contract or pool
+		const approvalTargetName = isEthereumChain ? "pool" : "bridge";
+		log(`Approving ${amount} USDC to ${approvalTargetName}...`, "sendToken", srcChain);
 		const approveTxHash = await walletClient.writeContract({
 			address: usdcAddress as `0x${string}`,
 			abi: usdcAbi,
 			functionName: "approve",
 			account: viemAccount,
-			args: [bridgeAddress, amountInWei],
+			args: [approvalTarget, amountInWei],
 			chain: viemChain,
 		});
 

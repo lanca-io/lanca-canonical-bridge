@@ -27,6 +27,10 @@ contract LancaCanonicalBridgePool is ILancaCanonicalBridgePool {
         i_owner = lancaCanonicalBridge;
     }
 
+	function deposit(address from, uint256 amount) external onlyOwner returns (bool success) {
+		success = i_usdc.transferFrom(from, address(this), amount);
+	}
+
     function withdraw(address to, uint256 amount) external onlyOwner returns (bool success) {
         // TODO: add limit?
         success = i_usdc.transfer(to, amount);

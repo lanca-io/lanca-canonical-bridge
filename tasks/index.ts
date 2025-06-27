@@ -4,10 +4,11 @@ import { deployBridgeL1Task } from "./deployBridge/deployBridgeL1Task";
 import { deployBridgeTask } from "./deployBridge/deployBridgeTask";
 import { deployFiatTokenTask } from "./deployFiatToken/deployFiatTokenTask";
 import deployPauseTask from "./deployPause.task";
-import deployConceroPauseToAllChains from "./pause/deployConceroPauseToAllChains";
 import { deployPoolTask } from "./deployPool/deployPoolTask";
 import { mintTestUsdcTask } from "./mintTestUsdc/mintTestUsdcTask";
+import deployConceroPauseToAllChains from "./pause/deployConceroPauseToAllChains";
 import { sendTokenTask } from "./sendToken/sendTokenTask";
+import updateAllPools from "./updateAllPools.task";
 
 export default {
 	addLaneTask,
@@ -20,4 +21,5 @@ export default {
 	sendTokenTask,
 	deployPauseTask,
 	deployConceroPauseToAllChains,
+	updateAllPools,
 };

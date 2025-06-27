@@ -49,6 +49,9 @@ export async function sendToken(
 	const isEthereumChain = srcChain.startsWith("ethereum");
 	let approvalTarget: string;
 
+	// Determine which contract ABI to use based on chain type
+	let bridgeAbi: any;
+
 	if (isEthereumChain) {
 		// For Ethereum chains, approve to the pool
 		const poolAddress = getEnvVar(
@@ -58,15 +61,21 @@ export async function sendToken(
 
 		approvalTarget = poolAddress;
 		log(`Using pool address for approval: ${poolAddress}`, "sendToken", srcChain);
+
+		const l1BridgeArtifact = await import(
+			"../../artifacts/contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol/LancaCanonicalBridgeL1.json"
+		);
+		bridgeAbi = l1BridgeArtifact.abi;
 	} else {
 		// For non-Ethereum chains, approve to the bridge
 		approvalTarget = bridgeAddress;
 		log(`Using bridge address for approval: ${bridgeAddress}`, "sendToken", srcChain);
-	}
 
-	const { abi: bridgeAbi } = await import(
-		"../../artifacts/contracts/LancaCanonicalBridge/LancaCanonicalBridge.sol/LancaCanonicalBridge.json"
-	);
+		const l2BridgeArtifact = await import(
+			"../../artifacts/contracts/LancaCanonicalBridge/LancaCanonicalBridge.sol/LancaCanonicalBridge.json"
+		);
+		bridgeAbi = l2BridgeArtifact.abi;
+	}
 
 	const { abi: usdcAbi } = await import(
 		"../../usdc-artifacts/FiatTokenV2_2.sol/FiatTokenV2_2.json"
@@ -91,7 +100,6 @@ export async function sendToken(
 			functionName: "getMessageFee",
 			args: [
 				dstChainSelector,
-				false, // shouldFinaliseSrc
 				"0x0000000000000000000000000000000000000000", // feeToken (ETH)
 				dstChainData,
 			],
@@ -122,24 +130,37 @@ export async function sendToken(
 
 		log(`Approval successful: ${approveTxHash}`, "sendToken", srcChain);
 
-		// Send token
+		// Send token - prepare arguments based on contract type
 		log(
 			`Sending ${amount} USDC to ${dstChain} (lane: ${laneAddress})...`,
 			"sendToken",
 			srcChain,
 		);
+
+		let sendTokenArgs: any[];
+		if (isEthereumChain) {
+			// L1 contract: sendToken(amount, dstChainSelector, feeToken, dstChainData)
+			sendTokenArgs = [
+				amountInWei,
+				dstChainSelector,
+				"0x0000000000000000000000000000000000000000", // feeToken
+				dstChainData,
+			];
+		} else {
+			// L2 contract: sendToken(amount, feeToken, dstChainData)
+			sendTokenArgs = [
+				amountInWei,
+				"0x0000000000000000000000000000000000000000", // feeToken
+				dstChainData,
+			];
+		}
+
 		const sendTxHash = await walletClient.writeContract({
 			address: bridgeAddress as `0x${string}`,
 			abi: bridgeAbi,
 			functionName: "sendToken",
 			account: viemAccount,
-			args: [
-				amountInWei,
-				dstChainSelector,
-				false,
-				"0x0000000000000000000000000000000000000000",
-				dstChainData,
-			],
+			args: sendTokenArgs,
 			value: messageFee as bigint,
 			chain: viemChain,
 		});

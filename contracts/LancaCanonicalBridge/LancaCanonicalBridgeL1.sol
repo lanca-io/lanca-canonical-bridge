@@ -9,8 +9,9 @@ pragma solidity 0.8.28;
 import {Storage as s} from "./libraries/Storage.sol";
 import {LancaCanonicalBridgeBase, ConceroClient, CommonErrors, ConceroTypes, IConceroRouter} from "./LancaCanonicalBridgeBase.sol";
 import {ILancaCanonicalBridgePool} from "../interfaces/ILancaCanonicalBridgePool.sol";
+import {ReentrancyGuard} from "../common/ReentrancyGuard.sol";
 
-contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase {
+contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
     using s for s.L1Bridge;
 
     error InvalidLane();
@@ -28,7 +29,7 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase {
         uint24 dstChainSelector,
         address /* feeToken */,
         ConceroTypes.EvmDstChainData memory dstChainData
-    ) external payable returns (bytes32 messageId) {
+    ) external payable nonReentrant returns (bytes32 messageId) {
         address pool = s.l1Bridge().pools[dstChainSelector];
         address lane = s.l1Bridge().lanes[dstChainSelector];
 
@@ -36,8 +37,10 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase {
         require(lane != address(0) && dstChainData.receiver == lane, InvalidLane());
 
         uint256 fee = getMessageFee(dstChainSelector, address(0), dstChainData);
-
         require(msg.value >= fee, InsufficientFee(msg.value, fee));
+
+        bool success = ILancaCanonicalBridgePool(pool).deposit(msg.sender, amount);
+        require(success, CommonErrors.TransferFailed());
 
         bytes memory message = abi.encode(msg.sender, amount);
         messageId = IConceroRouter(i_conceroRouter).conceroSend{value: msg.value}(
@@ -48,9 +51,6 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase {
             message
         );
 
-        bool success = ILancaCanonicalBridgePool(pool).deposit(msg.sender, amount);
-        require(success, CommonErrors.TransferFailed());
-
         emit TokenSent(messageId, lane, dstChainSelector, msg.sender, amount, fee);
     }
 
@@ -59,7 +59,7 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase {
         uint24 srcChainSelector,
         bytes calldata sender,
         bytes calldata message
-    ) internal override {
+    ) internal override nonReentrant {
         (address tokenSender, uint256 amount) = abi.decode(message, (address, uint256));
 
         address pool = s.l1Bridge().pools[srcChainSelector];

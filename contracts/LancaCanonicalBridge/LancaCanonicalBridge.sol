@@ -7,8 +7,9 @@
 pragma solidity 0.8.28;
 
 import {LancaCanonicalBridgeBase, ConceroClient, CommonErrors, ConceroTypes, IConceroRouter} from "./LancaCanonicalBridgeBase.sol";
+import {ReentrancyGuard} from "../common/ReentrancyGuard.sol";
 
-contract LancaCanonicalBridge is LancaCanonicalBridgeBase {
+contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
     uint24 internal immutable i_dstChainSelector;
     address internal immutable i_lancaBridgeL1;
 
@@ -26,12 +27,16 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase {
         uint256 amount,
         address /* feeToken */,
         ConceroTypes.EvmDstChainData memory dstChainData
-    ) external payable returns (bytes32 messageId) {
+    ) external payable nonReentrant returns (bytes32 messageId) {
         bytes memory message = abi.encode(msg.sender, amount);
 
         uint256 fee = getMessageFee(i_dstChainSelector, address(0), dstChainData);
-
         require(msg.value >= fee, InsufficientFee(msg.value, fee));
+
+        bool success = i_usdc.transferFrom(msg.sender, address(this), amount);
+        require(success, CommonErrors.TransferFailed());
+
+        i_usdc.burn(amount);
 
         messageId = IConceroRouter(i_conceroRouter).conceroSend{value: msg.value}(
             i_dstChainSelector,
@@ -41,11 +46,6 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase {
             message
         );
 
-        bool success = i_usdc.transferFrom(msg.sender, address(this), amount);
-        require(success, CommonErrors.TransferFailed());
-
-        i_usdc.burn(amount);
-
         emit TokenSent(messageId, i_lancaBridgeL1, i_dstChainSelector, msg.sender, amount, fee);
     }
 
@@ -54,7 +54,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase {
         uint24 srcChainSelector,
         bytes calldata sender,
         bytes calldata message
-    ) internal override {
+    ) internal override nonReentrant {
         (address tokenSender, uint256 amount) = abi.decode(message, (address, uint256));
 
         bool success = i_usdc.mint(tokenSender, amount);

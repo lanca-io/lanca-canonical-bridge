@@ -9,6 +9,7 @@ import { mintTestUsdcTask } from "./mintTestUsdc/mintTestUsdcTask";
 import deployConceroPauseToAllChains from "./pause/deployConceroPauseToAllChains";
 import { sendTokenTask } from "./sendToken/sendTokenTask";
 import updateAllPools from "./updateAllPools.task";
+import updateAllBridges from "./updateAllBridges.task";
 
 export default {
 	addLaneTask,
@@ -22,4 +23,5 @@ export default {
 	deployPauseTask,
 	deployConceroPauseToAllChains,
 	updateAllPools,
+	updateAllBridges,
 };

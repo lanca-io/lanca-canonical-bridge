@@ -17,8 +17,6 @@ import {IFiatTokenV1} from "../interfaces/IFiatTokenV1.sol";
 abstract contract LancaCanonicalBridgeBase is ConceroClient, ConceroOwnable {
     IFiatTokenV1 internal immutable i_usdc;
 
-    error InvalidLane();
-
     event TokenSent(
         bytes32 messageId,
         address dstBridgeAddress,
@@ -42,14 +40,13 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, ConceroOwnable {
 
     function getMessageFee(
         uint24 dstChainSelector,
-        bool shouldFinaliseSrc,
         address feeToken,
         ConceroTypes.EvmDstChainData memory dstChainData
     ) public view returns (uint256) {
         return
             IConceroRouter(i_conceroRouter).getMessageFee(
                 dstChainSelector,
-                shouldFinaliseSrc,
+                false,
                 feeToken,
                 dstChainData
             );

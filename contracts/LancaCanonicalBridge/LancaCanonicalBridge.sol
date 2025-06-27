@@ -10,44 +10,32 @@ import {LancaCanonicalBridgeBase, ConceroClient, CommonErrors, ConceroTypes, ICo
 
 contract LancaCanonicalBridge is LancaCanonicalBridgeBase {
     uint24 internal immutable i_dstChainSelector;
-    address internal immutable i_lane;
+    address internal immutable i_lancaBridgeL1;
 
     constructor(
         uint24 dstChainSelector,
         address conceroRouter,
         address usdcAddress,
-        address lane
+        address lancaBridgeL1
     ) LancaCanonicalBridgeBase(usdcAddress) ConceroClient(conceroRouter) {
         i_dstChainSelector = dstChainSelector;
-        i_lane = lane;
+        i_lancaBridgeL1 = lancaBridgeL1;
     }
 
     function sendToken(
         uint256 amount,
-        uint24 dstChainSelector,
-        bool shouldFinaliseSrc,
         address /* feeToken */,
         ConceroTypes.EvmDstChainData memory dstChainData
     ) external payable returns (bytes32 messageId) {
-        require(
-            dstChainSelector == i_dstChainSelector && dstChainData.receiver == i_lane,
-            InvalidLane()
-        );
-
         bytes memory message = abi.encode(msg.sender, amount);
 
-        uint256 fee = getMessageFee(
-            dstChainSelector,
-            shouldFinaliseSrc,
-            address(0),
-            dstChainData
-        );
+        uint256 fee = getMessageFee(i_dstChainSelector, address(0), dstChainData);
 
         require(msg.value >= fee, InsufficientFee(msg.value, fee));
 
         messageId = IConceroRouter(i_conceroRouter).conceroSend{value: msg.value}(
-            dstChainSelector,
-            shouldFinaliseSrc,
+            i_dstChainSelector,
+            false,
             address(0),
             dstChainData,
             message
@@ -58,7 +46,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase {
 
         i_usdc.burn(amount);
 
-        emit TokenSent(messageId, i_lane, dstChainSelector, msg.sender, amount, fee);
+        emit TokenSent(messageId, i_lancaBridgeL1, i_dstChainSelector, msg.sender, amount, fee);
     }
 
     function _conceroReceive(

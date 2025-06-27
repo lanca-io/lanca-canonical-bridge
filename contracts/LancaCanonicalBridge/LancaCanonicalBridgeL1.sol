@@ -13,6 +13,7 @@ import {ILancaCanonicalBridgePool} from "../interfaces/ILancaCanonicalBridgePool
 contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase {
     using s for s.L1Bridge;
 
+    error InvalidLane();
     error PoolNotFound(uint24 dstChainSelector);
     error PoolAlreadyExists(uint24 dstChainSelector);
     error LaneAlreadyExists(uint24 dstChainSelector);
@@ -25,7 +26,6 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase {
     function sendToken(
         uint256 amount,
         uint24 dstChainSelector,
-        bool shouldFinaliseSrc,
         address /* feeToken */,
         ConceroTypes.EvmDstChainData memory dstChainData
     ) external payable returns (bytes32 messageId) {
@@ -35,19 +35,14 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase {
         require(pool != address(0), PoolNotFound(dstChainSelector));
         require(lane != address(0) && dstChainData.receiver == lane, InvalidLane());
 
-        uint256 fee = getMessageFee(
-            dstChainSelector,
-            shouldFinaliseSrc,
-            address(0),
-            dstChainData
-        );
+        uint256 fee = getMessageFee(dstChainSelector, address(0), dstChainData);
 
         require(msg.value >= fee, InsufficientFee(msg.value, fee));
 
         bytes memory message = abi.encode(msg.sender, amount);
         messageId = IConceroRouter(i_conceroRouter).conceroSend{value: msg.value}(
             dstChainSelector,
-            shouldFinaliseSrc,
+            false,
             address(0),
             dstChainData,
             message
@@ -115,8 +110,8 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase {
             l1BridgeStorage.lanes[dstChainSelectors[i]] = lanes[i];
         }
     }
-	
-	function getPool(uint24 dstChainSelector) external view returns (address pool) {
-		pool = s.l1Bridge().pools[dstChainSelector];
-	}
+
+    function getPool(uint24 dstChainSelector) external view returns (address pool) {
+        pool = s.l1Bridge().pools[dstChainSelector];
+    }
 }

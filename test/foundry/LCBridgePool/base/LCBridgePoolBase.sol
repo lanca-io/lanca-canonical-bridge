@@ -8,7 +8,7 @@ pragma solidity 0.8.28;
 
 import {BaseScript} from "../../scripts/BaseScript.s.sol";
 
-contract LancaCanonicalBridgeBaseTest is BaseScript {
+contract LCBridgePoolBase is BaseScript {
     function setUp() public virtual override {
         super.setUp();
     }

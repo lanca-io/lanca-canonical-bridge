@@ -8,9 +8,9 @@ pragma solidity 0.8.28;
 
 import {LancaCanonicalBridgePool} from "contracts/LancaCanonicalBridgePool/LancaCanonicalBridgePool.sol";
 import {TransparentUpgradeableProxy, ITransparentUpgradeableProxy} from "contracts/Proxy/TransparentUpgradeableProxy.sol";
-import {LancaCanonicalBridgePoolBase} from "test/foundry/LCBridgePool/base/LancaCanonicalBridgePoolBase.sol";
+import {LCBridgePoolBase} from "test/foundry/LCBridgePool/base/LCBridgePoolBase.sol";
 
-contract DeployLancaCanonicalBridgePool is LancaCanonicalBridgePoolBase {
+contract DeployLCBridgePool is LCBridgePoolBase {
     TransparentUpgradeableProxy internal lancaCanonicalBridgePoolProxy;
     LancaCanonicalBridgePool internal lancaCanonicalBridgePool;
 
@@ -28,11 +28,7 @@ contract DeployLancaCanonicalBridgePool is LancaCanonicalBridgePoolBase {
     }
 
     function deploy() public returns (address) {
-        address implementation = _deployImplementation(
-            usdc,
-            lancaCanonicalBridgeMock,
-            DST_CHAIN_SELECTOR
-        );
+        address implementation = _deployImplementation(usdc, lcbMock, DST_CHAIN_SELECTOR);
         _deployProxy(implementation);
 
         return address(lancaCanonicalBridgePoolProxy);

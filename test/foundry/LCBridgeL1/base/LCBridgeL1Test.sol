@@ -9,12 +9,12 @@ pragma solidity 0.8.28;
 import {LancaCanonicalBridgeL1} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol";
 
 import {BridgeTest} from "../../utils/BridgeTest.sol";
-import {DeployLancaCanonicalBridgeL1} from "../../scripts/deploy/DeployLancaCanonicalBridgeL1.s.sol";
+import {DeployLCBridgeL1} from "../../scripts/deploy/DeployLCBridgeL1.s.sol";
 
-abstract contract LancaCanonicalBridgeL1Test is DeployLancaCanonicalBridgeL1, BridgeTest {
-    function setUp() public virtual override(DeployLancaCanonicalBridgeL1, BridgeTest) {
+abstract contract LCBridgeL1Test is DeployLCBridgeL1, BridgeTest {
+    function setUp() public virtual override(DeployLCBridgeL1, BridgeTest) {
         super.setUp();
 
-		lancaCanonicalBridgeL1 = LancaCanonicalBridgeL1(deploy());
+        lancaCanonicalBridgeL1 = LancaCanonicalBridgeL1(deploy());
     }
 }

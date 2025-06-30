@@ -111,7 +111,11 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         }
     }
 
-    function getPool(uint24 dstChainSelector) external view returns (address pool) {
-        pool = s.l1Bridge().pools[dstChainSelector];
+    function getPool(uint24 dstChainSelector) external view returns (address) {
+        return s.l1Bridge().pools[dstChainSelector];
+    }
+
+    function getLane(uint24 dstChainSelector) external view returns (address) {
+        return s.l1Bridge().lanes[dstChainSelector];
     }
 }

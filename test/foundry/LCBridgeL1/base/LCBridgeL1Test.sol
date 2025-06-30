@@ -6,12 +6,11 @@
  */
 pragma solidity 0.8.28;
 
-
 import {LancaCanonicalBridgeL1} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol";
 import {LancaCanonicalBridgePool} from "contracts/LancaCanonicalBridgePool/LancaCanonicalBridgePool.sol";
 
 import {BridgeTest} from "../../utils/BridgeTest.sol";
-import {MockERC20} from "../../scripts/deploy/DeployMockUSDC.s.sol";
+import {MockUSDC} from "../../mocks/MockUSDC.sol";
 import {DeployLCBridgeL1} from "../../scripts/deploy/DeployLCBridgeL1.s.sol";
 
 abstract contract LCBridgeL1Test is DeployLCBridgeL1, BridgeTest {
@@ -28,7 +27,7 @@ abstract contract LCBridgeL1Test is DeployLCBridgeL1, BridgeTest {
         );
 
         vm.prank(deployer);
-        MockERC20(usdc).transfer(user, AMOUNT);
+        MockUSDC(usdc).transfer(user, AMOUNT);
 
         vm.deal(user, 1e18);
     }
@@ -55,6 +54,6 @@ abstract contract LCBridgeL1Test is DeployLCBridgeL1, BridgeTest {
 
     function _approvePool(uint256 amount) internal {
         vm.prank(user);
-        MockERC20(usdc).approve(address(lancaCanonicalBridgePool), amount);
+        MockUSDC(usdc).approve(address(lancaCanonicalBridgePool), amount);
     }
 }

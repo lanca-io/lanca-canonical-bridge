@@ -12,7 +12,7 @@ import {IConceroClientErrors} from "@concero/messaging-contracts-v2/contracts/in
 
 import {LCBridgeL1Test} from "./base/LCBridgeL1Test.sol";
 import {MaliciousPool} from "../mocks/MaliciousPool.sol";
-import {MockERC20} from "../scripts/deploy/DeployMockUSDC.s.sol";
+import {MockUSDC} from "../mocks/MockUSDC.sol";
 import {ReentrancyGuard} from "contracts/common/ReentrancyGuard.sol";
 import {LancaCanonicalBridgeBase} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
 import {LancaCanonicalBridgeL1} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol";
@@ -95,7 +95,7 @@ contract SendTokenTest is LCBridgeL1Test {
         );
 
         _approvePool(AMOUNT);
-        MockERC20(usdc).setShouldFailTransfer(true);
+        MockUSDC(usdc).setShouldFailTransfer(true);
 
         vm.expectRevert(abi.encodeWithSelector(CommonErrors.TransferFailed.selector));
 
@@ -129,7 +129,7 @@ contract SendTokenTest is LCBridgeL1Test {
         );
 
         assertEq(messageId, DEFAULT_MESSAGE_ID);
-        assertEq(MockERC20(usdc).balanceOf(address(lancaCanonicalBridgePool)), AMOUNT);
+        assertEq(MockUSDC(usdc).balanceOf(address(lancaCanonicalBridgePool)), AMOUNT);
     }
 
     function test_sendToken_EmitsTokenSent() public {
@@ -190,7 +190,7 @@ contract SendTokenTest is LCBridgeL1Test {
         );
 
         vm.prank(user);
-        MockERC20(usdc).approve(address(maliciousPool), AMOUNT * 2);
+        MockUSDC(usdc).approve(address(maliciousPool), AMOUNT * 2);
 
         maliciousPool.setAttackMode(true);
 

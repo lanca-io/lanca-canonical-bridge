@@ -9,7 +9,7 @@ pragma solidity 0.8.28;
 import {CommonErrors} from "@concero/messaging-contracts-v2/contracts/common/CommonErrors.sol";
 
 import {LCBridgeL1Test} from "./base/LCBridgeL1Test.sol";
-import {MockERC20} from "../scripts/deploy/DeployMockUSDC.s.sol";
+import {MockUSDC} from "../mocks/MockUSDC.sol";
 import {ReentrancyGuard} from "contracts/common/ReentrancyGuard.sol";
 import {LancaCanonicalBridgeBase} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
 import {LancaCanonicalBridgeL1} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol";
@@ -38,7 +38,7 @@ contract ConceroReceiveTest is LCBridgeL1Test {
     function test_conceroReceive_RevertsTransferFailed() public {
         _addDefaultPool();
 
-        MockERC20(usdc).setShouldFailTransfer(true);
+        MockUSDC(usdc).setShouldFailTransfer(true);
 
         bytes memory message = abi.encode(user, AMOUNT);
 
@@ -56,10 +56,10 @@ contract ConceroReceiveTest is LCBridgeL1Test {
     function test_conceroReceive_Success() public {
         _addDefaultPool();
 
-        MockERC20(usdc).mint(address(lancaCanonicalBridgePool), AMOUNT);
+        MockUSDC(usdc).mint(address(lancaCanonicalBridgePool), AMOUNT);
 
         bytes memory message = abi.encode(user, AMOUNT);
-        uint256 userBalanceBefore = MockERC20(usdc).balanceOf(user);
+        uint256 userBalanceBefore = MockUSDC(usdc).balanceOf(user);
 
         vm.prank(conceroRouter);
         lancaCanonicalBridgeL1.conceroReceive(
@@ -69,13 +69,13 @@ contract ConceroReceiveTest is LCBridgeL1Test {
             message
         );
 
-        assertEq(MockERC20(usdc).balanceOf(user), userBalanceBefore + AMOUNT);
+        assertEq(MockUSDC(usdc).balanceOf(user), userBalanceBefore + AMOUNT);
     }
 
     function test_conceroReceive_EmitsTokenReceived() public {
         _addDefaultPool();
 
-        MockERC20(usdc).mint(address(lancaCanonicalBridgePool), AMOUNT);
+        MockUSDC(usdc).mint(address(lancaCanonicalBridgePool), AMOUNT);
 
         bytes memory message = abi.encode(user, AMOUNT);
 

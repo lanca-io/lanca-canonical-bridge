@@ -11,20 +11,23 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 contract MockUSDCe is ERC20 {
     uint8 private _decimals;
     address private _minter;
+    bool public shouldFailTransfer;
 
     modifier onlyMinter() {
         require(msg.sender == _minter, "FiatToken: caller is not the masterMinter");
         _;
     }
 
-    constructor(
-        string memory name,
-        string memory symbol,
-        uint8 decimalsValue,
-        address minter
-    ) ERC20(name, symbol) {
+    constructor(string memory name, string memory symbol, uint8 decimalsValue) ERC20(name, symbol) {
         _decimals = decimalsValue;
+    }
+
+    function setMinter(address minter) external {
         _minter = minter;
+    }
+
+    function mintTo(address to, uint256 amount) external {
+        _mint(to, amount);
     }
 
     function mint(address to, uint256 amount) external onlyMinter {
@@ -37,5 +40,16 @@ contract MockUSDCe is ERC20 {
 
     function decimals() public view virtual override returns (uint8) {
         return _decimals;
+    }
+
+	function setShouldFailTransfer(bool _shouldFail) external {
+        shouldFailTransfer = _shouldFail;
+    }
+
+    function transferFrom(address from, address to, uint256 amount) public override returns (bool) {
+        if (shouldFailTransfer) {
+            return false;
+        }
+        return super.transferFrom(from, to, amount);
     }
 }

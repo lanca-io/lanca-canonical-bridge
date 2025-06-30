@@ -18,7 +18,7 @@ contract DeployMockUSDCe is Script {
         string memory symbol,
         uint8 decimals
     ) public returns (MockUSDCe) {
-        MockUSDCe token = new MockUSDCe(name, symbol, decimals, minter);
+        MockUSDCe token = new MockUSDCe(name, symbol, decimals);
 
         return token;
     }

@@ -10,7 +10,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract MockUSDC is ERC20 {
     uint8 private _decimals;
-    bool public shouldFailTransfer = false;
+    bool public shouldFailTransfer;
 
     constructor(string memory name, string memory symbol, uint8 decimalsValue) ERC20(name, symbol) {
         _decimals = decimalsValue;

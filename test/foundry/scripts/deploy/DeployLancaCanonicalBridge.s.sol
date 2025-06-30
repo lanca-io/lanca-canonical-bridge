@@ -31,8 +31,8 @@ contract DeployLancaCanonicalBridge is LancaCanonicalBridgeBaseTest {
         address implementation = _deployImplementation(
             SRC_CHAIN_SELECTOR,
             conceroRouter,
-            usdc,
-            lancaBridgeL1
+            usdcE,
+            lancaBridgeL1Mock
         );
         _deployProxy(implementation);
         return address(lancaCanonicalBridgeProxy);
@@ -41,13 +41,13 @@ contract DeployLancaCanonicalBridge is LancaCanonicalBridgeBaseTest {
     function deploy(
         uint24 _dstChainSelector,
         address _conceroRouter,
-        address _usdc,
+        address _usdcE,
         address _lancaBridgeL1
     ) public returns (address) {
         address implementation = _deployImplementation(
             _dstChainSelector,
             _conceroRouter,
-            _usdc,
+            _usdcE,
             _lancaBridgeL1
         );
         _deployProxy(implementation);
@@ -68,7 +68,7 @@ contract DeployLancaCanonicalBridge is LancaCanonicalBridgeBaseTest {
     function _deployImplementation(
         uint24 _dstChainSelector,
         address _conceroRouter,
-        address _usdc,
+        address _usdcE,
         address _lancaBridgeL1
     ) internal returns (address) {
         vm.startPrank(deployer);
@@ -76,7 +76,7 @@ contract DeployLancaCanonicalBridge is LancaCanonicalBridgeBaseTest {
         lancaCanonicalBridge = new LancaCanonicalBridge(
             _dstChainSelector,
             _conceroRouter,
-            _usdc,
+            _usdcE,
             _lancaBridgeL1
         );
         vm.stopPrank();

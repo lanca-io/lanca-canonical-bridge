@@ -28,14 +28,26 @@ contract DeployLancaCanonicalBridgePool is LancaCanonicalBridgePoolBase {
     }
 
     function deploy() public returns (address) {
-        address implementation = _deployImplementation();
+        address implementation = _deployImplementation(
+            usdc,
+            lancaCanonicalBridgeMock,
+            DST_CHAIN_SELECTOR
+        );
         _deployProxy(implementation);
 
         return address(lancaCanonicalBridgePoolProxy);
     }
 
-    function deploy() public returns (address) {
-        address implementation = _deployImplementation();
+    function deploy(
+        address _usdc,
+        address _lancaCanonicalBridge,
+        uint24 _dstChainSelector
+    ) public returns (address) {
+        address implementation = _deployImplementation(
+            _usdc,
+            _lancaCanonicalBridge,
+            _dstChainSelector
+        );
         _deployProxy(implementation);
         return address(lancaCanonicalBridgePoolProxy);
     }
@@ -50,10 +62,18 @@ contract DeployLancaCanonicalBridgePool is LancaCanonicalBridgePoolBase {
         vm.stopPrank();
     }
 
-    function _deployImplementation() internal returns (address) {
+    function _deployImplementation(
+        address _usdc,
+        address _lancaCanonicalBridge,
+        uint24 _dstChainSelector
+    ) internal returns (address) {
         vm.startPrank(deployer);
 
-        lancaCanonicalBridgePool = new LancaCanonicalBridgePool();
+        lancaCanonicalBridgePool = new LancaCanonicalBridgePool(
+            _usdc,
+            _lancaCanonicalBridge,
+            _dstChainSelector
+        );
         vm.stopPrank();
 
         return address(lancaCanonicalBridgePool);

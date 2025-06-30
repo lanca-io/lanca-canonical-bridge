@@ -11,13 +11,29 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract MockERC20 is ERC20 {
     uint8 private _decimals;
+    address private _minter;
 
-    constructor(string memory name, string memory symbol, uint8 decimalsValue) ERC20(name, symbol) {
-        _decimals = decimalsValue;
+    modifier onlyMinter() {
+        require(msg.sender == _minter, "FiatToken: caller is not the masterMinter");
+        _;
     }
 
-    function mint(address to, uint256 amount) external {
+    constructor(
+        string memory name,
+        string memory symbol,
+        uint8 decimalsValue,
+        address minter
+    ) ERC20(name, symbol) {
+        _decimals = decimalsValue;
+        _minter = minter;
+    }
+
+    function mint(address to, uint256 amount) external onlyMinter {
         _mint(to, amount);
+    }
+
+    function burn(uint256 amount) external onlyMinter {
+        _burn(msg.sender, amount);
     }
 
     function decimals() public view virtual override returns (uint8) {
@@ -25,18 +41,15 @@ contract MockERC20 is ERC20 {
     }
 }
 
-contract DeployMockUSDC is Script {
-    address public initialHolder = vm.envAddress("DEPLOYER_ADDRESS");
-    uint256 public initialSupply = 1_000_000;
+contract DeployMockUSDCe is Script {
+    address public minter = vm.envAddress("DEPLOYER_ADDRESS");
 
-    function deployUSDC(
+    function deployUSDCe(
         string memory name,
         string memory symbol,
         uint8 decimals
     ) public returns (MockERC20) {
-        MockERC20 token = new MockERC20(name, symbol, decimals);
-
-        token.mint(initialHolder, initialSupply);
+        MockERC20 token = new MockERC20(name, symbol, decimals, minter);
 
         return token;
     }

@@ -35,6 +35,13 @@ contract MockERC20 is ERC20 {
         }
         return super.transferFrom(from, to, amount);
     }
+
+    function transfer(address to, uint256 amount) public override returns (bool) {
+        if (shouldFailTransfer) {
+            return false;
+        }
+        return super.transfer(to, amount);
+    }
 }
 
 contract DeployMockUSDC is Script {

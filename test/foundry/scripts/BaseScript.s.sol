@@ -22,10 +22,15 @@ abstract contract BaseScript is Script {
     address public usdcE;
     address public conceroRouter;
     address public lancaBridgeL1Mock = address(0x0202020202020202020202020202020202020202);
-    address public lcbMock = address(0x0303030303030303030303030303030303030303);
+    address public lancaBridgeMock = address(0x0303030303030303030303030303030303030303);
+
+    bytes32 public constant DEFAULT_MESSAGE_ID = bytes32(uint256(1));
 
     uint24 public constant SRC_CHAIN_SELECTOR = 1;
     uint24 public constant DST_CHAIN_SELECTOR = 8453;
+
+    uint256 public constant AMOUNT = 1e6;
+    uint256 public constant GAS_LIMIT = 150_000;
 
     constructor() {
         deployer = vm.envAddress("DEPLOYER_ADDRESS");

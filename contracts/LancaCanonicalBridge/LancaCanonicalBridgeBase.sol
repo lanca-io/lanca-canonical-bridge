@@ -18,17 +18,17 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, ConceroOwnable {
     IFiatTokenV1 internal immutable i_usdc;
 
     event TokenSent(
-        bytes32 messageId,
-        address dstBridgeAddress,
-        uint24 dstChainSelector,
+        bytes32 indexed messageId,
+        address indexed dstBridgeAddress,
+        uint24 indexed dstChainSelector,
         address tokenSender,
         uint256 amount,
         uint256 fee
     );
 
     event TokenReceived(
-        bytes32 messageId,
-        uint24 srcChainSelector,
+        bytes32 indexed messageId,
+        uint24 indexed srcChainSelector,
         address sender,
         address tokenSender,
         uint256 amount

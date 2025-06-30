@@ -11,6 +11,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract MockERC20 is ERC20 {
     uint8 private _decimals;
+    bool public shouldFailTransfer = false;
 
     constructor(string memory name, string memory symbol, uint8 decimalsValue) ERC20(name, symbol) {
         _decimals = decimalsValue;
@@ -22,6 +23,17 @@ contract MockERC20 is ERC20 {
 
     function decimals() public view virtual override returns (uint8) {
         return _decimals;
+    }
+
+    function setShouldFailTransfer(bool _shouldFail) external {
+        shouldFailTransfer = _shouldFail;
+    }
+
+    function transferFrom(address from, address to, uint256 amount) public override returns (bool) {
+        if (shouldFailTransfer) {
+            return false;
+        }
+        return super.transferFrom(from, to, amount);
     }
 }
 
@@ -36,7 +48,7 @@ contract DeployMockUSDC is Script {
     ) public returns (MockERC20) {
         MockERC20 token = new MockERC20(name, symbol, decimals);
 
-        token.mint(initialHolder, initialSupply);
+        token.mint(initialHolder, initialSupply * 10 ** decimals);
 
         return token;
     }

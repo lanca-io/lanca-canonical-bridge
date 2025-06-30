@@ -28,7 +28,7 @@ contract DeployLCBridgePool is LCBridgePoolBase {
     }
 
     function deploy() public returns (address) {
-        address implementation = _deployImplementation(usdc, lcbMock, DST_CHAIN_SELECTOR);
+        address implementation = _deployImplementation(usdc, lancaBridgeMock, DST_CHAIN_SELECTOR);
         _deployProxy(implementation);
 
         return address(lancaCanonicalBridgePoolProxy);

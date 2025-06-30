@@ -10,7 +10,6 @@ import {CommonErrors} from "@concero/messaging-contracts-v2/contracts/common/Com
 
 import {LCBridgeL1Test} from "./base/LCBridgeL1Test.sol";
 import {MockUSDC} from "../mocks/MockUSDC.sol";
-import {ReentrancyGuard} from "contracts/common/ReentrancyGuard.sol";
 import {LancaCanonicalBridgeBase} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
 import {LancaCanonicalBridgeL1} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol";
 

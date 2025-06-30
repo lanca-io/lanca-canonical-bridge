@@ -30,6 +30,8 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         address /* feeToken */,
         ConceroTypes.EvmDstChainData memory dstChainData
     ) external payable nonReentrant returns (bytes32 messageId) {
+        require(amount > 0, CommonErrors.InvalidAmount());
+
         address pool = s.l1Bridge().pools[dstChainSelector];
         address lane = s.l1Bridge().lanes[dstChainSelector];
 

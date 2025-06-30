@@ -28,7 +28,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         address /* feeToken */,
         ConceroTypes.EvmDstChainData memory dstChainData
     ) external payable nonReentrant returns (bytes32 messageId) {
-        bytes memory message = abi.encode(msg.sender, amount);
+        require(amount > 0, CommonErrors.InvalidAmount());
 
         uint256 fee = getMessageFee(i_dstChainSelector, address(0), dstChainData);
         require(msg.value >= fee, InsufficientFee(msg.value, fee));
@@ -38,6 +38,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
 
         i_usdc.burn(amount);
 
+        bytes memory message = abi.encode(msg.sender, amount);
         messageId = IConceroRouter(i_conceroRouter).conceroSend{value: msg.value}(
             i_dstChainSelector,
             false,

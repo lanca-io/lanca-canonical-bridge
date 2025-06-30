@@ -67,4 +67,23 @@ contract AddLanesTest is LCBridgeL1Test {
 
         assertEq(lancaCanonicalBridgeL1.getLane(DST_CHAIN_SELECTOR), lanes[0]);
     }
+
+    function test_addLanes_MultipleLanes() public {
+        uint24[] memory dstChainSelectors = new uint24[](3);
+        dstChainSelectors[0] = 1;
+        dstChainSelectors[1] = 2;
+        dstChainSelectors[2] = 3;
+
+        address[] memory lanes = new address[](3);
+        lanes[0] = makeAddr("lane1");
+        lanes[1] = makeAddr("lane2");
+        lanes[2] = makeAddr("lane3");
+
+        vm.prank(deployer);
+        lancaCanonicalBridgeL1.addLanes(dstChainSelectors, lanes);
+
+        assertEq(lancaCanonicalBridgeL1.getLane(1), lanes[0]);
+        assertEq(lancaCanonicalBridgeL1.getLane(2), lanes[1]);
+        assertEq(lancaCanonicalBridgeL1.getLane(3), lanes[2]);
+    }
 }

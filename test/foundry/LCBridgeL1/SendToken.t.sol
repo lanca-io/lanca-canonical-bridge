@@ -22,6 +22,17 @@ contract SendTokenTest is LCBridgeL1Test {
         super.setUp();
     }
 
+    function test_sendToken_RevertsInvalidAmount() public {
+        vm.expectRevert(abi.encodeWithSelector(CommonErrors.InvalidAmount.selector));
+
+        lancaCanonicalBridgeL1.sendToken(
+            0,
+            DST_CHAIN_SELECTOR,
+            address(0),
+            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT})
+        );
+    }
+
     function test_sendToken_RevertsPoolNotFound() public {
         vm.expectRevert(
             abi.encodeWithSelector(LancaCanonicalBridgeL1.PoolNotFound.selector, DST_CHAIN_SELECTOR)

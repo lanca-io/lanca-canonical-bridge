@@ -42,14 +42,14 @@ contract MockERC20 is ERC20 {
 }
 
 contract DeployMockUSDC is Script {
-    address public initialHolder = vm.envAddress("PROXY_DEPLOYER_ADDRESS");
+    address public minter = vm.envAddress("DEPLOYER_ADDRESS");
 
     function deployUSDC(
         string memory name,
         string memory symbol,
         uint8 decimals
     ) public returns (MockERC20) {
-        MockERC20 token = new MockERC20(name, symbol, decimals, initialHolder);
+        MockERC20 token = new MockERC20(name, symbol, decimals, minter);
 
         return token;
     }

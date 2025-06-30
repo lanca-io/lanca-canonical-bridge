@@ -8,9 +8,9 @@ pragma solidity 0.8.28;
 
 import {LancaCanonicalBridgeL1} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol";
 import {TransparentUpgradeableProxy, ITransparentUpgradeableProxy} from "contracts/Proxy/TransparentUpgradeableProxy.sol";
-import {LancaCanonicalBridgeBaseL1} from "test/foundry/LCBridgeL1/base/LancaCanonicalBridgeBaseL1.sol";
+import {LancaCanonicalBridgeL1BaseTest} from "test/foundry/LCBridgeL1/base/LancaCanonicalBridgeL1BaseTest.sol";
 
-contract DeployLancaCanonicalBridgeL1 is LancaCanonicalBridgeBaseL1 {
+contract DeployLancaCanonicalBridgeL1 is LancaCanonicalBridgeL1BaseTest {
     TransparentUpgradeableProxy internal lancaCanonicalBridgeL1Proxy;
     LancaCanonicalBridgeL1 internal lancaCanonicalBridgeL1;
 
@@ -28,14 +28,14 @@ contract DeployLancaCanonicalBridgeL1 is LancaCanonicalBridgeBaseL1 {
     }
 
     function deploy() public returns (address) {
-        address implementation = _deployImplementation();
+        address implementation = _deployImplementation(conceroRouter, usdc);
         _deployProxy(implementation);
 
         return address(lancaCanonicalBridgeL1Proxy);
     }
 
-    function deploy() public returns (address) {
-        address implementation = _deployImplementation();
+    function deploy(address _conceroRouter, address _usdc) public returns (address) {
+        address implementation = _deployImplementation(_conceroRouter, _usdc);
         _deployProxy(implementation);
         return address(lancaCanonicalBridgeL1Proxy);
     }
@@ -50,10 +50,13 @@ contract DeployLancaCanonicalBridgeL1 is LancaCanonicalBridgeBaseL1 {
         vm.stopPrank();
     }
 
-    function _deployImplementation() internal returns (address) {
+    function _deployImplementation(
+        address _conceroRouter,
+        address _usdc
+    ) internal returns (address) {
         vm.startPrank(deployer);
 
-        lancaCanonicalBridgeL1 = new LancaCanonicalBridgeL1();
+        lancaCanonicalBridgeL1 = new LancaCanonicalBridgeL1(_conceroRouter, _usdc);
         vm.stopPrank();
 
         return address(lancaCanonicalBridgeL1);

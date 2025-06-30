@@ -6,9 +6,12 @@
  */
 pragma solidity 0.8.28;
 
-import {BaseScript} from "../../scripts/BaseScript.s.sol";
+import {Test} from "forge-std/src/Test.sol";
 
-contract LancaCanonicalBridgeBaseL1 is BaseScript {
+import {BaseScript} from "../scripts/BaseScript.s.sol";
+import {IConceroRouter} from "@concero/messaging-contracts-v2/contracts/interfaces/IConceroRouter.sol";
+
+abstract contract BridgeTest is BaseScript, Test {
     function setUp() public virtual override {
         super.setUp();
     }

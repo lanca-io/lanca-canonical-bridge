@@ -8,9 +8,9 @@ pragma solidity 0.8.28;
 
 import {LancaCanonicalBridge} from "contracts/LancaCanonicalBridge/LancaCanonicalBridge.sol";
 import {TransparentUpgradeableProxy, ITransparentUpgradeableProxy} from "contracts/Proxy/TransparentUpgradeableProxy.sol";
-import {LancaCanonicalBridgeBase} from "test/foundry/LCBridge/base/LancaCanonicalBridgeBase.sol";
+import {LancaCanonicalBridgeBaseTest} from "test/foundry/LCBridge/base/LancaCanonicalBridgeBaseTest.sol";
 
-contract DeployLancaCanonicalBridge is LancaCanonicalBridgeBase {
+contract DeployLancaCanonicalBridge is LancaCanonicalBridgeBaseTest {
     TransparentUpgradeableProxy internal lancaCanonicalBridgeProxy;
     LancaCanonicalBridge internal lancaCanonicalBridge;
 
@@ -28,15 +28,30 @@ contract DeployLancaCanonicalBridge is LancaCanonicalBridgeBase {
     }
 
     function deploy() public returns (address) {
-        address implementation = _deployImplementation();
+        address implementation = _deployImplementation(
+            SRC_CHAIN_SELECTOR,
+            conceroRouter,
+            usdc,
+            lancaBridgeL1
+        );
         _deployProxy(implementation);
-
         return address(lancaCanonicalBridgeProxy);
     }
 
-    function deploy() public returns (address) {
-        address implementation = _deployImplementation();
+    function deploy(
+        uint24 _dstChainSelector,
+        address _conceroRouter,
+        address _usdc,
+        address _lancaBridgeL1
+    ) public returns (address) {
+        address implementation = _deployImplementation(
+            _dstChainSelector,
+            _conceroRouter,
+            _usdc,
+            _lancaBridgeL1
+        );
         _deployProxy(implementation);
+
         return address(lancaCanonicalBridgeProxy);
     }
 
@@ -50,10 +65,20 @@ contract DeployLancaCanonicalBridge is LancaCanonicalBridgeBase {
         vm.stopPrank();
     }
 
-    function _deployImplementation() internal returns (address) {
+    function _deployImplementation(
+        uint24 _dstChainSelector,
+        address _conceroRouter,
+        address _usdc,
+        address _lancaBridgeL1
+    ) internal returns (address) {
         vm.startPrank(deployer);
 
-        lancaCanonicalBridge = new LancaCanonicalBridge();
+        lancaCanonicalBridge = new LancaCanonicalBridge(
+            _dstChainSelector,
+            _conceroRouter,
+            _usdc,
+            _lancaBridgeL1
+        );
         vm.stopPrank();
 
         return address(lancaCanonicalBridge);

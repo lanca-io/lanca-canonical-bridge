@@ -17,7 +17,7 @@ import {ReentrancyGuard} from "contracts/common/ReentrancyGuard.sol";
 import {LancaCanonicalBridgeBase} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
 import {LancaCanonicalBridgeL1} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol";
 
-contract SendTokenTest is LCBridgeL1Test {
+contract SendTokenL1Test is LCBridgeL1Test {
     function setUp() public override {
         super.setUp();
     }

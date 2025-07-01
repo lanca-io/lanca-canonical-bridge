@@ -10,20 +10,33 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import {LancaCanonicalBridgeClient} from "./LancaCanonicalBridgeClient.sol";
 
+import {console} from "forge-std/src/Console.sol";
+
 contract LancaCanonicalBridgeClientExample is LancaCanonicalBridgeClient {
+    address public token;
+    address public tokenSender;
+    uint256 public tokenAmount;
+    string public testString;
+
     error TransferFailed();
+    event TokensReceived(address token, address from, uint256 value, string testData);
 
-    event TokensReceived(address token, address from, uint256 value, bytes data);
-
-    constructor(address conceroRouter) LancaCanonicalBridgeClient(conceroRouter) {}
+    constructor(address lancaCanonicalBridge) LancaCanonicalBridgeClient(lancaCanonicalBridge) {}
 
     function _lancaCanonicalBridgeReceive(
-        address token,
-        address from,
-        uint256 value,
-        bytes memory data
+        address _token,
+        address _from,
+        uint256 _value,
+        bytes memory _data
     ) internal override {
-        require(IERC20(token).balanceOf(address(this)) >= value, TransferFailed());
-        emit TokensReceived(token, from, value, data);
+        token = _token;
+        tokenSender = _from;
+        tokenAmount = _value;
+
+        string memory _testString = abi.decode(_data, (string));
+        testString = _testString;
+
+        require(IERC20(_token).balanceOf(address(this)) >= _value, TransferFailed());
+        emit TokensReceived(_token, _from, _value, _testString);
     }
 }

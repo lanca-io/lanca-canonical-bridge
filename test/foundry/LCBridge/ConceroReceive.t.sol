@@ -74,4 +74,27 @@ contract ConceroReceiveTest is LCBridgeTest {
             message
         );
     }
+
+    function test_conceroReceive_WithCall() public {
+        string memory testString = "LancaCanonicalBridgeL1";
+        bytes memory message = abi.encode(
+            user,
+            AMOUNT,
+            address(lcBridgeClient),
+            abi.encode(testString)
+        );
+
+        vm.prank(conceroRouter);
+        lancaCanonicalBridge.conceroReceive(
+            DEFAULT_MESSAGE_ID,
+            SRC_CHAIN_SELECTOR,
+            abi.encode(lancaBridgeL1Mock),
+            message
+        );
+
+        assertEq(lcBridgeClient.token(), address(usdcE));
+        assertEq(lcBridgeClient.tokenSender(), user);
+        assertEq(lcBridgeClient.tokenAmount(), AMOUNT);
+        assertEq(lcBridgeClient.testString(), testString);
+    }
 }

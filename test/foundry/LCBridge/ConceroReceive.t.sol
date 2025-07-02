@@ -10,7 +10,8 @@ import {CommonErrors} from "@concero/messaging-contracts-v2/contracts/common/Com
 
 import {LCBridgeTest} from "./base/LCBridgeTest.sol";
 import {MockUSDCe} from "../mocks/MockUSDCe.sol";
-import {LancaCanonicalBridgeBase} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
+import {ILancaCanonicalBridgeClient} from "contracts/interfaces/ILancaCanonicalBridgeClient.sol";
+import {LancaCanonicalBridgeBase, LCBridgeCallData} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
 import {LancaCanonicalBridge} from "contracts/LancaCanonicalBridge/LancaCanonicalBridge.sol";
 
 contract ConceroReceiveTest is LCBridgeTest {
@@ -77,12 +78,15 @@ contract ConceroReceiveTest is LCBridgeTest {
 
     function test_conceroReceive_WithCall() public {
         string memory testString = "LancaCanonicalBridgeL1";
-        bytes memory message = abi.encode(
-            user,
-            AMOUNT,
-            address(lcBridgeClient),
-            abi.encode(testString)
-        );
+
+        assertTrue(lcBridgeClient.supportsInterface(type(ILancaCanonicalBridgeClient).interfaceId));
+
+        LCBridgeCallData memory lcbCallData = LCBridgeCallData({
+            tokenReceiver: address(lcBridgeClient),
+            receiverData: abi.encode(testString)
+        });
+
+        bytes memory message = abi.encode(user, AMOUNT, lcbCallData);
 
         vm.prank(conceroRouter);
         lancaCanonicalBridge.conceroReceive(

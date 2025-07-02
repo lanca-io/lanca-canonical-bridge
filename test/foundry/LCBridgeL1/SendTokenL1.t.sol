@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
+/* solhint-disable func-name-mixedcase */
 /**
  * @title Security Reporting
  * @notice If you discover any security vulnerabilities, please report them responsibly.
@@ -11,15 +12,20 @@ import {ConceroTypes} from "@concero/messaging-contracts-v2/contracts/ConceroCli
 import {IConceroClientErrors} from "@concero/messaging-contracts-v2/contracts/interfaces/IConceroClientErrors.sol";
 
 import {LCBridgeL1Test} from "./base/LCBridgeL1Test.sol";
+import {MockConceroRouter} from "../mocks/MockConceroRouter.sol";
 import {MaliciousPool} from "../mocks/MaliciousPool.sol";
 import {MockUSDC} from "../mocks/MockUSDC.sol";
 import {ReentrancyGuard} from "contracts/common/ReentrancyGuard.sol";
-import {LancaCanonicalBridgeBase} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
+import {LancaCanonicalBridgeBase, LCBridgeCallData} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
 import {LancaCanonicalBridgeL1} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol";
 
 contract SendTokenL1Test is LCBridgeL1Test {
+    LCBridgeCallData lcbCallData;
+
     function setUp() public override {
         super.setUp();
+
+        lcbCallData = LCBridgeCallData({tokenReceiver: address(0), receiverData: ""});
     }
 
     function test_sendToken_RevertsInvalidAmount() public {
@@ -29,7 +35,8 @@ contract SendTokenL1Test is LCBridgeL1Test {
             0,
             DST_CHAIN_SELECTOR,
             address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT})
+            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT}),
+            lcbCallData
         );
     }
 
@@ -42,7 +49,8 @@ contract SendTokenL1Test is LCBridgeL1Test {
             AMOUNT,
             DST_CHAIN_SELECTOR,
             address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT})
+            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT}),
+            lcbCallData
         );
     }
 
@@ -55,7 +63,8 @@ contract SendTokenL1Test is LCBridgeL1Test {
             AMOUNT,
             DST_CHAIN_SELECTOR,
             address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT})
+            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT}),
+            lcbCallData
         );
     }
 
@@ -69,7 +78,8 @@ contract SendTokenL1Test is LCBridgeL1Test {
             AMOUNT,
             DST_CHAIN_SELECTOR,
             address(0),
-            ConceroTypes.EvmDstChainData({receiver: address(0), gasLimit: GAS_LIMIT})
+            ConceroTypes.EvmDstChainData({receiver: address(0), gasLimit: GAS_LIMIT}),
+            lcbCallData
         );
     }
 
@@ -91,7 +101,8 @@ contract SendTokenL1Test is LCBridgeL1Test {
             AMOUNT,
             DST_CHAIN_SELECTOR,
             address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT})
+            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT}),
+            lcbCallData
         );
     }
 
@@ -115,7 +126,8 @@ contract SendTokenL1Test is LCBridgeL1Test {
             AMOUNT,
             DST_CHAIN_SELECTOR,
             address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT})
+            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT}),
+            lcbCallData
         );
     }
 
@@ -136,7 +148,8 @@ contract SendTokenL1Test is LCBridgeL1Test {
             AMOUNT,
             DST_CHAIN_SELECTOR,
             address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT})
+            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT}),
+            lcbCallData
         );
 
         assertEq(messageId, DEFAULT_MESSAGE_ID);
@@ -170,8 +183,43 @@ contract SendTokenL1Test is LCBridgeL1Test {
             AMOUNT,
             DST_CHAIN_SELECTOR,
             address(0),
+            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT}),
+            lcbCallData
+        );
+    }
+
+    function test_sendToken_WithReceiverCallData() public {
+        _addDefaultPool();
+        _addDefaultLane();
+
+        uint256 messageFee = lancaCanonicalBridgeL1.getMessageFee(
+            DST_CHAIN_SELECTOR,
+            address(0),
             ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT})
         );
+
+        _approvePool(AMOUNT);
+
+        address tokenReceiver = makeAddr("tokenReceiver");
+        string memory testString = "LancaCanonicalBridgeL1";
+        bytes memory receiverData = abi.encode(testString);
+
+        vm.prank(user);
+        lancaCanonicalBridgeL1.sendToken{value: messageFee}(
+            AMOUNT,
+            DST_CHAIN_SELECTOR,
+            address(0),
+            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT}),
+            LCBridgeCallData({tokenReceiver: tokenReceiver, receiverData: receiverData})
+        );
+
+        assertEq(MockConceroRouter(conceroRouter).tokenSender(), user);
+        assertEq(MockConceroRouter(conceroRouter).amount(), AMOUNT);
+        (address decodedTokenReceiver, bytes memory decodedReceiverData) = MockConceroRouter(
+            conceroRouter
+        ).lcbCallData();
+        assertEq(tokenReceiver, decodedTokenReceiver);
+        assertEq(receiverData, decodedReceiverData);
     }
 
     function test_sendToken_RevertsOnReentrancyAttack() public {
@@ -212,7 +260,8 @@ contract SendTokenL1Test is LCBridgeL1Test {
             AMOUNT,
             DST_CHAIN_SELECTOR,
             address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT})
+            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT}),
+            lcbCallData
         );
     }
 }

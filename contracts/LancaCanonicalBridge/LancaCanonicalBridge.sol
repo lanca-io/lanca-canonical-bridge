@@ -8,6 +8,7 @@ pragma solidity 0.8.28;
 
 import {Utils} from "@concero/messaging-contracts-v2/contracts/common/libraries/Utils.sol";
 
+import {LancaCanonicalBridgeClient} from "../LancaCanonicalBridgeClient/LancaCanonicalBridgeClient.sol";
 import {ILancaCanonicalBridgeClient} from "../interfaces/ILancaCanonicalBridgeClient.sol";
 import {LancaCanonicalBridgeBase, ConceroClient, CommonErrors, ConceroTypes, IConceroRouter, LCBridgeCallData} from "./LancaCanonicalBridgeBase.sol";
 import {ReentrancyGuard} from "../common/ReentrancyGuard.sol";
@@ -65,6 +66,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         uint256 amount;
         LCBridgeCallData memory lcbCallData;
 
+		// decode the message
         if (message.length > 64) {
             (tokenSender, amount, lcbCallData) = abi.decode(
                 message,
@@ -74,9 +76,19 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
             (tokenSender, amount) = abi.decode(message, (address, uint256));
         }
 
-        if (
-            lcbCallData.tokenReceiver != address(0) && Utils.isContract(lcbCallData.tokenReceiver)
-        ) {
+		// check if the receiver is a valid LCB receiver
+        bool isValidLCBReceiver;
+        if (lcbCallData.tokenReceiver != address(0)) {
+            isValidLCBReceiver =
+                Utils.isContract(lcbCallData.tokenReceiver) &&
+                LancaCanonicalBridgeClient(lcbCallData.tokenReceiver).supportsInterface(
+                    type(ILancaCanonicalBridgeClient).interfaceId
+                );
+        }
+
+		// if the receiver is a valid LancaCanonicalBridge receiver, 
+		// mint the token and call the external function
+        if (isValidLCBReceiver) {
             _mintToken(lcbCallData.tokenReceiver, amount);
             _externalCall(tokenSender, amount, lcbCallData.tokenReceiver, lcbCallData.receiverData);
         } else {

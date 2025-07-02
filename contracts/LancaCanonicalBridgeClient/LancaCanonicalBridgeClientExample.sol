@@ -10,8 +10,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import {LancaCanonicalBridgeClient} from "./LancaCanonicalBridgeClient.sol";
 
-import {console} from "forge-std/src/Console.sol";
-
 contract LancaCanonicalBridgeClientExample is LancaCanonicalBridgeClient {
     address public token;
     address public tokenSender;

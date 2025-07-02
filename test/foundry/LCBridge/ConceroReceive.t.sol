@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
+/* solhint-disable func-name-mixedcase */
 /**
  * @title Security Reporting
  * @notice If you discover any security vulnerabilities, please report them responsibly.
@@ -9,6 +10,7 @@ pragma solidity 0.8.28;
 import {CommonErrors} from "@concero/messaging-contracts-v2/contracts/common/CommonErrors.sol";
 
 import {LCBridgeTest} from "./base/LCBridgeTest.sol";
+import {MockInvalidLCBridgeClient} from "../mocks/MockInvalidLCBridgeClient.sol";
 import {MockUSDCe} from "../mocks/MockUSDCe.sol";
 import {ILancaCanonicalBridgeClient} from "contracts/interfaces/ILancaCanonicalBridgeClient.sol";
 import {LancaCanonicalBridgeBase, LCBridgeCallData} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
@@ -18,6 +20,8 @@ contract ConceroReceiveTest is LCBridgeTest {
     function setUp() public override {
         super.setUp();
     }
+
+    // --- Tests for conceroReceive with no call ---
 
     function test_conceroReceive_Success() public {
         bytes memory message = abi.encode(user, AMOUNT);
@@ -76,10 +80,30 @@ contract ConceroReceiveTest is LCBridgeTest {
         );
     }
 
+    // --- Tests for conceroReceive with call ---
+
+    function test_conceroReceive_WithCall_RevertsCallFiled() public {
+        MockInvalidLCBridgeClient invalidLCBridgeClient = new MockInvalidLCBridgeClient();
+        LCBridgeCallData memory lcbCallData = LCBridgeCallData({
+            tokenReceiver: address(invalidLCBridgeClient),
+            receiverData: ""
+        });
+
+        bytes memory message = abi.encode(user, AMOUNT, lcbCallData);
+
+        vm.expectRevert(abi.encodeWithSelector(ILancaCanonicalBridgeClient.CallFiled.selector));
+
+        vm.prank(conceroRouter);
+        lancaCanonicalBridge.conceroReceive(
+            DEFAULT_MESSAGE_ID,
+            SRC_CHAIN_SELECTOR,
+            abi.encode(lancaBridgeL1Mock),
+            message
+        );
+    }
+
     function test_conceroReceive_WithCall() public {
         string memory testString = "LancaCanonicalBridgeL1";
-
-        assertTrue(lcBridgeClient.supportsInterface(type(ILancaCanonicalBridgeClient).interfaceId));
 
         LCBridgeCallData memory lcbCallData = LCBridgeCallData({
             tokenReceiver: address(lcBridgeClient),

@@ -9,7 +9,7 @@ pragma solidity 0.8.28;
 import {Utils} from "@concero/messaging-contracts-v2/contracts/common/libraries/Utils.sol";
 
 import {ILancaCanonicalBridgeClient} from "../interfaces/ILancaCanonicalBridgeClient.sol";
-import {LancaCanonicalBridgeBase, ConceroClient, CommonErrors, ConceroTypes, IConceroRouter} from "./LancaCanonicalBridgeBase.sol";
+import {LancaCanonicalBridgeBase, ConceroClient, CommonErrors, ConceroTypes, IConceroRouter, LCBridgeCallData} from "./LancaCanonicalBridgeBase.sol";
 import {ReentrancyGuard} from "../common/ReentrancyGuard.sol";
 
 contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
@@ -63,21 +63,22 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
     ) internal override nonReentrant {
         address tokenSender;
         uint256 amount;
-        address target;
-        bytes memory data;
+        LCBridgeCallData memory lcbCallData;
 
         if (message.length > 64) {
-            (tokenSender, amount, target, data) = abi.decode(
+            (tokenSender, amount, lcbCallData) = abi.decode(
                 message,
-                (address, uint256, address, bytes)
+                (address, uint256, LCBridgeCallData)
             );
         } else {
             (tokenSender, amount) = abi.decode(message, (address, uint256));
         }
 
-        if (target != address(0) && Utils.isContract(target)) {
-            _mintToken(target, amount);
-            _externalCall(tokenSender, amount, target, data);
+        if (
+            lcbCallData.tokenReceiver != address(0) && Utils.isContract(lcbCallData.tokenReceiver)
+        ) {
+            _mintToken(lcbCallData.tokenReceiver, amount);
+            _externalCall(tokenSender, amount, lcbCallData.tokenReceiver, lcbCallData.receiverData);
         } else {
             _mintToken(tokenSender, amount);
         }
@@ -99,7 +100,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
     function _externalCall(
         address tokenSender,
         uint256 amount,
-        address target,
+        address tokenReceiver,
         bytes memory data
     ) internal {
         bytes memory callData = abi.encodeWithSelector(
@@ -113,7 +114,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         uint256 callGas = (gasleft() * 63) / 64;
 
         (bool callResult, bytes memory returnData) = Utils.safeCall(
-            target,
+            tokenReceiver,
             callGas,
             0,
             MAX_RET_BYTES,

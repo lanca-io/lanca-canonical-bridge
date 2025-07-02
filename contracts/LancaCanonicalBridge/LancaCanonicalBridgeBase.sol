@@ -14,6 +14,11 @@ import {ConceroTypes} from "@concero/messaging-contracts-v2/contracts/ConceroCli
 
 import {IFiatTokenV1} from "../interfaces/IFiatTokenV1.sol";
 
+struct LCBridgeCallData {
+    address tokenReceiver;
+    bytes receiverData;
+}
+
 abstract contract LancaCanonicalBridgeBase is ConceroClient, ConceroOwnable {
     IFiatTokenV1 internal immutable i_usdc;
 

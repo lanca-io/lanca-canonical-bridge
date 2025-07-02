@@ -7,7 +7,7 @@
 pragma solidity 0.8.28;
 
 import {Storage as s} from "./libraries/Storage.sol";
-import {LancaCanonicalBridgeBase, ConceroClient, CommonErrors, ConceroTypes, IConceroRouter} from "./LancaCanonicalBridgeBase.sol";
+import {LancaCanonicalBridgeBase, ConceroClient, CommonErrors, ConceroTypes, IConceroRouter, LCBridgeCallData} from "./LancaCanonicalBridgeBase.sol";
 import {ILancaCanonicalBridgePool} from "../interfaces/ILancaCanonicalBridgePool.sol";
 import {ReentrancyGuard} from "../common/ReentrancyGuard.sol";
 
@@ -28,7 +28,8 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         uint256 amount,
         uint24 dstChainSelector,
         address /* feeToken */,
-        ConceroTypes.EvmDstChainData memory dstChainData
+        ConceroTypes.EvmDstChainData memory dstChainData,
+        LCBridgeCallData memory lcbCallData
     ) external payable nonReentrant returns (bytes32 messageId) {
         require(amount > 0, CommonErrors.InvalidAmount());
 
@@ -38,13 +39,23 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         require(pool != address(0), PoolNotFound(dstChainSelector));
         require(lane != address(0) && dstChainData.receiver == lane, InvalidLane());
 
+        // check fee
         uint256 fee = getMessageFee(dstChainSelector, address(0), dstChainData);
         require(msg.value >= fee, InsufficientFee(msg.value, fee));
 
+        // deposit token to pool
         bool success = ILancaCanonicalBridgePool(pool).deposit(msg.sender, amount);
         require(success, CommonErrors.TransferFailed());
 
-        bytes memory message = abi.encode(msg.sender, amount);
+        // prepare message
+        bytes memory message;
+        if (lcbCallData.tokenReceiver != address(0)) {
+            message = abi.encode(msg.sender, amount, lcbCallData);
+        } else {
+            message = abi.encode(msg.sender, amount);
+        }
+
+        // send message
         messageId = IConceroRouter(i_conceroRouter).conceroSend{value: msg.value}(
             dstChainSelector,
             false,

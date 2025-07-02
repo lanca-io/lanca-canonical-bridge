@@ -66,7 +66,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         uint256 amount;
         LCBridgeCallData memory lcbCallData;
 
-		// decode the message
+        // decode the message
         if (message.length > 64) {
             (tokenSender, amount, lcbCallData) = abi.decode(
                 message,
@@ -76,7 +76,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
             (tokenSender, amount) = abi.decode(message, (address, uint256));
         }
 
-		// check if the receiver is a valid LCB receiver
+        // check if the receiver is a valid LCB receiver
         bool isValidLCBReceiver;
         if (lcbCallData.tokenReceiver != address(0)) {
             isValidLCBReceiver =
@@ -86,11 +86,23 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
                 );
         }
 
-		// if the receiver is a valid LancaCanonicalBridge receiver, 
-		// mint the token and call the external function
+        // if the receiver is a valid LancaCanonicalBridge receiver,
+        // mint the token and call receive function
         if (isValidLCBReceiver) {
             _mintToken(lcbCallData.tokenReceiver, amount);
-            _externalCall(tokenSender, amount, lcbCallData.tokenReceiver, lcbCallData.receiverData);
+
+            bytes4 selector = ILancaCanonicalBridgeClient(lcbCallData.tokenReceiver)
+                .lancaCanonicalBridgeReceive(
+                    address(i_usdc),
+                    tokenSender,
+                    amount,
+                    lcbCallData.receiverData
+                );
+
+            require(
+                selector == ILancaCanonicalBridgeClient.lancaCanonicalBridgeReceive.selector,
+                ILancaCanonicalBridgeClient.CallFiled()
+            );
         } else {
             _mintToken(tokenSender, amount);
         }
@@ -107,38 +119,5 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
     function _mintToken(address to, uint256 amount) internal {
         bool success = i_usdc.mint(to, amount);
         require(success, CommonErrors.TransferFailed());
-    }
-
-    function _externalCall(
-        address tokenSender,
-        uint256 amount,
-        address tokenReceiver,
-        bytes memory data
-    ) internal {
-        bytes memory callData = abi.encodeWithSelector(
-            ILancaCanonicalBridgeClient.lancaCanonicalBridgeReceive.selector,
-            address(i_usdc),
-            tokenSender,
-            amount,
-            data
-        );
-
-        uint256 callGas = (gasleft() * 63) / 64;
-
-        (bool callResult, bytes memory returnData) = Utils.safeCall(
-            tokenReceiver,
-            callGas,
-            0,
-            MAX_RET_BYTES,
-            callData
-        );
-
-        if (callResult && returnData.length >= 32) {
-            bytes4 returnSelector = abi.decode(returnData, (bytes4));
-            require(
-                returnSelector == ILancaCanonicalBridgeClient.lancaCanonicalBridgeReceive.selector,
-                ILancaCanonicalBridgeClient.CallFiled()
-            );
-        }
     }
 }

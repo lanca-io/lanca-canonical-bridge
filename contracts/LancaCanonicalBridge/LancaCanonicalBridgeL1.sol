@@ -8,11 +8,10 @@ pragma solidity 0.8.28;
 
 import {Storage as s} from "./libraries/Storage.sol";
 import {LancaCanonicalBridgeBase, ConceroClient, CommonErrors, ConceroTypes, IConceroRouter, LCBridgeCallData} from "./LancaCanonicalBridgeBase.sol";
-import {RateLimiter} from "./RateLimiter.sol";
 import {ILancaCanonicalBridgePool} from "../interfaces/ILancaCanonicalBridgePool.sol";
 import {ReentrancyGuard} from "../common/ReentrancyGuard.sol";
 
-contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, RateLimiter, ReentrancyGuard {
+contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
     using s for s.L1Bridge;
 
     error InvalidLane();
@@ -23,8 +22,8 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, RateLimiter, Reentr
     constructor(
         address conceroRouter,
         address usdcAddress,
-        address rateLimitAdmin
-    ) LancaCanonicalBridgeBase(usdcAddress) ConceroClient(conceroRouter) RateLimiter(rateLimitAdmin) {}
+        address flowAdmin
+    ) LancaCanonicalBridgeBase(usdcAddress, flowAdmin) ConceroClient(conceroRouter) {}
 
     function sendToken(
         uint256 amount,
@@ -43,8 +42,8 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, RateLimiter, Reentr
         require(pool != address(0), PoolNotFound(dstChainSelector));
         require(lane != address(0) && dstChainData.receiver == lane, InvalidLane());
 
-        // Rate limiting check
-        _checkOutboundRateLimit(dstChainSelector, amount);
+        // Flow limiting check
+        _checkOutboundFlow(dstChainSelector, amount);
 
         // Process transfer and send message
         messageId = _processTransfer(amount, dstChainSelector, dstChainData, lcbCallData, pool);
@@ -92,7 +91,7 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, RateLimiter, Reentr
         address pool = s.l1Bridge().pools[srcChainSelector];
         require(pool != address(0), PoolNotFound(srcChainSelector));
 
-        _checkInboundRateLimit(srcChainSelector, amount);
+        _checkInboundFlow(srcChainSelector, amount);
 
         bool success = ILancaCanonicalBridgePool(pool).withdraw(tokenSender, amount);
         require(success, CommonErrors.TransferFailed());
@@ -148,19 +147,19 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, RateLimiter, Reentr
         return s.l1Bridge().lanes[dstChainSelector];
     }
 
-    function setOutboundRateLimit(
+    function setOutboundFlowLimit(
         uint24 dstChainSelector,
-        uint32 period,
-        uint128 maxAmountPerPeriod
-    ) public override onlyRateLimitAdmin {
-        super.setOutboundRateLimit(dstChainSelector, period, maxAmountPerPeriod);
+        uint128 maxAmount,
+        uint128 refillSpeed
+    ) public onlyFlowAdmin {
+        _setFlowLimit(dstChainSelector, maxAmount, refillSpeed, true);
     }
 
-    function setInboundRateLimit(
+    function setInboundFlowLimit(
         uint24 dstChainSelector,
-        uint32 period,
-        uint128 maxAmountPerPeriod
-    ) public override onlyRateLimitAdmin {
-        super.setInboundRateLimit(dstChainSelector, period, maxAmountPerPeriod);
+        uint128 maxAmount,
+        uint128 refillSpeed
+    ) public onlyFlowAdmin {
+        _setFlowLimit(dstChainSelector, maxAmount, refillSpeed, false);
     }
 }

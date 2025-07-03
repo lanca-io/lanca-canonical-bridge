@@ -183,26 +183,58 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
 
     function getOutboundRateLimitInfo(
         uint24 dstChainSelector
-    ) external view returns (uint256 usedAmount, uint256 period, uint256 availableAmount) {
+    )
+        external
+        view
+        returns (
+            uint128 usedAmount,
+            uint32 period,
+            uint128 maxAmountPerPeriod,
+            uint32 lastReset,
+            uint256 availableAmount
+        )
+    {
         s.RateLimits storage rateLimits = s.rateLimits();
 
         usedAmount = rateLimits.outboundRateLimit[dstChainSelector].used;
         period = rateLimits.outboundRateLimit[dstChainSelector].period;
-        availableAmount =
-            rateLimits.outboundRateLimit[dstChainSelector].maxAmountPerPeriod -
-            usedAmount;
+        maxAmountPerPeriod = rateLimits.outboundRateLimit[dstChainSelector].maxAmountPerPeriod;
+        lastReset = rateLimits.outboundRateLimit[dstChainSelector].lastReset;
+
+        availableAmount = RateLimiter.getAvailable(
+            maxAmountPerPeriod,
+            period,
+            lastReset,
+            usedAmount
+        );
     }
 
     function getInboundRateLimitInfo(
         uint24 dstChainSelector
-    ) external view returns (uint256 usedAmount, uint256 period, uint256 availableAmount) {
+    )
+        external
+        view
+        returns (
+            uint128 usedAmount,
+            uint32 period,
+            uint128 maxAmountPerPeriod,
+            uint32 lastReset,
+            uint256 availableAmount
+        )
+    {
         s.RateLimits storage rateLimits = s.rateLimits();
 
         usedAmount = rateLimits.inboundRateLimit[dstChainSelector].used;
         period = rateLimits.inboundRateLimit[dstChainSelector].period;
-        availableAmount =
-            rateLimits.inboundRateLimit[dstChainSelector].maxAmountPerPeriod -
-            usedAmount;
+        maxAmountPerPeriod = rateLimits.inboundRateLimit[dstChainSelector].maxAmountPerPeriod;
+        lastReset = rateLimits.inboundRateLimit[dstChainSelector].lastReset;
+
+        availableAmount = RateLimiter.getAvailable(
+            maxAmountPerPeriod,
+            period,
+            lastReset,
+            usedAmount
+        );
     }
 
     function addPools(

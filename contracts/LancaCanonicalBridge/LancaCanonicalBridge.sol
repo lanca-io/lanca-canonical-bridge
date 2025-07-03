@@ -8,13 +8,12 @@ pragma solidity 0.8.28;
 
 import {Utils} from "@concero/messaging-contracts-v2/contracts/common/libraries/Utils.sol";
 
-import {RateLimiter} from "./RateLimiter.sol";
 import {LancaCanonicalBridgeBase, ConceroClient, CommonErrors, ConceroTypes, IConceroRouter, LCBridgeCallData} from "./LancaCanonicalBridgeBase.sol";
 import {LancaCanonicalBridgeClient} from "../LancaCanonicalBridgeClient/LancaCanonicalBridgeClient.sol";
 import {ILancaCanonicalBridgeClient} from "../interfaces/ILancaCanonicalBridgeClient.sol";
 import {ReentrancyGuard} from "../common/ReentrancyGuard.sol";
 
-contract LancaCanonicalBridge is LancaCanonicalBridgeBase, RateLimiter, ReentrancyGuard {
+contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
     uint16 private constant MAX_RET_BYTES = 256;
 
     uint24 internal immutable i_dstChainSelector;
@@ -25,12 +24,8 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, RateLimiter, Reentran
         address conceroRouter,
         address usdcAddress,
         address lancaBridgeL1,
-        address rateLimitAdmin
-    )
-        LancaCanonicalBridgeBase(usdcAddress)
-        ConceroClient(conceroRouter)
-        RateLimiter(rateLimitAdmin)
-    {
+        address flowAdmin
+    ) LancaCanonicalBridgeBase(usdcAddress, flowAdmin) ConceroClient(conceroRouter) {
         i_dstChainSelector = dstChainSelector;
         i_lancaBridgeL1 = lancaBridgeL1;
     }
@@ -43,7 +38,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, RateLimiter, Reentran
         require(amount > 0, CommonErrors.InvalidAmount());
 
         // Check outbound rate limit
-        _checkOutboundRateLimit(i_dstChainSelector, amount);
+        _checkOutboundFlow(i_dstChainSelector, amount);
 
         // Process transfer and send message
         messageId = _processTransfer(amount, dstChainData);
@@ -104,7 +99,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, RateLimiter, Reentran
         }
 
         // Check inbound rate limit
-        _checkInboundRateLimit(srcChainSelector, amount);
+        _checkInboundFlow(srcChainSelector, amount);
 
         // check if the receiver is a valid LCB receiver
         bool isValidLCBReceiver;
@@ -151,45 +146,39 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, RateLimiter, Reentran
         require(success, CommonErrors.TransferFailed());
     }
 
-    function setInboundRateLimit(
-        uint32 period,
-        uint128 maxAmountPerPeriod
-    ) external onlyRateLimitAdmin {
-        setInboundRateLimit(i_dstChainSelector, period, maxAmountPerPeriod);
+    function setOutboundFlowLimit(uint128 maxAmount, uint128 refillSpeed) external onlyFlowAdmin {
+        _setFlowLimit(i_dstChainSelector, maxAmount, refillSpeed, true);
     }
 
-    function setOutboundRateLimit(
-        uint32 period,
-        uint128 maxAmountPerPeriod
-    ) external onlyRateLimitAdmin {
-        setOutboundRateLimit(i_dstChainSelector, period, maxAmountPerPeriod);
+    function setInboundFlowLimit(uint128 maxAmount, uint128 refillSpeed) external onlyFlowAdmin {
+        _setFlowLimit(i_dstChainSelector, maxAmount, refillSpeed, false);
     }
 
-    function getOutboundRateLimitInfo()
+    function getOutboundFlowInfo()
         external
         view
         returns (
-            uint128 usedAmount,
-            uint32 period,
-            uint128 maxAmountPerPeriod,
-            uint32 lastReset,
-            uint256 availableAmount
+            uint128 available,
+            uint128 maxAmount,
+            uint128 refillSpeed,
+            uint32 lastUpdate,
+            bool isActive
         )
     {
-        return getOutboundRateLimitInfo(i_dstChainSelector);
+        return getOutboundFlowInfo(i_dstChainSelector);
     }
 
-    function getInboundRateLimitInfo()
+    function getInboundFlowInfo()
         external
         view
         returns (
-            uint128 usedAmount,
-            uint32 period,
-            uint128 maxAmountPerPeriod,
-            uint32 lastReset,
-            uint256 availableAmount
+            uint128 available,
+            uint128 maxAmount,
+            uint128 refillSpeed,
+            uint32 lastUpdate,
+            bool isActive
         )
     {
-        return getInboundRateLimitInfo(i_dstChainSelector);
+        return getInboundFlowInfo(i_dstChainSelector);
     }
 }

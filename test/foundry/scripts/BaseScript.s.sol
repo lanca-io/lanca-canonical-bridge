@@ -34,8 +34,6 @@ abstract contract BaseScript is Script {
     uint256 public constant AMOUNT = 1e6;
     uint256 public constant GAS_LIMIT = 150_000;
 
-    uint32 public constant PERIOD = 3600; // 1 hour
-    uint32 public constant MAX_AMOUNT_PER_PERIOD = 1000e6; // 1000 USDT
     uint128 public constant MAX_FLOW_AMOUNT = 1000e6; // 1000 USDC max available amount
     uint128 public constant REFILL_SPEED = 10e6; // 10 USDC/sec refill speed
 

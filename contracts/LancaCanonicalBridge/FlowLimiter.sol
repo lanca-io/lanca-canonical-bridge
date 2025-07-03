@@ -23,11 +23,11 @@ abstract contract FlowLimiter {
     );
 
     struct FlowLimit {
-        uint128 available;
-        uint128 maxAmount;
-        uint128 refillSpeed;
-        uint32 lastUpdate;
-        bool isActive;
+        uint128 available; // Current available amount for transfers
+        uint128 maxAmount; // Maximum allowed flow amount
+        uint128 refillSpeed; // Amount added per second (refill rate)
+        uint32 lastUpdate; // Last update timestamp for refill calculations
+        bool isActive; // Whether flow limiting is enabled (false if maxAmount = 0)
     }
 
     address public immutable i_flowAdmin;
@@ -49,6 +49,7 @@ abstract contract FlowLimiter {
         uint128 refillSpeed,
         bool isOutbound
     ) internal {
+        // Validate: refill speed cannot exceed max amount to prevent overflow
         if (maxAmount > 0 && refillSpeed > maxAmount) {
             revert InvalidFlowConfig(maxAmount, refillSpeed);
         }
@@ -58,6 +59,7 @@ abstract contract FlowLimiter {
             ? limits.outboundFlows[dstChainSelector]
             : limits.inboundFlows[dstChainSelector];
 
+        // Update available amount based on time elapsed since last update
         if (flow.lastUpdate > 0) {
             _refillFlow(flow);
         }
@@ -67,10 +69,13 @@ abstract contract FlowLimiter {
         flow.isActive = maxAmount > 0;
         flow.lastUpdate = uint32(block.timestamp);
 
+        // Security: Cap available amount to new max when reducing limits
+        // Prevents bypass of new restrictions with previously accumulated amounts
         if (flow.available > maxAmount) {
             flow.available = maxAmount;
         }
 
+        // Initialize available amount for first-time setup
         if (flow.available == 0 && maxAmount > 0) {
             flow.available = maxAmount;
         }
@@ -96,12 +101,15 @@ abstract contract FlowLimiter {
 
         if (!flow.isActive) return;
 
+        // Update available amount with time-based refill before checking limits
         _refillFlow(flow);
 
+        // Enforce flow limit: revert if requested amount exceeds available
         if (flow.available < amount) {
             revert FlowLimitExceeded(amount, flow.available);
         }
 
+        // Consume the requested amount from available flow
         flow.available -= uint128(amount);
     }
 
@@ -109,9 +117,11 @@ abstract contract FlowLimiter {
         uint256 timeElapsed = block.timestamp - flow.lastUpdate;
         if (timeElapsed == 0) return;
 
+        // Calculate amount to add based on elapsed time and refill rate
         uint256 toAdd = timeElapsed * flow.refillSpeed;
         uint256 newAvailable = flow.available + toAdd;
 
+        // Cap at maximum amount to prevent overflow and maintain limits
         flow.available = uint128(newAvailable > flow.maxAmount ? flow.maxAmount : newAvailable);
         flow.lastUpdate = uint32(block.timestamp);
     }
@@ -163,10 +173,12 @@ abstract contract FlowLimiter {
             bool isActive
         )
     {
+        // Simulate refill for active flows to show current available amount
         if (flow.isActive && flow.lastUpdate > 0) {
             uint256 timeElapsed = block.timestamp - flow.lastUpdate;
             uint256 toAdd = timeElapsed * flow.refillSpeed;
             uint256 newAvailable = flow.available + toAdd;
+            // Apply maximum amount capping in simulation
             flow.available = uint128(newAvailable > flow.maxAmount ? flow.maxAmount : newAvailable);
         }
 

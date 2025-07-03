@@ -28,14 +28,18 @@ contract DeployLCBridgeL1 is LCBridgeL1BaseTest {
     }
 
     function deploy() public returns (address) {
-        address implementation = _deployImplementation(conceroRouter, usdc);
+        address implementation = _deployImplementation(conceroRouter, usdc, deployer);
         _deployProxy(implementation);
 
         return address(lancaCanonicalBridgeL1Proxy);
     }
 
-    function deploy(address _conceroRouter, address _usdc) public returns (address) {
-        address implementation = _deployImplementation(_conceroRouter, _usdc);
+    function deploy(
+        address _conceroRouter,
+        address _usdc,
+        address _rateLimitAdmin
+    ) public returns (address) {
+        address implementation = _deployImplementation(_conceroRouter, _usdc, _rateLimitAdmin);
         _deployProxy(implementation);
         return address(lancaCanonicalBridgeL1Proxy);
     }
@@ -52,11 +56,12 @@ contract DeployLCBridgeL1 is LCBridgeL1BaseTest {
 
     function _deployImplementation(
         address _conceroRouter,
-        address _usdc
+        address _usdc,
+        address _rateLimitAdmin
     ) internal returns (address) {
         vm.startPrank(deployer);
 
-        lancaCanonicalBridgeL1 = new LancaCanonicalBridgeL1(_conceroRouter, _usdc);
+        lancaCanonicalBridgeL1 = new LancaCanonicalBridgeL1(_conceroRouter, _usdc, _rateLimitAdmin);
         vm.stopPrank();
 
         return address(lancaCanonicalBridgeL1);

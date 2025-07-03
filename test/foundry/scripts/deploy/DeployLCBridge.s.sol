@@ -32,7 +32,8 @@ contract DeployLCBridge is LCBridgeBaseTest {
             SRC_CHAIN_SELECTOR,
             conceroRouter,
             usdcE,
-            lancaBridgeL1Mock
+            lancaBridgeL1Mock,
+            deployer
         );
         _deployProxy(implementation);
         return address(lancaCanonicalBridgeProxy);
@@ -42,13 +43,15 @@ contract DeployLCBridge is LCBridgeBaseTest {
         uint24 _dstChainSelector,
         address _conceroRouter,
         address _usdcE,
-        address _lancaBridgeL1
+        address _lancaBridgeL1,
+        address _rateLimitAdmin
     ) public returns (address) {
         address implementation = _deployImplementation(
             _dstChainSelector,
             _conceroRouter,
             _usdcE,
-            _lancaBridgeL1
+            _lancaBridgeL1,
+            _rateLimitAdmin
         );
         _deployProxy(implementation);
 
@@ -69,7 +72,8 @@ contract DeployLCBridge is LCBridgeBaseTest {
         uint24 _dstChainSelector,
         address _conceroRouter,
         address _usdcE,
-        address _lancaBridgeL1
+        address _lancaBridgeL1,
+        address _rateLimitAdmin
     ) internal returns (address) {
         vm.startPrank(deployer);
 
@@ -77,7 +81,8 @@ contract DeployLCBridge is LCBridgeBaseTest {
             _dstChainSelector,
             _conceroRouter,
             _usdcE,
-            _lancaBridgeL1
+            _lancaBridgeL1,
+            _rateLimitAdmin
         );
         vm.stopPrank();
 

@@ -130,7 +130,7 @@ contract SendTokenTest is LCBridgeTest {
         MaliciousToken maliciousToken = new MaliciousToken();
 
         LancaCanonicalBridge newBridge = LancaCanonicalBridge(
-            deploy(SRC_CHAIN_SELECTOR, conceroRouter, address(maliciousToken), lancaBridgeL1Mock)
+            deploy(SRC_CHAIN_SELECTOR, conceroRouter, address(maliciousToken), lancaBridgeL1Mock, deployer)
         );
 
         maliciousToken.setMinter(address(newBridge));

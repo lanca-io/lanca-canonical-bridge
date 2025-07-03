@@ -6,6 +6,8 @@
  */
 pragma solidity 0.8.28;
 
+import {CommonErrors} from "@concero/messaging-contracts-v2/contracts/common/CommonErrors.sol";
+
 import {Storage as s} from "./libraries/Storage.sol";
 
 abstract contract RateLimiter {
@@ -29,6 +31,20 @@ abstract contract RateLimiter {
         uint128 maxAmountPerPeriod;
         uint32 period;
         uint32 lastReset;
+    }
+
+    address public immutable i_rateLimitAdmin;
+
+    modifier onlyRateLimitAdmin() {
+        if (msg.sender != i_rateLimitAdmin) {
+            revert CommonErrors.Unauthorized();
+        }
+
+        _;
+    }
+
+    constructor(address _rateLimitAdmin) {
+        i_rateLimitAdmin = _rateLimitAdmin;
     }
 
     function setOutboundRateLimit(
@@ -66,7 +82,6 @@ abstract contract RateLimiter {
     )
         public
         view
-        virtual
         returns (
             uint128 usedAmount,
             uint32 period,
@@ -82,12 +97,7 @@ abstract contract RateLimiter {
         maxAmountPerPeriod = rateLimits.outboundRateLimit[dstChainSelector].maxAmountPerPeriod;
         lastReset = rateLimits.outboundRateLimit[dstChainSelector].lastReset;
 
-        availableAmount = _getAvailable(
-            maxAmountPerPeriod,
-            period,
-            lastReset,
-            usedAmount
-        );
+        availableAmount = _getAvailable(maxAmountPerPeriod, period, lastReset, usedAmount);
     }
 
     function getInboundRateLimitInfo(
@@ -95,7 +105,6 @@ abstract contract RateLimiter {
     )
         public
         view
-        virtual
         returns (
             uint128 usedAmount,
             uint32 period,
@@ -111,12 +120,7 @@ abstract contract RateLimiter {
         maxAmountPerPeriod = rateLimits.inboundRateLimit[dstChainSelector].maxAmountPerPeriod;
         lastReset = rateLimits.inboundRateLimit[dstChainSelector].lastReset;
 
-        availableAmount = _getAvailable(
-            maxAmountPerPeriod,
-            period,
-            lastReset,
-            usedAmount
-        );
+        availableAmount = _getAvailable(maxAmountPerPeriod, period, lastReset, usedAmount);
     }
 
     function _checkOutboundRateLimit(uint24 dstChainSelector, uint256 amount) internal {

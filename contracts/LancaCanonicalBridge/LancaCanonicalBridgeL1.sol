@@ -22,8 +22,9 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, RateLimiter, Reentr
 
     constructor(
         address conceroRouter,
-        address usdcAddress
-    ) LancaCanonicalBridgeBase(usdcAddress) ConceroClient(conceroRouter) {}
+        address usdcAddress,
+        address rateLimitAdmin
+    ) LancaCanonicalBridgeBase(usdcAddress) ConceroClient(conceroRouter) RateLimiter(rateLimitAdmin) {}
 
     function sendToken(
         uint256 amount,
@@ -151,7 +152,7 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, RateLimiter, Reentr
         uint24 dstChainSelector,
         uint32 period,
         uint128 maxAmountPerPeriod
-    ) public override onlyOwner {
+    ) public override onlyRateLimitAdmin {
         super.setOutboundRateLimit(dstChainSelector, period, maxAmountPerPeriod);
     }
 
@@ -159,7 +160,7 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, RateLimiter, Reentr
         uint24 dstChainSelector,
         uint32 period,
         uint128 maxAmountPerPeriod
-    ) public override onlyOwner {
+    ) public override onlyRateLimitAdmin {
         super.setInboundRateLimit(dstChainSelector, period, maxAmountPerPeriod);
     }
 }

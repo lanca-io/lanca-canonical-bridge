@@ -8,12 +8,13 @@ pragma solidity 0.8.28;
 
 import {Utils} from "@concero/messaging-contracts-v2/contracts/common/libraries/Utils.sol";
 
+import {RateLimiter} from "./RateLimiter.sol";
+import {LancaCanonicalBridgeBase, ConceroClient, CommonErrors, ConceroTypes, IConceroRouter, LCBridgeCallData} from "./LancaCanonicalBridgeBase.sol";
 import {LancaCanonicalBridgeClient} from "../LancaCanonicalBridgeClient/LancaCanonicalBridgeClient.sol";
 import {ILancaCanonicalBridgeClient} from "../interfaces/ILancaCanonicalBridgeClient.sol";
-import {LancaCanonicalBridgeBase, ConceroClient, CommonErrors, ConceroTypes, IConceroRouter, LCBridgeCallData} from "./LancaCanonicalBridgeBase.sol";
 import {ReentrancyGuard} from "../common/ReentrancyGuard.sol";
 
-contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
+contract LancaCanonicalBridge is LancaCanonicalBridgeBase, RateLimiter, ReentrancyGuard {
     uint16 private constant MAX_RET_BYTES = 256;
 
     uint24 internal immutable i_dstChainSelector;
@@ -23,8 +24,13 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         uint24 dstChainSelector,
         address conceroRouter,
         address usdcAddress,
-        address lancaBridgeL1
-    ) LancaCanonicalBridgeBase(usdcAddress) ConceroClient(conceroRouter) {
+        address lancaBridgeL1,
+        address rateLimitAdmin
+    )
+        LancaCanonicalBridgeBase(usdcAddress)
+        ConceroClient(conceroRouter)
+        RateLimiter(rateLimitAdmin)
+    {
         i_dstChainSelector = dstChainSelector;
         i_lancaBridgeL1 = lancaBridgeL1;
     }
@@ -119,5 +125,47 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
     function _mintToken(address to, uint256 amount) internal {
         bool success = i_usdc.mint(to, amount);
         require(success, CommonErrors.TransferFailed());
+    }
+
+    function setInboundRateLimit(
+        uint32 period,
+        uint128 maxAmountPerPeriod
+    ) external onlyRateLimitAdmin {
+        setInboundRateLimit(i_dstChainSelector, period, maxAmountPerPeriod);
+    }
+
+    function setOutboundRateLimit(
+        uint32 period,
+        uint128 maxAmountPerPeriod
+    ) external onlyRateLimitAdmin {
+        setOutboundRateLimit(i_dstChainSelector, period, maxAmountPerPeriod);
+    }
+
+    function getOutboundRateLimitInfo()
+        external
+        view
+        returns (
+            uint128 usedAmount,
+            uint32 period,
+            uint128 maxAmountPerPeriod,
+            uint32 lastReset,
+            uint256 availableAmount
+        )
+    {
+        return getOutboundRateLimitInfo(i_dstChainSelector);
+    }
+
+    function getInboundRateLimitInfo()
+        external
+        view
+        returns (
+            uint128 usedAmount,
+            uint32 period,
+            uint128 maxAmountPerPeriod,
+            uint32 lastReset,
+            uint256 availableAmount
+        )
+    {
+        return getInboundRateLimitInfo(i_dstChainSelector);
     }
 }

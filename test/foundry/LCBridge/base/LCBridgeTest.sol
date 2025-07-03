@@ -26,6 +26,18 @@ abstract contract LCBridgeTest is DeployLCBridge, BridgeTest {
         MockUSDCe(usdcE).mintTo(user, AMOUNT);
 
         vm.deal(user, 1e18);
+
+        vm.startPrank(deployer);
+        LancaCanonicalBridge(address(lancaCanonicalBridge)).setOutboundFlowLimit(
+            MAX_FLOW_AMOUNT,
+            REFILL_SPEED
+        );
+
+        LancaCanonicalBridge(address(lancaCanonicalBridge)).setInboundFlowLimit(
+            MAX_FLOW_AMOUNT,
+            REFILL_SPEED
+        );
+        vm.stopPrank();
     }
 
     function _approveBridge(uint256 amount) internal {

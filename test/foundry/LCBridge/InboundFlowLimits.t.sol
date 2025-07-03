@@ -175,8 +175,20 @@ contract InboundFlowLimitsTest is LCBridgeTest {
         vm.prank(deployer);
         LancaCanonicalBridge(address(lancaCanonicalBridge)).setInboundFlowLimit(0, REFILL_SPEED);
 
-        // Should be able to receive unlimited amounts
-        _performReceive(5000 * 1e6);
+        // Transfers should be blocked when maxAmount = 0 (soft pause)
+        bytes memory message = abi.encode(user, 1000 * 1e6);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(FlowLimiter.FlowLimitExceeded.selector, 1000 * 1e6, 0)
+        );
+
+        vm.prank(conceroRouter);
+        LancaCanonicalBridge(address(lancaCanonicalBridge)).conceroReceive(
+            DEFAULT_MESSAGE_ID,
+            SRC_CHAIN_SELECTOR,
+            abi.encode(lancaBridgeL1Mock),
+            message
+        );
 
         (uint128 available, uint128 maxAmount, , , bool isActive) = LancaCanonicalBridge(
             address(lancaCanonicalBridge)
@@ -196,6 +208,25 @@ contract InboundFlowLimitsTest is LCBridgeTest {
             50e6, // maxAmount
             100e6 // refillSpeed > maxAmount
         );
+
+        // But it should be allowed when maxAmount = 0 (disabled state)
+        vm.prank(deployer);
+        LancaCanonicalBridge(address(lancaCanonicalBridge)).setInboundFlowLimit(
+            0, // maxAmount = 0 (disabled)
+            100e6 // refillSpeed can be anything when disabled
+        );
+
+        (
+            uint128 available,
+            uint128 maxAmount,
+            uint128 refillSpeed,
+            ,
+            bool isActive
+        ) = LancaCanonicalBridge(address(lancaCanonicalBridge)).getInboundFlowInfo();
+        assertEq(maxAmount, 0);
+        assertEq(refillSpeed, 100e6);
+        assertFalse(isActive);
+        assertEq(available, 0);
     }
 
     function test_inboundFlowLimit_PartialRefill() public {

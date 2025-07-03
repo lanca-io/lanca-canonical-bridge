@@ -173,8 +173,20 @@ contract OutboundFlowLimitsTest is LCBridgeTest {
         vm.prank(deployer);
         LancaCanonicalBridge(address(lancaCanonicalBridge)).setOutboundFlowLimit(0, REFILL_SPEED);
 
-        // Should be able to transfer unlimited amounts
-        _performTransfer(5000 * 1e6);
+        // Transfers should be blocked when maxAmount = 0 (soft pause)
+        uint256 messageFee = _getMessageFee();
+        vm.startPrank(user);
+        MockUSDCe(usdcE).approve(address(lancaCanonicalBridge), 1000 * 1e6);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(FlowLimiter.FlowLimitExceeded.selector, 1000 * 1e6, 0)
+        );
+        LancaCanonicalBridge(address(lancaCanonicalBridge)).sendToken{value: messageFee}(
+            1000 * 1e6,
+            address(0),
+            ConceroTypes.EvmDstChainData({receiver: lancaBridgeL1Mock, gasLimit: GAS_LIMIT})
+        );
+        vm.stopPrank();
 
         (uint128 available, uint128 maxAmount, , , bool isActive) = LancaCanonicalBridge(
             address(lancaCanonicalBridge)
@@ -194,6 +206,25 @@ contract OutboundFlowLimitsTest is LCBridgeTest {
             50e6, // maxAmount
             100e6 // refillSpeed > maxAmount
         );
+
+        // But it should be allowed when maxAmount = 0 (disabled state)
+        vm.prank(deployer);
+        LancaCanonicalBridge(address(lancaCanonicalBridge)).setOutboundFlowLimit(
+            0, // maxAmount = 0 (disabled)
+            100e6 // refillSpeed can be anything when disabled
+        );
+
+        (
+            uint128 available,
+            uint128 maxAmount,
+            uint128 refillSpeed,
+            ,
+            bool isActive
+        ) = LancaCanonicalBridge(address(lancaCanonicalBridge)).getOutboundFlowInfo();
+        assertEq(maxAmount, 0);
+        assertEq(refillSpeed, 100e6);
+        assertFalse(isActive);
+        assertEq(available, 0);
     }
 
     function test_outboundFlowLimit_PartialRefill() public {

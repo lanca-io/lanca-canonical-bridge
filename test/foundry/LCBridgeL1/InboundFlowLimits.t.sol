@@ -166,8 +166,11 @@ contract InboundFlowLimitsTest is LCBridgeL1Test {
         vm.prank(deployer);
         lancaCanonicalBridgeL1.setInboundFlowLimit(DST_CHAIN_SELECTOR, 0, 0);
 
-        // Any amount should pass when limit is disabled
-        _performInboundTransfer(5000 * 1e6);
+        // Transfers should be blocked when maxAmount = 0 (soft pause)
+        vm.expectRevert(
+            abi.encodeWithSelector(FlowLimiter.FlowLimitExceeded.selector, 1000 * 1e6, 0)
+        );
+        _performInboundTransfer(1000 * 1e6);
 
         (, uint128 maxAmount, uint128 refillSpeed, , bool isActive) = lancaCanonicalBridgeL1
             .getInboundFlowInfo(DST_CHAIN_SELECTOR);
@@ -187,6 +190,21 @@ contract InboundFlowLimitsTest is LCBridgeL1Test {
             100 * 1e6, // maxAmount
             200 * 1e6 // refillSpeed greater than maxAmount
         );
+
+        // But it should be allowed when maxAmount = 0 (disabled state)
+        vm.prank(deployer);
+        lancaCanonicalBridgeL1.setInboundFlowLimit(
+            DST_CHAIN_SELECTOR,
+            0, // maxAmount = 0 (disabled)
+            200 * 1e6 // refillSpeed can be anything when disabled
+        );
+
+        (, uint128 maxAmount, uint128 refillSpeed, , bool isActive) = lancaCanonicalBridgeL1
+            .getInboundFlowInfo(DST_CHAIN_SELECTOR);
+
+        assertEq(maxAmount, 0);
+        assertEq(refillSpeed, 200 * 1e6);
+        assertFalse(isActive);
     }
 
     function test_inboundFlowLimit_PartialRefill() public {

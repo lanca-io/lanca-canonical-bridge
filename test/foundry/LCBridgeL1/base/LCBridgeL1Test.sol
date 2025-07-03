@@ -28,6 +28,20 @@ abstract contract LCBridgeL1Test is DeployLCBridgeL1, BridgeTest {
 
         deal(address(usdc), user, AMOUNT);
         vm.deal(user, 1e18);
+
+        vm.startPrank(deployer);
+        lancaCanonicalBridgeL1.setOutboundFlowLimit(
+            DST_CHAIN_SELECTOR,
+            MAX_FLOW_AMOUNT,
+            REFILL_SPEED
+        );
+
+        lancaCanonicalBridgeL1.setInboundFlowLimit(
+            DST_CHAIN_SELECTOR,
+            MAX_FLOW_AMOUNT,
+            REFILL_SPEED
+        );
+        vm.stopPrank();
     }
 
     function _addDefaultPool() internal {

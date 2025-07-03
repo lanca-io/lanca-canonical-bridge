@@ -27,7 +27,6 @@ abstract contract FlowLimiter {
         uint128 maxAmount; // Maximum allowed flow amount
         uint128 refillSpeed; // Amount added per second (refill rate)
         uint32 lastUpdate; // Last update timestamp for refill calculations
-        bool isActive; // Whether flow limiting is enabled (false if maxAmount = 0)
     }
 
     address public immutable i_flowAdmin;
@@ -50,6 +49,7 @@ abstract contract FlowLimiter {
         bool isOutbound
     ) internal {
         // Validate: refill speed cannot exceed max amount to prevent overflow
+        // Only validate if maxAmount > 0, since 0 means transfers are disabled
         if (maxAmount > 0 && refillSpeed > maxAmount) {
             revert InvalidFlowConfig(maxAmount, refillSpeed);
         }
@@ -66,7 +66,6 @@ abstract contract FlowLimiter {
 
         flow.maxAmount = maxAmount;
         flow.refillSpeed = refillSpeed;
-        flow.isActive = maxAmount > 0;
         flow.lastUpdate = uint32(block.timestamp);
 
         // Security: Cap available amount to new max when reducing limits
@@ -99,7 +98,10 @@ abstract contract FlowLimiter {
             ? limits.outboundFlows[dstChainSelector]
             : limits.inboundFlows[dstChainSelector];
 
-        if (!flow.isActive) return;
+        // If maxAmount = 0, transfers are disabled (soft pause)
+        if (flow.maxAmount == 0) {
+            revert FlowLimitExceeded(amount, 0);
+        }
 
         // Update available amount with time-based refill before checking limits
         _refillFlow(flow);
@@ -174,7 +176,9 @@ abstract contract FlowLimiter {
         )
     {
         // Simulate refill for active flows to show current available amount
-        if (flow.isActive && flow.lastUpdate > 0) {
+        // isActive computed as maxAmount > 0
+        bool flowIsActive = flow.maxAmount > 0;
+        if (flowIsActive && flow.lastUpdate > 0) {
             uint256 timeElapsed = block.timestamp - flow.lastUpdate;
             uint256 toAdd = timeElapsed * flow.refillSpeed;
             uint256 newAvailable = flow.available + toAdd;
@@ -182,6 +186,6 @@ abstract contract FlowLimiter {
             flow.available = uint128(newAvailable > flow.maxAmount ? flow.maxAmount : newAvailable);
         }
 
-        return (flow.available, flow.maxAmount, flow.refillSpeed, flow.lastUpdate, flow.isActive);
+        return (flow.available, flow.maxAmount, flow.refillSpeed, flow.lastUpdate, flowIsActive);
     }
 }

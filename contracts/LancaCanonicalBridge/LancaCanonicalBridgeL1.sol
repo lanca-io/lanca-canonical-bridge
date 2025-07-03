@@ -10,9 +10,11 @@ import {Storage as s} from "./libraries/Storage.sol";
 import {LancaCanonicalBridgeBase, ConceroClient, CommonErrors, ConceroTypes, IConceroRouter, LCBridgeCallData} from "./LancaCanonicalBridgeBase.sol";
 import {ILancaCanonicalBridgePool} from "../interfaces/ILancaCanonicalBridgePool.sol";
 import {ReentrancyGuard} from "../common/ReentrancyGuard.sol";
+import {RateLimiter} from "../common/RateLimiter.sol";
 
 contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
     using s for s.L1Bridge;
+    using s for s.RateLimits;
 
     error InvalidLane();
     error PoolNotFound(uint24 dstChainSelector);
@@ -33,27 +35,84 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
     ) external payable nonReentrant returns (bytes32 messageId) {
         require(amount > 0, CommonErrors.InvalidAmount());
 
-        address pool = s.l1Bridge().pools[dstChainSelector];
-        address lane = s.l1Bridge().lanes[dstChainSelector];
+        s.L1Bridge storage bridge = s.l1Bridge();
 
+        // Get pool and lane
+        address pool = bridge.pools[dstChainSelector];
+        address lane = bridge.lanes[dstChainSelector];
         require(pool != address(0), PoolNotFound(dstChainSelector));
         require(lane != address(0) && dstChainData.receiver == lane, InvalidLane());
 
+        // Rate limiting check
+        _checkOutboundRateLimit(dstChainSelector, amount);
+
+        // Process transfer and send message
+        messageId = _processTransfer(amount, dstChainSelector, dstChainData, lcbCallData, pool);
+
+        emit TokenSent(messageId, lane, dstChainSelector, msg.sender, amount, msg.value);
+    }
+
+    function _checkOutboundRateLimit(uint24 dstChainSelector, uint256 amount) internal {
+        s.RateLimits storage rateLimits = s.rateLimits();
+
+        uint32 lastReset = rateLimits.outboundRateLimit[dstChainSelector].lastReset;
+        uint128 used = rateLimits.outboundRateLimit[dstChainSelector].used;
+
+        (uint32 newLastReset, uint128 newUsed) = RateLimiter.checkAndConsume(
+            rateLimits.outboundRateLimit[dstChainSelector].lastReset,
+            rateLimits.outboundRateLimit[dstChainSelector].period,
+            rateLimits.outboundRateLimit[dstChainSelector].used,
+            rateLimits.outboundRateLimit[dstChainSelector].maxAmountPerPeriod,
+            amount
+        );
+
+        if (newLastReset != lastReset) {
+            rateLimits.outboundRateLimit[dstChainSelector].lastReset = newLastReset;
+        }
+
+        if (newUsed != used) {
+            rateLimits.outboundRateLimit[dstChainSelector].used = newUsed;
+        }
+    }
+
+    function _checkInboundRateLimit(uint24 dstChainSelector, uint256 amount) internal {
+        s.RateLimits storage rateLimits = s.rateLimits();
+        uint32 lastReset = rateLimits.inboundRateLimit[dstChainSelector].lastReset;
+        uint128 used = rateLimits.inboundRateLimit[dstChainSelector].used;
+
+        (uint32 newLastReset, uint128 newUsed) = RateLimiter.checkAndConsume(
+            rateLimits.inboundRateLimit[dstChainSelector].lastReset,
+            rateLimits.inboundRateLimit[dstChainSelector].period,
+            rateLimits.inboundRateLimit[dstChainSelector].used,
+            rateLimits.inboundRateLimit[dstChainSelector].maxAmountPerPeriod,
+            amount
+        );
+
+        if (newLastReset != lastReset) {
+            rateLimits.inboundRateLimit[dstChainSelector].lastReset = newLastReset;
+        }
+
+        if (newUsed != used) {
+            rateLimits.inboundRateLimit[dstChainSelector].used = newUsed;
+        }
+    }
+
+    function _processTransfer(
+        uint256 amount,
+        uint24 dstChainSelector,
+        ConceroTypes.EvmDstChainData memory dstChainData,
+        LCBridgeCallData memory lcbCallData,
+        address pool
+    ) internal returns (bytes32 messageId) {
         // check fee
         uint256 fee = getMessageFee(dstChainSelector, address(0), dstChainData);
         require(msg.value >= fee, InsufficientFee(msg.value, fee));
 
-        // deposit token to pool
-        bool success = ILancaCanonicalBridgePool(pool).deposit(msg.sender, amount);
-        require(success, CommonErrors.TransferFailed());
-
-        // prepare message
-        bytes memory message;
-        if (lcbCallData.tokenReceiver != address(0)) {
-            message = abi.encode(msg.sender, amount, lcbCallData);
-        } else {
-            message = abi.encode(msg.sender, amount);
-        }
+        // deposit to pool
+        require(
+            ILancaCanonicalBridgePool(pool).deposit(msg.sender, amount),
+            CommonErrors.TransferFailed()
+        );
 
         // send message
         messageId = IConceroRouter(i_conceroRouter).conceroSend{value: msg.value}(
@@ -61,10 +120,10 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
             false,
             address(0),
             dstChainData,
-            message
+            lcbCallData.tokenReceiver == address(0) // get message
+                ? abi.encode(msg.sender, amount) // no receiver, no extra data
+                : abi.encode(msg.sender, amount, lcbCallData) // receiver, extra data
         );
-
-        emit TokenSent(messageId, lane, dstChainSelector, msg.sender, amount, fee);
     }
 
     function _conceroReceive(
@@ -78,6 +137,8 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         address pool = s.l1Bridge().pools[srcChainSelector];
         require(pool != address(0), PoolNotFound(srcChainSelector));
 
+        _checkInboundRateLimit(srcChainSelector, amount);
+
         bool success = ILancaCanonicalBridgePool(pool).withdraw(tokenSender, amount);
         require(success, CommonErrors.TransferFailed());
 
@@ -88,6 +149,60 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
             tokenSender,
             amount
         );
+    }
+
+    function setOutboundRateLimit(
+        uint24 dstChainSelector,
+        uint32 period,
+        uint128 maxAmountPerPeriod
+    ) external onlyOwner {
+        s.RateLimits storage rateLimits = s.rateLimits();
+
+        rateLimits.outboundRateLimit[dstChainSelector].period = period;
+        rateLimits.outboundRateLimit[dstChainSelector].maxAmountPerPeriod = maxAmountPerPeriod;
+        rateLimits.outboundRateLimit[dstChainSelector].lastReset = uint32(block.timestamp);
+        rateLimits.outboundRateLimit[dstChainSelector].used = 0;
+
+        emit RateLimiter.RateLimitOutboundConfigSet(dstChainSelector, period, maxAmountPerPeriod);
+    }
+
+    function setInboundRateLimit(
+        uint24 dstChainSelector,
+        uint32 period,
+        uint128 maxAmountPerPeriod
+    ) external onlyOwner {
+        s.RateLimits storage rateLimits = s.rateLimits();
+
+        rateLimits.inboundRateLimit[dstChainSelector].period = period;
+        rateLimits.inboundRateLimit[dstChainSelector].maxAmountPerPeriod = maxAmountPerPeriod;
+        rateLimits.inboundRateLimit[dstChainSelector].lastReset = uint32(block.timestamp);
+        rateLimits.inboundRateLimit[dstChainSelector].used = 0;
+
+        emit RateLimiter.RateLimitInboundConfigSet(dstChainSelector, period, maxAmountPerPeriod);
+    }
+
+    function getOutboundRateLimitInfo(
+        uint24 dstChainSelector
+    ) external view returns (uint256 usedAmount, uint256 period, uint256 availableAmount) {
+        s.RateLimits storage rateLimits = s.rateLimits();
+
+        usedAmount = rateLimits.outboundRateLimit[dstChainSelector].used;
+        period = rateLimits.outboundRateLimit[dstChainSelector].period;
+        availableAmount =
+            rateLimits.outboundRateLimit[dstChainSelector].maxAmountPerPeriod -
+            usedAmount;
+    }
+
+    function getInboundRateLimitInfo(
+        uint24 dstChainSelector
+    ) external view returns (uint256 usedAmount, uint256 period, uint256 availableAmount) {
+        s.RateLimits storage rateLimits = s.rateLimits();
+
+        usedAmount = rateLimits.inboundRateLimit[dstChainSelector].used;
+        period = rateLimits.inboundRateLimit[dstChainSelector].period;
+        availableAmount =
+            rateLimits.inboundRateLimit[dstChainSelector].maxAmountPerPeriod -
+            usedAmount;
     }
 
     function addPools(

@@ -10,7 +10,7 @@ pragma solidity 0.8.28;
 import {CommonErrors} from "@concero/messaging-contracts-v2/contracts/common/CommonErrors.sol";
 import {ConceroTypes} from "@concero/messaging-contracts-v2/contracts/ConceroClient/ConceroTypes.sol";
 
-import {RateLimiter} from "contracts/common/RateLimiter.sol";
+import {RateLimiter} from "contracts/LancaCanonicalBridge/RateLimiter.sol";
 
 import {LCBridgeL1Test} from "./base/LCBridgeL1Test.sol";
 import {MockUSDC} from "../mocks/MockUSDC.sol";

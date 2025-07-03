@@ -8,13 +8,12 @@ pragma solidity 0.8.28;
 
 import {Storage as s} from "./libraries/Storage.sol";
 import {LancaCanonicalBridgeBase, ConceroClient, CommonErrors, ConceroTypes, IConceroRouter, LCBridgeCallData} from "./LancaCanonicalBridgeBase.sol";
+import {RateLimiter} from "./RateLimiter.sol";
 import {ILancaCanonicalBridgePool} from "../interfaces/ILancaCanonicalBridgePool.sol";
 import {ReentrancyGuard} from "../common/ReentrancyGuard.sol";
-import {RateLimiter} from "../common/RateLimiter.sol";
 
-contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
+contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, RateLimiter, ReentrancyGuard {
     using s for s.L1Bridge;
-    using s for s.RateLimits;
 
     error InvalidLane();
     error PoolNotFound(uint24 dstChainSelector);
@@ -50,51 +49,6 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         messageId = _processTransfer(amount, dstChainSelector, dstChainData, lcbCallData, pool);
 
         emit TokenSent(messageId, lane, dstChainSelector, msg.sender, amount, msg.value);
-    }
-
-    function _checkOutboundRateLimit(uint24 dstChainSelector, uint256 amount) internal {
-        s.RateLimits storage rateLimits = s.rateLimits();
-
-        uint32 lastReset = rateLimits.outboundRateLimit[dstChainSelector].lastReset;
-        uint128 used = rateLimits.outboundRateLimit[dstChainSelector].used;
-
-        (uint32 newLastReset, uint128 newUsed) = RateLimiter.checkAndConsume(
-            rateLimits.outboundRateLimit[dstChainSelector].lastReset,
-            rateLimits.outboundRateLimit[dstChainSelector].period,
-            rateLimits.outboundRateLimit[dstChainSelector].used,
-            rateLimits.outboundRateLimit[dstChainSelector].maxAmountPerPeriod,
-            amount
-        );
-
-        if (newLastReset != lastReset) {
-            rateLimits.outboundRateLimit[dstChainSelector].lastReset = newLastReset;
-        }
-
-        if (newUsed != used) {
-            rateLimits.outboundRateLimit[dstChainSelector].used = newUsed;
-        }
-    }
-
-    function _checkInboundRateLimit(uint24 dstChainSelector, uint256 amount) internal {
-        s.RateLimits storage rateLimits = s.rateLimits();
-        uint32 lastReset = rateLimits.inboundRateLimit[dstChainSelector].lastReset;
-        uint128 used = rateLimits.inboundRateLimit[dstChainSelector].used;
-
-        (uint32 newLastReset, uint128 newUsed) = RateLimiter.checkAndConsume(
-            rateLimits.inboundRateLimit[dstChainSelector].lastReset,
-            rateLimits.inboundRateLimit[dstChainSelector].period,
-            rateLimits.inboundRateLimit[dstChainSelector].used,
-            rateLimits.inboundRateLimit[dstChainSelector].maxAmountPerPeriod,
-            amount
-        );
-
-        if (newLastReset != lastReset) {
-            rateLimits.inboundRateLimit[dstChainSelector].lastReset = newLastReset;
-        }
-
-        if (newUsed != used) {
-            rateLimits.inboundRateLimit[dstChainSelector].used = newUsed;
-        }
     }
 
     function _processTransfer(
@@ -151,92 +105,6 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         );
     }
 
-    function setOutboundRateLimit(
-        uint24 dstChainSelector,
-        uint32 period,
-        uint128 maxAmountPerPeriod
-    ) external onlyOwner {
-        s.RateLimits storage rateLimits = s.rateLimits();
-
-        rateLimits.outboundRateLimit[dstChainSelector].period = period;
-        rateLimits.outboundRateLimit[dstChainSelector].maxAmountPerPeriod = maxAmountPerPeriod;
-        rateLimits.outboundRateLimit[dstChainSelector].lastReset = uint32(block.timestamp);
-        rateLimits.outboundRateLimit[dstChainSelector].used = 0;
-
-        emit RateLimiter.RateLimitOutboundConfigSet(dstChainSelector, period, maxAmountPerPeriod);
-    }
-
-    function setInboundRateLimit(
-        uint24 dstChainSelector,
-        uint32 period,
-        uint128 maxAmountPerPeriod
-    ) external onlyOwner {
-        s.RateLimits storage rateLimits = s.rateLimits();
-
-        rateLimits.inboundRateLimit[dstChainSelector].period = period;
-        rateLimits.inboundRateLimit[dstChainSelector].maxAmountPerPeriod = maxAmountPerPeriod;
-        rateLimits.inboundRateLimit[dstChainSelector].lastReset = uint32(block.timestamp);
-        rateLimits.inboundRateLimit[dstChainSelector].used = 0;
-
-        emit RateLimiter.RateLimitInboundConfigSet(dstChainSelector, period, maxAmountPerPeriod);
-    }
-
-    function getOutboundRateLimitInfo(
-        uint24 dstChainSelector
-    )
-        external
-        view
-        returns (
-            uint128 usedAmount,
-            uint32 period,
-            uint128 maxAmountPerPeriod,
-            uint32 lastReset,
-            uint256 availableAmount
-        )
-    {
-        s.RateLimits storage rateLimits = s.rateLimits();
-
-        usedAmount = rateLimits.outboundRateLimit[dstChainSelector].used;
-        period = rateLimits.outboundRateLimit[dstChainSelector].period;
-        maxAmountPerPeriod = rateLimits.outboundRateLimit[dstChainSelector].maxAmountPerPeriod;
-        lastReset = rateLimits.outboundRateLimit[dstChainSelector].lastReset;
-
-        availableAmount = RateLimiter.getAvailable(
-            maxAmountPerPeriod,
-            period,
-            lastReset,
-            usedAmount
-        );
-    }
-
-    function getInboundRateLimitInfo(
-        uint24 dstChainSelector
-    )
-        external
-        view
-        returns (
-            uint128 usedAmount,
-            uint32 period,
-            uint128 maxAmountPerPeriod,
-            uint32 lastReset,
-            uint256 availableAmount
-        )
-    {
-        s.RateLimits storage rateLimits = s.rateLimits();
-
-        usedAmount = rateLimits.inboundRateLimit[dstChainSelector].used;
-        period = rateLimits.inboundRateLimit[dstChainSelector].period;
-        maxAmountPerPeriod = rateLimits.inboundRateLimit[dstChainSelector].maxAmountPerPeriod;
-        lastReset = rateLimits.inboundRateLimit[dstChainSelector].lastReset;
-
-        availableAmount = RateLimiter.getAvailable(
-            maxAmountPerPeriod,
-            period,
-            lastReset,
-            usedAmount
-        );
-    }
-
     function addPools(
         uint24[] calldata dstChainSelectors,
         address[] calldata pools
@@ -277,5 +145,21 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
 
     function getLane(uint24 dstChainSelector) external view returns (address) {
         return s.l1Bridge().lanes[dstChainSelector];
+    }
+
+    function setOutboundRateLimit(
+        uint24 dstChainSelector,
+        uint32 period,
+        uint128 maxAmountPerPeriod
+    ) public override onlyOwner {
+        super.setOutboundRateLimit(dstChainSelector, period, maxAmountPerPeriod);
+    }
+
+    function setInboundRateLimit(
+        uint24 dstChainSelector,
+        uint32 period,
+        uint128 maxAmountPerPeriod
+    ) public override onlyOwner {
+        super.setInboundRateLimit(dstChainSelector, period, maxAmountPerPeriod);
     }
 }

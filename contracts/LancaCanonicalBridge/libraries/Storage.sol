@@ -6,7 +6,7 @@
  */
 pragma solidity 0.8.28;
 
-import {RateLimiter} from "contracts/common/RateLimiter.sol";
+import {RateLimiter} from "../RateLimiter.sol";
 
 library Namespaces {
     bytes32 internal constant L1_BRIDGE =

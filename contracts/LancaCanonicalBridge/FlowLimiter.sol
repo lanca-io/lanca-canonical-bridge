@@ -61,7 +61,14 @@ abstract contract FlowLimiter {
 
         // Update available amount based on time elapsed since last update
         if (flow.lastUpdate > 0) {
-            _refillFlow(flow);
+            (uint128 newAvailable, uint32 newLastUpdate) = _refillFlow(
+                flow.available,
+                flow.refillSpeed,
+                flow.maxAmount,
+                flow.lastUpdate
+            );
+            flow.available = newAvailable;
+            flow.lastUpdate = newLastUpdate;
         }
 
         flow.maxAmount = maxAmount;
@@ -98,34 +105,55 @@ abstract contract FlowLimiter {
             ? limits.outboundFlows[dstChainSelector]
             : limits.inboundFlows[dstChainSelector];
 
+        uint128 maxAmount = flow.maxAmount;
+        uint32 lastUpdate = flow.lastUpdate;
+
         // If maxAmount = 0, transfers are disabled (soft pause)
-        if (flow.maxAmount == 0) {
+        if (maxAmount == 0) {
             revert FlowLimitExceeded(amount, 0);
         }
 
-        // Update available amount with time-based refill before checking limits
-        _refillFlow(flow);
+        // Update available amount with time-based refill
+        (uint128 newAvailable, uint32 newLastUpdate) = _refillFlow(
+            flow.available,
+            flow.refillSpeed,
+            maxAmount,
+            lastUpdate
+        );
 
         // Enforce flow limit: revert if requested amount exceeds available
-        if (flow.available < amount) {
-            revert FlowLimitExceeded(amount, flow.available);
+        if (newAvailable < amount) {
+            revert FlowLimitExceeded(amount, newAvailable);
         }
 
         // Consume the requested amount from available flow
-        flow.available -= uint128(amount);
+        newAvailable -= uint128(amount);
+
+        // Write back only the changed values
+        flow.available = newAvailable;
+        if (newLastUpdate != lastUpdate) {
+            flow.lastUpdate = newLastUpdate;
+        }
     }
 
-    function _refillFlow(FlowLimit storage flow) internal {
-        uint256 timeElapsed = block.timestamp - flow.lastUpdate;
-        if (timeElapsed == 0) return;
+    function _refillFlow(
+        uint128 available,
+        uint128 refillSpeed,
+        uint128 maxAmount,
+        uint32 lastUpdate
+    ) internal view returns (uint128 newAvailable, uint32 newLastUpdate) {
+        uint256 timeElapsed = block.timestamp - lastUpdate;
+        if (timeElapsed == 0) {
+            return (available, lastUpdate);
+        }
 
         // Calculate amount to add based on elapsed time and refill rate
-        uint256 toAdd = timeElapsed * flow.refillSpeed;
-        uint256 newAvailable = flow.available + toAdd;
+        uint256 toAdd = timeElapsed * refillSpeed;
+        uint256 totalAvailable = available + toAdd;
 
         // Cap at maximum amount to prevent overflow and maintain limits
-        flow.available = uint128(newAvailable > flow.maxAmount ? flow.maxAmount : newAvailable);
-        flow.lastUpdate = uint32(block.timestamp);
+        newAvailable = uint128(totalAvailable > maxAmount ? maxAmount : totalAvailable);
+        newLastUpdate = uint32(block.timestamp);
     }
 
     function getOutboundFlowInfo(

@@ -33,12 +33,7 @@ contract InboundFlowLimitsTest is LCBridgeTest {
 
     function test_setInboundFlowLimit_Success() public {
         vm.expectEmit(true, true, true, true);
-        emit FlowLimiter.FlowLimitSet(
-            SRC_CHAIN_SELECTOR,
-            false,
-            MAX_FLOW_AMOUNT,
-            REFILL_SPEED
-        );
+        emit FlowLimiter.FlowLimitSet(SRC_CHAIN_SELECTOR, false, MAX_FLOW_AMOUNT, REFILL_SPEED);
 
         vm.prank(deployer);
         LancaCanonicalBridge(address(lancaCanonicalBridge)).setInboundFlowLimit(
@@ -178,10 +173,7 @@ contract InboundFlowLimitsTest is LCBridgeTest {
 
     function test_inboundFlowLimit_DisabledWithZeroMaxAmount() public {
         vm.prank(deployer);
-        LancaCanonicalBridge(address(lancaCanonicalBridge)).setInboundFlowLimit(
-            0,
-            REFILL_SPEED
-        );
+        LancaCanonicalBridge(address(lancaCanonicalBridge)).setInboundFlowLimit(0, REFILL_SPEED);
 
         // Should be able to receive unlimited amounts
         _performReceive(5000 * 1e6);
@@ -229,6 +221,42 @@ contract InboundFlowLimitsTest is LCBridgeTest {
         (available, , , , ) = LancaCanonicalBridge(address(lancaCanonicalBridge))
             .getInboundFlowInfo();
         assertEq(available, 0);
+    }
+
+    function test_inboundFlowLimit_ReducingMaxAmountCapsAvailable() public {
+        vm.prank(deployer);
+        LancaCanonicalBridge(address(lancaCanonicalBridge)).setInboundFlowLimit(
+            MAX_FLOW_AMOUNT, // 1000 USDC
+            REFILL_SPEED
+        );
+
+        // Consume some flow, leaving 800 USDC available
+        _performReceive(200 * 1e6);
+
+        (uint128 availableBefore, , , , ) = LancaCanonicalBridge(address(lancaCanonicalBridge))
+            .getInboundFlowInfo();
+        assertEq(availableBefore, 800 * 1e6);
+
+        // Reduce max amount to 500 USDC (less than current available)
+        vm.prank(deployer);
+        LancaCanonicalBridge(address(lancaCanonicalBridge)).setInboundFlowLimit(
+            500e6, // 500 USDC (new limit)
+            REFILL_SPEED
+        );
+
+        // Available should be capped at new maxAmount
+        (uint128 availableAfter, uint128 maxAmount, , , ) = LancaCanonicalBridge(
+            address(lancaCanonicalBridge)
+        ).getInboundFlowInfo();
+        assertEq(maxAmount, 500e6);
+        assertEq(availableAfter, 500e6); // Capped at new limit, not 800
+
+        // Should only be able to receive up to the new limit
+        _performReceive(500 * 1e6);
+
+        (uint128 finalAvailable, , , , ) = LancaCanonicalBridge(address(lancaCanonicalBridge))
+            .getInboundFlowInfo();
+        assertEq(finalAvailable, 0);
     }
 
     // --- Helper functions ---

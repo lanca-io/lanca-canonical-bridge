@@ -221,6 +221,42 @@ contract OutboundFlowLimitsTest is LCBridgeTest {
         assertEq(available, 0);
     }
 
+    function test_outboundFlowLimit_ReducingMaxAmountCapsAvailable() public {
+        vm.prank(deployer);
+        LancaCanonicalBridge(address(lancaCanonicalBridge)).setOutboundFlowLimit(
+            MAX_FLOW_AMOUNT, // 1000 USDC
+            REFILL_SPEED
+        );
+
+        // Consume some flow, leaving 800 USDC available
+        _performTransfer(200 * 1e6);
+
+        (uint128 availableBefore, , , , ) = LancaCanonicalBridge(address(lancaCanonicalBridge))
+            .getOutboundFlowInfo();
+        assertEq(availableBefore, 800 * 1e6);
+
+        // Reduce max amount to 500 USDC (less than current available)
+        vm.prank(deployer);
+        LancaCanonicalBridge(address(lancaCanonicalBridge)).setOutboundFlowLimit(
+            500e6, // 500 USDC (new limit)
+            REFILL_SPEED
+        );
+
+        // Available should be capped at new maxAmount
+        (uint128 availableAfter, uint128 maxAmount, , , ) = LancaCanonicalBridge(
+            address(lancaCanonicalBridge)
+        ).getOutboundFlowInfo();
+        assertEq(maxAmount, 500e6);
+        assertEq(availableAfter, 500e6); // Capped at new limit, not 800
+
+        // Should only be able to transfer up to the new limit
+        _performTransfer(500 * 1e6);
+
+        (uint128 finalAvailable, , , , ) = LancaCanonicalBridge(address(lancaCanonicalBridge))
+            .getOutboundFlowInfo();
+        assertEq(finalAvailable, 0);
+    }
+
     // --- Helper functions ---
 
     function _performTransfer(uint256 amount) internal {

@@ -20,12 +20,8 @@ import {LancaCanonicalBridgeBase, LCBridgeCallData} from "contracts/LancaCanonic
 import {LancaCanonicalBridgeL1} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol";
 
 contract SendTokenL1Test is LCBridgeL1Test {
-    LCBridgeCallData lcbCallData;
-
     function setUp() public override {
         super.setUp();
-
-        lcbCallData = LCBridgeCallData({tokenReceiver: address(0), receiverData: ""});
     }
 
     function test_sendToken_RevertsInvalidAmount() public {

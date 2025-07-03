@@ -26,9 +26,7 @@ abstract contract LCBridgeL1Test is DeployLCBridgeL1, BridgeTest {
             DST_CHAIN_SELECTOR
         );
 
-        vm.prank(deployer);
-        MockUSDC(usdc).transfer(user, AMOUNT);
-
+        deal(address(usdc), user, AMOUNT);
         vm.deal(user, 1e18);
     }
 

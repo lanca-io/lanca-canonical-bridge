@@ -13,6 +13,8 @@ import {DeployMockUSDC} from "./deploy/DeployMockUSDC.s.sol";
 import {DeployMockUSDCe} from "./deploy/DeployMockUSDCe.s.sol";
 import {DeployMockConceroRouter} from "./deploy/DeployMockConceroRouter.s.sol";
 
+import {LCBridgeCallData} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
+
 abstract contract BaseScript is Script {
     address public immutable deployer;
     address public immutable proxyDeployer;
@@ -31,6 +33,11 @@ abstract contract BaseScript is Script {
 
     uint256 public constant AMOUNT = 1e6;
     uint256 public constant GAS_LIMIT = 150_000;
+
+    uint32 public constant PERIOD = 3600; // 1 hour
+    uint32 public constant MAX_AMOUNT_PER_PERIOD = 1000e6; // 1000 USDT
+
+    LCBridgeCallData public lcbCallData;
 
     constructor() {
         deployer = vm.envAddress("DEPLOYER_ADDRESS");

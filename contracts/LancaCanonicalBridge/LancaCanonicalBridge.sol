@@ -45,14 +45,34 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, RateLimiter, Reentran
         // Check outbound rate limit
         _checkOutboundRateLimit(i_dstChainSelector, amount);
 
+        // Process transfer and send message
+        messageId = _processTransfer(amount, dstChainData);
+
+        emit TokenSent(
+            messageId,
+            i_lancaBridgeL1,
+            i_dstChainSelector,
+            msg.sender,
+            amount,
+            msg.value
+        );
+    }
+
+    function _processTransfer(
+        uint256 amount,
+        ConceroTypes.EvmDstChainData memory dstChainData
+    ) internal returns (bytes32 messageId) {
+        // check fee
         uint256 fee = getMessageFee(i_dstChainSelector, address(0), dstChainData);
         require(msg.value >= fee, InsufficientFee(msg.value, fee));
 
+        // transfer tokens and burn
         bool success = i_usdc.transferFrom(msg.sender, address(this), amount);
         require(success, CommonErrors.TransferFailed());
 
         i_usdc.burn(amount);
 
+        // send message
         bytes memory message = abi.encode(msg.sender, amount);
         messageId = IConceroRouter(i_conceroRouter).conceroSend{value: msg.value}(
             i_dstChainSelector,
@@ -61,8 +81,6 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, RateLimiter, Reentran
             dstChainData,
             message
         );
-
-        emit TokenSent(messageId, i_lancaBridgeL1, i_dstChainSelector, msg.sender, amount, fee);
     }
 
     function _conceroReceive(

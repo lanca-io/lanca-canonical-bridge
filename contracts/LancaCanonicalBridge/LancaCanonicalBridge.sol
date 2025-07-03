@@ -42,6 +42,9 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, RateLimiter, Reentran
     ) external payable nonReentrant returns (bytes32 messageId) {
         require(amount > 0, CommonErrors.InvalidAmount());
 
+        // Check outbound rate limit
+        _checkOutboundRateLimit(i_dstChainSelector, amount);
+
         uint256 fee = getMessageFee(i_dstChainSelector, address(0), dstChainData);
         require(msg.value >= fee, InsufficientFee(msg.value, fee));
 
@@ -81,6 +84,9 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, RateLimiter, Reentran
         } else {
             (tokenSender, amount) = abi.decode(message, (address, uint256));
         }
+
+        // Check inbound rate limit
+        _checkInboundRateLimit(srcChainSelector, amount);
 
         // check if the receiver is a valid LCB receiver
         bool isValidLCBReceiver;

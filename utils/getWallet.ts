@@ -16,7 +16,7 @@ export function getWallet(
 			prefix = "DEPLOYER";
 			break;
 		case "flowAdmin":
-			prefix = "FEED_UPDATER"; // TODO: Remove this once we have a proper flow admin
+			prefix = "FLOW_ADMIN";
 			break;
 		default:
 			throw new Error(`Unknown account type: ${accountType}`);

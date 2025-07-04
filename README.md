@@ -22,7 +22,11 @@ yarn hardhat deploy-pool [--implementation] [--proxy] [--addpool] [--pause] --ch
 ```bash
 yarn hardhat add-lane --chain <destination_chain_name> --network <network_name>
 ```
-7. [ ] (L1, L2) Ready, transactions can be sent
+7. [ ] (L1) Set flow limits for new network
+```bash
+yarn hardhat set-flow-limits [--dstchain <chain_name>] [--outmax <amount>] [--outrefill <speed>] [--inmax <amount>] [--inrefill <speed>] --network <network_name>
+```
+8. [ ] (L1, L2) Ready, transactions can be sent
 ```bash
 yarn hardhat send-token --from <source_network> --to <destination_network> --amount <amount>
 ```

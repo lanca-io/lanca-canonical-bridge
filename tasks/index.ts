@@ -1,6 +1,6 @@
 import { addLaneTask } from "./addLane/addLaneTask";
 import { changeProxyAdminOwnerTask } from "./changeProxyAdminOwner/changeProxyAdminOwnerTask";
-import { configureMinterTask } from "./configureMinter/configureMinterTask";
+import { configureMinterTask } from "./deployFiatToken/configureMinterTask";
 import { deployBridgeL1Task } from "./deployBridge/deployBridgeL1Task";
 import { deployBridgeTask } from "./deployBridge/deployBridgeTask";
 import { setFlowLimitsTask } from "./deployBridge/setFlowLimitsTask";
@@ -12,6 +12,8 @@ import deployPauseTask from "./pause/deployPause.task";
 import { sendTokenTask } from "./sendToken/sendTokenTask";
 import updateAllBridges from "./updateAllBridges.task";
 import updateAllPools from "./updateAllPools.task";
+import  fiatTokenTransferOwnership  from "./deployFiatToken/transferOwnership.task";
+import  fiatTokenChangeAdmin  from "./deployFiatToken/changeAdmin.task";
 
 export default {
 	addLaneTask,
@@ -28,4 +30,6 @@ export default {
 	deployConceroPauseToAllChains,
 	updateAllPools,
 	updateAllBridges,
+	fiatTokenTransferOwnership,
+	fiatTokenChangeAdmin,
 };

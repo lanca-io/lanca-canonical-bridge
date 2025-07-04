@@ -13,6 +13,8 @@ interface SendTokenParams {
 	gasLimit: string;
 }
 
+const ADDRESS_ZERO = "0x0000000000000000000000000000000000000000";
+
 export async function sendToken(
 	hre: HardhatRuntimeEnvironment,
 	params: SendTokenParams,
@@ -92,6 +94,11 @@ export async function sendToken(
 		gasLimit: gasLimitBigInt,
 	};
 
+	const lcbCallData = {
+		tokenReceiver: ADDRESS_ZERO as `0x${string}`,
+		receiverData: "0x",
+	};
+
 	try {
 		log("Getting message fee...", "sendToken", srcChain);
 		const messageFee = await publicClient.readContract({
@@ -100,7 +107,7 @@ export async function sendToken(
 			functionName: "getMessageFee",
 			args: [
 				dstChainSelector,
-				"0x0000000000000000000000000000000000000000", // feeToken (ETH)
+				ADDRESS_ZERO, // feeToken (ETH)
 				dstChainData,
 			],
 		});
@@ -143,14 +150,15 @@ export async function sendToken(
 			sendTokenArgs = [
 				amountInWei,
 				dstChainSelector,
-				"0x0000000000000000000000000000000000000000", // feeToken
+				ADDRESS_ZERO, // feeToken
 				dstChainData,
+				lcbCallData,
 			];
 		} else {
 			// L2 contract: sendToken(amount, feeToken, dstChainData)
 			sendTokenArgs = [
 				amountInWei,
-				"0x0000000000000000000000000000000000000000", // feeToken
+				ADDRESS_ZERO, // feeToken
 				dstChainData,
 			];
 		}

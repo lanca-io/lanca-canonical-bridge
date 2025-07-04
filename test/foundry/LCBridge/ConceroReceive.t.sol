@@ -66,7 +66,7 @@ contract ConceroReceiveTest is LCBridgeTest {
         emit LancaCanonicalBridgeBase.TokenReceived(
             DEFAULT_MESSAGE_ID,
             SRC_CHAIN_SELECTOR,
-            address(bytes20(abi.encode(lancaBridgeL1Mock))),
+            address(lancaBridgeL1Mock),
             user,
             AMOUNT
         );

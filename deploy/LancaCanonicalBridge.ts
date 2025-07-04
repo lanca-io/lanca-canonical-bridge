@@ -55,7 +55,7 @@ const deployLancaCanonicalBridge: DeploymentFunction = async function (
 	}
 
 	// TODO: Remove this once we have a proper flow admin
-	const flowAdmin = getEnvVar(`FEED_UPDATER_ADDRESS`);
+	const flowAdmin = getEnvVar(`TESTNET_FEED_UPDATER_ADDRESS`);
 	if (!flowAdmin) {
 		throw new Error(
 			`Flow admin address not found. Set FEED_UPDATER_ADDRESS in environment variables.`,

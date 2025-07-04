@@ -14,8 +14,6 @@ import {ILancaCanonicalBridgeClient} from "../interfaces/ILancaCanonicalBridgeCl
 import {ReentrancyGuard} from "../common/ReentrancyGuard.sol";
 
 contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
-    uint16 private constant MAX_RET_BYTES = 256;
-
     uint24 internal immutable i_dstChainSelector;
     address internal immutable i_lancaBridgeL1;
 

@@ -9,6 +9,7 @@ import { getEnvVar, log, updateEnvVariable } from "../utils/";
 type DeployArgs = {
 	conceroRouter: string;
 	usdcAddress: string;
+	flowAdmin: string;
 };
 
 type DeploymentFunction = (
@@ -43,9 +44,18 @@ const deployLancaCanonicalBridgeL1: DeploymentFunction = async function (
 		);
 	}
 
+	// TODO: Remove this once we have a proper flow admin
+	const flowAdmin = getEnvVar(`FEED_UPDATER_ADDRESS`);
+	if (!flowAdmin) {
+		throw new Error(
+			`Flow admin address not found. Set FEED_UPDATER_ADDRESS in environment variables.`,
+		);
+	}
+
 	const defaultArgs: DeployArgs = {
 		conceroRouter: conceroRouterAddress,
 		usdcAddress: usdcAddress,
+		flowAdmin: flowAdmin,
 	};
 
 	const args: DeployArgs = {
@@ -59,7 +69,7 @@ const deployLancaCanonicalBridgeL1: DeploymentFunction = async function (
 
 	const deployment = await deploy("LancaCanonicalBridgeL1", {
 		from: deployer,
-		args: [args.conceroRouter, args.usdcAddress],
+		args: [args.conceroRouter, args.usdcAddress, args.flowAdmin],
 		log: true,
 		autoMine: true,
 	});

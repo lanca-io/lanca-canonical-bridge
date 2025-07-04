@@ -7,10 +7,11 @@ import { conceroNetworks } from "../constants";
 import { getEnvVar, getGasParameters, log, updateEnvVariable } from "../utils/";
 
 type DeployArgs = {
-    dstChainSelector: bigint;
+	dstChainSelector: bigint;
 	conceroRouter: string;
 	usdcAddress: string;
-    lane: string;
+	lane: string;
+	flowAdmin: string;
 };
 
 type DeploymentFunction = (
@@ -29,7 +30,7 @@ const deployLancaCanonicalBridge: DeploymentFunction = async function (
 	const { name } = hre.network;
 
 	const chain = conceroNetworks[name];
-    const dstChain = conceroNetworks[dstChainName];
+	const dstChain = conceroNetworks[dstChainName];
 	const { type: networkType } = chain;
 
 	const conceroRouterAddress = getEnvVar(`CONCERO_ROUTER_PROXY_${getNetworkEnvKey(name)}`);
@@ -46,18 +47,27 @@ const deployLancaCanonicalBridge: DeploymentFunction = async function (
 		);
 	}
 
-    const lane = getEnvVar(`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChainName)}`);
-    if (!lane) {
-        throw new Error(
-            `Lane address not found. Set LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChainName)} in environment variables.`,
-        );
-    }
+	const lane = getEnvVar(`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChainName)}`);
+	if (!lane) {
+		throw new Error(
+			`Lane address not found. Set LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChainName)} in environment variables.`,
+		);
+	}
+
+	// TODO: Remove this once we have a proper flow admin
+	const flowAdmin = getEnvVar(`FEED_UPDATER_ADDRESS`);
+	if (!flowAdmin) {
+		throw new Error(
+			`Flow admin address not found. Set FEED_UPDATER_ADDRESS in environment variables.`,
+		);
+	}
 
 	const defaultArgs: DeployArgs = {
 		dstChainSelector: BigInt(dstChain.chainId),
 		conceroRouter: conceroRouterAddress,
 		usdcAddress: usdcAddress,
-        lane: lane,
+		lane: lane,
+		flowAdmin: flowAdmin,
 	};
 
 	const args: DeployArgs = {
@@ -65,15 +75,21 @@ const deployLancaCanonicalBridge: DeploymentFunction = async function (
 		...overrideArgs,
 	};
 
-	log(`Deploying LancaCanonicalBridge with args:`, "deployLancaCanonicalBridge", name)
-    log(`  dstChainSelector: ${args.dstChainSelector}`, "deployLancaCanonicalBridge", name);
+	log(`Deploying LancaCanonicalBridge with args:`, "deployLancaCanonicalBridge", name);
+	log(`  dstChainSelector: ${args.dstChainSelector}`, "deployLancaCanonicalBridge", name);
 	log(`  conceroRouter: ${args.conceroRouter}`, "deployLancaCanonicalBridge", name);
 	log(`  usdcAddress: ${args.usdcAddress}`, "deployLancaCanonicalBridge", name);
-    log(`  lane: ${args.lane}`, "deployLancaCanonicalBridge", name);
+	log(`  lane: ${args.lane}`, "deployLancaCanonicalBridge", name);
 
 	const deployment = await deploy("LancaCanonicalBridge", {
 		from: deployer,
-		args: [args.dstChainSelector, args.conceroRouter, args.usdcAddress, args.lane],
+		args: [
+			args.dstChainSelector,
+			args.conceroRouter,
+			args.usdcAddress,
+			args.lane,
+			args.flowAdmin,
+		],
 		log: true,
 		autoMine: true,
 	});

@@ -3,7 +3,7 @@ import { warn } from "./log";
 
 export function getWallet(
 	chainType: ConceroNetworkType,
-	accountType: "proxyDeployer" | "deployer",
+	accountType: "proxyDeployer" | "deployer" | "flowAdmin",
 	walletType: "privateKey" | "address",
 ) {
 	let prefix;
@@ -14,6 +14,9 @@ export function getWallet(
 			break;
 		case "deployer":
 			prefix = "DEPLOYER";
+			break;
+		case "flowAdmin":
+			prefix = "FEED_UPDATER"; // TODO: Remove this once we have a proper flow admin
 			break;
 		default:
 			throw new Error(`Unknown account type: ${accountType}`);

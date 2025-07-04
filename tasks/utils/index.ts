@@ -7,3 +7,4 @@ export { configureMinterTest } from "./configureMinterTest";
 export { addPool } from "./addPool";
 export { addLane } from "./addLane";
 export { sendToken } from "./sendToken";
+export { setFlowLimits } from "./setFlowLimits";

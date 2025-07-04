@@ -184,6 +184,35 @@ yarn hardhat send-token --dstchain arbitrumSepolia --amount 10.5 --gaslimit 2000
 yarn hardhat send-token --dstchain baseSepolia --amount 5 --gaslimit 150000 --network arbitrumSepolia
 ```
 
+### Set Flow Limits
+Set flow limits for LancaCanonicalBridge contracts (both L1 and L2).
+
+```bash
+yarn hardhat set-flow-limits [--dstchain <chain_name>] [--outmax <amount>] [--outrefill <speed>] [--inmax <amount>] [--inrefill <speed>] --network <network_name>
+```
+
+**Parameters:**
+- `--dstchain` - Destination chain name (required for L1 bridge, omit for L2 bridge)
+- `--outmax` - Maximum outbound flow amount (in USDC)
+- `--outrefill` - Outbound refill speed (USDC per second)
+- `--inmax` - Maximum inbound flow amount (in USDC)
+- `--inrefill` - Inbound refill speed (USDC per second)
+
+**Examples:**
+```bash
+# Set flow limits for L1 bridge (with destination chain name)
+yarn hardhat set-flow-limits --dstchain base --outmax 1000000 --outrefill 10 --inmax 1000000 --inrefill 10 --network ethereum
+
+# Set flow limits for L2 bridge (without destination chain name)
+yarn hardhat set-flow-limits --outmax 500000 --outrefill 5 --inmax 500000 --inrefill 5 --network baseSepolia
+
+# Set only outbound flow limits
+yarn hardhat set-flow-limits --dstchain arbitrum --outmax 250000 --outrefill 2 --network ethereum
+
+# Set only inbound flow limits for L2
+yarn hardhat set-flow-limits --inmax 100000 --inrefill 1 --network arbitrumSepolia
+```
+
 ### Mint Test USDC
 Mint Test USDC tokens to a specified address.
 

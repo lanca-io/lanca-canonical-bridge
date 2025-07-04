@@ -8,8 +8,9 @@ import { deployPoolTask } from "./deployPool/deployPoolTask";
 import { mintTestUsdcTask } from "./mintTestUsdc/mintTestUsdcTask";
 import deployConceroPauseToAllChains from "./pause/deployConceroPauseToAllChains";
 import { sendTokenTask } from "./sendToken/sendTokenTask";
-import updateAllPools from "./updateAllPools.task";
+import { setFlowLimitsTask } from "./setFlowLimits/setFlowLimitsTask";
 import updateAllBridges from "./updateAllBridges.task";
+import updateAllPools from "./updateAllPools.task";
 
 export default {
 	addLaneTask,
@@ -20,6 +21,7 @@ export default {
 	configureMinterTask,
 	mintTestUsdcTask,
 	sendTokenTask,
+	setFlowLimitsTask,
 	deployPauseTask,
 	deployConceroPauseToAllChains,
 	updateAllPools,

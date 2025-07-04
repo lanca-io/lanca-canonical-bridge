@@ -7,6 +7,8 @@ import { getNetworkEnvKey } from "@concero/contract-utils";
 import { conceroNetworks, getViemReceiptConfig } from "../../constants";
 import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils";
 
+/// For testing purposes, we need to configure the minter to the deployer account
+/// This is only for testnet networks and mock USDC
 export async function configureMinterTest(hre: HardhatRuntimeEnvironment): Promise<void> {
 	const { name: chainName } = hre.network;
 	const { viemChain, type } = conceroNetworks[chainName];

@@ -1,5 +1,6 @@
 import { task } from "hardhat/config";
-import { deployPauseDummy } from "../deploy";
+
+import { deployPauseDummy } from "../../deploy";
 
 task("deploy-pause", "").setAction(async taskArgs => {
 	const hre = require("hardhat");

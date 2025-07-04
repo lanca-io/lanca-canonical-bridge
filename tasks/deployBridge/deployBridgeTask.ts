@@ -32,9 +32,9 @@ async function deployBridgeTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 // yarn hardhat deploy-bridge [--implementation] [--proxy] [--pause] --chain <chain_name> --network <network_name>
 task("deploy-bridge", "Deploy LancaCanonicalBridge")
 	.addFlag("implementation", "Deploy implementation")
+	.addOptionalParam("chain", "Destination chain name (L1), only for implementation")
 	.addFlag("proxy", "Deploy proxy and proxy admin")
 	.addFlag("pause", "Pause bridge")
-	.addParam("chain", "Destination chain name (L1)")
 	.setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
 		await deployBridgeTask(taskArgs, hre);
 	});

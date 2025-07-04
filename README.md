@@ -24,7 +24,7 @@ yarn hardhat add-lane --chain <destination_chain_name> --network <network_name>
 ```
 7. [ ] (L1, L2) Ready, transactions can be sent
 ```bash
-yarn hardhat send-token --dstchain <destination_network> --amount <amount> --gaslimit <gas_limit> --network <source_network>
+yarn hardhat send-token --from <source_network> --to <destination_network> --amount <amount>
 ```
 
 ## Available Tasks
@@ -164,24 +164,25 @@ yarn hardhat add-lane --chain base --network ethereum
 ```
 
 ### Send Tokens
-Send tokens from one network to another via bridge.
+Send tokens from one chain to another through the Lanca Canonical Bridge.
 
 ```bash
-yarn hardhat send-token --dstchain <destination_network> --amount <amount> --gaslimit <gas_limit> --network <source_network>
+yarn hardhat send-token --from <source_network> --to <destination_network> --amount <amount> [--gaslimit <gas_limit>]
 ```
 
 **Parameters:**
-- `--dstchain` - Destination network name (e.g., 'arbitrumSepolia', 'baseSepolia')
+- `--from` - Source network name (e.g., 'arbitrumSepolia', 'baseSepolia')
+- `--to` - Destination network name (e.g., 'arbitrumSepolia', 'baseSepolia')
 - `--amount` - Amount of USDC to send (e.g., '10.5')
-- `--gaslimit` - Gas limit for destination transaction (e.g., '200000')
+- `--gaslimit` - Gas limit for destination transaction (optional, defaults to 150000)
 
 **Examples:**
 ```bash
-# Send 10.5 USDC from Ethereum Sepolia to Arbitrum Sepolia
-yarn hardhat send-token --dstchain arbitrumSepolia --amount 10.5 --gaslimit 200000 --network ethereumSepolia
+# Send 5 USDC from Arbitrum Sepolia to Base Sepolia (with default gas limit)
+yarn hardhat send-token --from arbitrumSepolia --to baseSepolia --amount 5
 
-# Send 5 USDC from Arbitrum Sepolia to Base Sepolia
-yarn hardhat send-token --dstchain baseSepolia --amount 5 --gaslimit 150000 --network arbitrumSepolia
+# Send 100 USDC from Ethereum to Base with custom gas limit
+yarn hardhat send-token --from ethereum --to base --amount 100 --gaslimit 200000
 ```
 
 ### Set Flow Limits

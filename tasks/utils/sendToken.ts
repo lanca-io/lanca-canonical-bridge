@@ -1,4 +1,4 @@
-import { formatEther, parseUnits } from "viem";
+import { decodeEventLog, formatEther, parseUnits } from "viem";
 
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
@@ -6,11 +6,13 @@ import { getNetworkEnvKey } from "@concero/contract-utils";
 
 import { conceroNetworks, getViemReceiptConfig } from "../../constants";
 import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils";
+import { monitorTokenReceived } from "./monitorTokenReceived";
 
 interface SendTokenParams {
+	srcChain: string;
 	dstChain: string;
 	amount: string;
-	gasLimit: string;
+	gasLimit?: string;
 }
 
 const ADDRESS_ZERO = "0x0000000000000000000000000000000000000000";
@@ -19,8 +21,7 @@ export async function sendToken(
 	hre: HardhatRuntimeEnvironment,
 	params: SendTokenParams,
 ): Promise<void> {
-	const { dstChain, amount, gasLimit } = params;
-	const { name: srcChain } = hre.network;
+	const { srcChain, dstChain, amount, gasLimit = "150000" } = params;
 
 	const srcNetwork = conceroNetworks[srcChain];
 	const { viemChain, type, chainSelector: srcChainSelector } = srcNetwork;
@@ -178,11 +179,43 @@ export async function sendToken(
 			hash: sendTxHash,
 		});
 
-		log(
-			`🎉 Token transfer successful! Transaction hash: ${sendTxHash} \n`,
-			"sendToken",
-			srcChain,
-		);
+		log(`🎉 Token transfer initiated! Transaction hash: ${sendTxHash}`, "sendToken", srcChain);
+
+		try {
+			let messageId: string | null = null;
+
+			for (const receiptLog of receipt.logs) {
+				try {
+					const decoded = decodeEventLog({
+						abi: bridgeAbi,
+						data: receiptLog.data,
+						topics: receiptLog.topics,
+					});
+
+					if (decoded.eventName === "TokenSent") {
+						messageId = (decoded.args as any).messageId;
+						break;
+					}
+				} catch (decodeError) {
+					continue;
+				}
+			}
+
+			if (messageId) {
+				log(`📡 MessageId: ${messageId}`, "sendToken", srcChain);
+				log(`🔄 Starting cross-chain monitoring...`, "sendToken", srcChain);
+
+				await monitorTokenReceived(messageId, srcChain, dstChain, amount);
+			} else {
+				log(`⚠️ TokenSent event not found in transaction receipt`, "sendToken", srcChain);
+			}
+		} catch (parseError) {
+			log(
+				`⚠️ Could not parse events from transaction receipt: ${parseError}`,
+				"sendToken",
+				srcChain,
+			);
+		}
 	} catch (error) {
 		err(`Failed to send tokens: ${error}`, "sendToken", srcChain);
 		throw error;

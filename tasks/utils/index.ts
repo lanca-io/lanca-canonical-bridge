@@ -1,3 +1,4 @@
+export { changeProxyAdminOwner } from "./changeProxyAdminOwner";
 export { upgradeLancaProxyImplementation } from "./upgradeLancaProxy";
 export { upgradeLancaPoolProxyImplementation } from "./upgradeLancaPool";
 export { initializeDefaultFiatToken } from "./initializeDefaultFiatToken";

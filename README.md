@@ -37,7 +37,7 @@ yarn hardhat send-token --from <source_network> --to <destination_network> --amo
 Deploy LancaCanonicalBridge contracts with flexible options.
 
 ```bash
-yarn hardhat deploy-bridge [--implementation] [--proxy] [--pause] --chain <l1-chain_name> --network <network_name>
+yarn hardhat deploy-bridge [--implementation] [--proxy] [--pause] [--owner <address>] --chain <l1-chain_name> --network <network_name>
 ```
 
 **Flags:**
@@ -47,6 +47,7 @@ yarn hardhat deploy-bridge [--implementation] [--proxy] [--pause] --chain <l1-ch
 
 **Parameters:**
 - `--chain` - Destination chain name (required) (L1 chain name)
+- `--owner` - Custom proxy admin owner address (optional)
 
 **Examples:**
 ```bash
@@ -67,13 +68,16 @@ yarn hardhat deploy-bridge --pause --chain ethereum --network base
 Deploy LancaCanonicalBridge L1 specific components.
 
 ```bash
-yarn hardhat deploy-bridge-l1 [--implementation] [--proxy] [--pause] --network <network_name>
+yarn hardhat deploy-bridge-l1 [--implementation] [--proxy] [--pause] [--owner <address>] --network <network_name>
 ```
 
 **Flags:**
 - `--implementation` - Deploy L1 bridge implementation
 - `--proxy` - Deploy proxy and proxy admin
 - `--pause` - Pause L1 bridge
+
+**Parameters:**
+- `--owner` - Custom proxy admin owner address (optional)
 
 **Examples:**
 ```bash
@@ -91,7 +95,7 @@ yarn hardhat deploy-bridge-l1 --pause --network ethereum
 Deploy LancaCanonicalBridgePool contracts with proxy setup and pool configuration.
 
 ```bash
-yarn hardhat deploy-pool [--implementation] [--proxy] [--addpool] [--pause] --chain <dst_chain_name> --network <network_name>
+yarn hardhat deploy-pool [--implementation] [--proxy] [--addpool] [--pause] [--owner <address>] --chain <dst_chain_name> --network <network_name>
 ```
 
 **Flags:**
@@ -102,6 +106,7 @@ yarn hardhat deploy-pool [--implementation] [--proxy] [--addpool] [--pause] --ch
 
 **Parameters:**
 - `--chain` - Destination chain name for the pool (required)
+- `--owner` - Custom proxy admin owner address (optional)
 
 **Examples:**
 ```bash
@@ -216,6 +221,39 @@ yarn hardhat set-flow-limits --dstchain arbitrum --outmax 250000 --outrefill 2 -
 
 # Set only inbound flow limits for L2
 yarn hardhat set-flow-limits --inmax 100000 --inrefill 1 --network arbitrumSepolia
+```
+
+### ProxyAdmin Owner Management
+Deploy proxy admins with custom owners and change ownership of existing proxy admins.
+
+```bash
+# Deploy with custom owner
+yarn hardhat deploy-bridge --proxy --owner <address> --network <network>
+yarn hardhat deploy-pool --proxy --owner <address> --chain <dst_chain> --network <network>
+
+# Change existing proxy admin owner
+yarn hardhat change-proxy-admin-owner --type <bridge|pool> --newowner <address> [--chain <chain>] --network <network>
+```
+
+**Parameters:**
+- `--type` - ProxyAdmin type (`bridge`, `pool`)
+- `--newowner` - New owner address
+- `--chain` - Destination chain name (required for pool type)
+- `--owner` - Custom owner address for deployment
+
+**Examples:**
+```bash
+# Deploy bridge proxy with custom owner
+yarn hardhat deploy-bridge --proxy --owner 0x1234567890123456789012345678901234567890 --network ethereum
+
+# Deploy pool proxy with custom owner
+yarn hardhat deploy-pool --proxy --owner 0x1234567890123456789012345678901234567890 --chain base --network ethereum
+
+# Change bridge proxy admin owner
+yarn hardhat change-proxy-admin-owner --type bridge --newowner 0x5678901234567890123456789012345678901234 --network ethereum
+
+# Change pool proxy admin owner
+yarn hardhat change-proxy-admin-owner --type pool --newowner 0x5678901234567890123456789012345678901234 --chain base --network ethereum
 ```
 
 ### Mint Test USDC

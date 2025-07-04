@@ -1,4 +1,5 @@
 import { addLaneTask } from "./addLane/addLaneTask";
+import { changeProxyAdminOwnerTask } from "./changeProxyAdminOwner/changeProxyAdminOwnerTask";
 import { configureMinterTask } from "./configureMinter/configureMinterTask";
 import { deployBridgeL1Task } from "./deployBridge/deployBridgeL1Task";
 import { deployBridgeTask } from "./deployBridge/deployBridgeTask";
@@ -14,6 +15,7 @@ import updateAllPools from "./updateAllPools.task";
 
 export default {
 	addLaneTask,
+	changeProxyAdminOwnerTask,
 	deployBridgeTask,
 	deployBridgeL1Task,
 	deployPoolTask,

@@ -14,7 +14,7 @@ export async function upgradeLancaPoolProxyImplementation(
 	const { viemChain, type } = conceroNetworks[chainName];
 
 	const { abi: proxyAdminAbi } = await import(
-		"../../artifacts/contracts/Proxy/LancaCanonicalBridgeProxyAdmin.sol/LancaCanonicalBridgeProxyAdmin.json"
+		"../../artifacts/contracts/Proxy/ProxyAdmin.sol/ProxyAdmin.json"
 	);
 
 	const viemAccount = getViemAccount(type, "proxyDeployer");

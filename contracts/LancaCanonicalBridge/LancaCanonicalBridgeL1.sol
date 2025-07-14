@@ -7,12 +7,14 @@
 pragma solidity 0.8.28;
 
 import {Storage as s} from "./libraries/Storage.sol";
-import {LancaCanonicalBridgeBase, ConceroClient, CommonErrors, ConceroTypes, IConceroRouter, LCBridgeCallData} from "./LancaCanonicalBridgeBase.sol";
+import {LancaCanonicalBridgeBase, ConceroClient, CommonErrors, ConceroTypes, IConceroRouter} from "./LancaCanonicalBridgeBase.sol";
 import {ILancaCanonicalBridgePool} from "../interfaces/ILancaCanonicalBridgePool.sol";
 import {ReentrancyGuard} from "../common/ReentrancyGuard.sol";
 
 contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
     using s for s.L1Bridge;
+
+    uint256 internal constant BRIDGE_GAS_OVERHEAD = 100_000;
 
     error InvalidLane();
     error PoolNotFound(uint24 dstChainSelector);
@@ -26,13 +28,14 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
     ) LancaCanonicalBridgeBase(usdcAddress, flowAdmin) ConceroClient(conceroRouter) {}
 
     function sendToken(
-        uint256 amount,
+        address tokenReceiver,
+        uint256 tokenAmount,
         uint24 dstChainSelector,
-        address /* feeToken */,
-        ConceroTypes.EvmDstChainData memory dstChainData,
-        LCBridgeCallData memory lcbCallData
+        bool isContract,
+        uint256 dstGasLimit,
+        bytes calldata dstCallData
     ) external payable nonReentrant returns (bytes32 messageId) {
-        require(amount > 0, CommonErrors.InvalidAmount());
+        require(tokenAmount > 0, CommonErrors.InvalidAmount());
 
         s.L1Bridge storage bridge = s.l1Bridge();
 
@@ -40,31 +43,55 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         address pool = bridge.pools[dstChainSelector];
         address lane = bridge.lanes[dstChainSelector];
         require(pool != address(0), PoolNotFound(dstChainSelector));
-        require(lane != address(0) && dstChainData.receiver == lane, InvalidLane());
+        require(lane != address(0), InvalidLane()); // TODO: LaneNotFound?
 
         // Flow limiting check
-        _checkOutboundFlow(dstChainSelector, amount);
+        _checkOutboundFlow(dstChainSelector, tokenAmount);
 
         // Process transfer and send message
-        messageId = _processTransfer(amount, dstChainSelector, dstChainData, lcbCallData, pool);
+        if (isContract) {
+            messageId = _processTransferToContract(
+                tokenReceiver,
+                tokenAmount,
+                dstChainSelector,
+                dstGasLimit,
+                dstCallData,
+                lane,
+                pool
+            );
+        } else {
+            messageId = _processTransferToEOA(
+                tokenReceiver,
+                tokenAmount,
+                dstChainSelector,
+                lane,
+                pool
+            );
+        }
 
-        emit TokenSent(messageId, lane, dstChainSelector, msg.sender, amount, msg.value);
+        // TODO: fix it
+        emit TokenSent(messageId, lane, dstChainSelector, msg.sender, tokenAmount, msg.value);
     }
 
-    function _processTransfer(
-        uint256 amount,
+    function _processTransferToEOA(
+        address tokenReceiver,
+        uint256 tokenAmount,
         uint24 dstChainSelector,
-        ConceroTypes.EvmDstChainData memory dstChainData,
-        LCBridgeCallData memory lcbCallData,
+        address lane,
         address pool
     ) internal returns (bytes32 messageId) {
+        ConceroTypes.EvmDstChainData memory dstChainData = ConceroTypes.EvmDstChainData({
+            receiver: lane,
+            gasLimit: BRIDGE_GAS_OVERHEAD
+        });
+
         // check fee
         uint256 fee = getMessageFee(dstChainSelector, address(0), dstChainData);
         require(msg.value >= fee, InsufficientFee(msg.value, fee));
 
         // deposit to pool
         require(
-            ILancaCanonicalBridgePool(pool).deposit(msg.sender, amount),
+            ILancaCanonicalBridgePool(pool).deposit(msg.sender, tokenAmount),
             CommonErrors.TransferFailed()
         );
 
@@ -74,9 +101,54 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
             false,
             address(0),
             dstChainData,
-            lcbCallData.tokenReceiver == address(0) // get message
-                ? abi.encode(msg.sender, amount) // no receiver, no extra data
-                : abi.encode(msg.sender, amount, lcbCallData) // receiver, extra data
+			abi.encodePacked(
+				abi.encode(tokenReceiver, tokenAmount),
+				abi.encodePacked(uint8(0))
+			)
+        );
+    }
+
+    function _processTransferToContract(
+        address tokenReceiver,
+        uint256 tokenAmount,
+        uint24 dstChainSelector,
+        uint256 dstGasLimit,
+        bytes calldata dstCallData,
+        address lane,
+		address pool
+    ) internal returns (bytes32 messageId) {
+        // check fee and deposit in separate scope
+        {
+            uint256 fee = getMessageFeeForContract(
+                dstChainSelector,
+                address(0),
+                dstGasLimit,
+                dstCallData
+            );
+            require(msg.value >= fee, InsufficientFee(msg.value, fee));
+
+            require(
+                ILancaCanonicalBridgePool(pool).deposit(
+                    msg.sender,
+                    tokenAmount
+                ),
+                CommonErrors.TransferFailed()
+            );
+        }
+
+        // send message
+        messageId = IConceroRouter(i_conceroRouter).conceroSend{value: msg.value}(
+            dstChainSelector,
+            false,
+            address(0),
+            ConceroTypes.EvmDstChainData({
+                receiver: lane,
+                gasLimit: BRIDGE_GAS_OVERHEAD + dstGasLimit
+            }),
+			abi.encodePacked(
+				abi.encode(tokenReceiver, tokenAmount),
+				abi.encodePacked(uint8(1), dstCallData)
+			)
         );
     }
 
@@ -139,11 +211,28 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         }
     }
 
+    function getMessageFeeForContract(
+        uint24 dstChainSelector,
+        address feeToken,
+        uint256 dstGasLimit,
+        bytes calldata /** dstCallData */
+    ) public view returns (uint256) {
+        return
+            getMessageFee(
+                dstChainSelector,
+                feeToken,
+                ConceroTypes.EvmDstChainData({
+                    receiver: getLane(dstChainSelector),
+                    gasLimit: BRIDGE_GAS_OVERHEAD + dstGasLimit
+                })
+            );
+    }
+
     function getPool(uint24 dstChainSelector) external view returns (address) {
         return s.l1Bridge().pools[dstChainSelector];
     }
 
-    function getLane(uint24 dstChainSelector) external view returns (address) {
+    function getLane(uint24 dstChainSelector) public view returns (address) {
         return s.l1Bridge().lanes[dstChainSelector];
     }
 

@@ -122,11 +122,12 @@ contract OutboundFlowLimitsTest is LCBridgeL1Test {
             abi.encodeWithSelector(FlowLimiter.FlowLimitExceeded.selector, 400 * 1e6, 300 * 1e6)
         );
         lancaCanonicalBridgeL1.sendToken{value: messageFee}(
+            user,
             400 * 1e6,
             DST_CHAIN_SELECTOR,
-            address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT}),
-            lcbCallData
+			false,
+            ZERO_AMOUNT,
+            ZERO_BYTES
         );
         vm.stopPrank();
     }
@@ -194,11 +195,12 @@ contract OutboundFlowLimitsTest is LCBridgeL1Test {
             abi.encodeWithSelector(FlowLimiter.FlowLimitExceeded.selector, 1000 * 1e6, 0)
         );
         lancaCanonicalBridgeL1.sendToken{value: messageFee}(
+            user,
             1000 * 1e6,
             DST_CHAIN_SELECTOR,
-            address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT}),
-            lcbCallData
+			false,
+            ZERO_AMOUNT,
+            ZERO_BYTES
         );
         vm.stopPrank();
 
@@ -298,11 +300,12 @@ contract OutboundFlowLimitsTest is LCBridgeL1Test {
         vm.startPrank(user);
         MockUSDC(usdc).approve(address(lancaCanonicalBridgePool), amount);
         lancaCanonicalBridgeL1.sendToken{value: _getMessageFee()}(
+            user,
             amount,
             DST_CHAIN_SELECTOR,
-            address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT}),
-            lcbCallData
+			false,
+            ZERO_AMOUNT,
+            ZERO_BYTES
         );
         vm.stopPrank();
     }

@@ -10,14 +10,13 @@ pragma solidity 0.8.28;
 import {ConceroTypes} from "@concero/messaging-contracts-v2/contracts/ConceroClient/ConceroTypes.sol";
 import {IConceroRouter} from "@concero/messaging-contracts-v2/contracts/interfaces/IConceroRouter.sol";
 
-import {LCBridgeCallData} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
-
 contract MockConceroRouter is IConceroRouter {
     uint256 public constant MESSAGE_FEE = 100;
 
-    address public tokenSender;
-    uint256 public amount;
-    LCBridgeCallData public lcbCallData;
+    address public tokenReceiver;
+    uint256 public tokenAmount;
+    uint8 public isContract;
+    bytes public dstCallData;
 
     function conceroSend(
         uint24 /* dstChainSelector */,
@@ -27,12 +26,12 @@ contract MockConceroRouter is IConceroRouter {
         bytes calldata message
     ) external payable returns (bytes32 messageId) {
         if (message.length > 64) {
-            (tokenSender, amount, lcbCallData) = abi.decode(
-                message,
-                (address, uint256, LCBridgeCallData)
-            );
+            (tokenReceiver, tokenAmount) = abi.decode(message[:64], (address, uint256));
+            isContract = uint8(message[64]);
+            dstCallData = message[65:];
         } else {
-            (tokenSender, amount) = abi.decode(message, (address, uint256));
+            (tokenReceiver, tokenAmount) = abi.decode(message, (address, uint256));
+            dstCallData = "";
         }
 
         return bytes32(uint256(1));

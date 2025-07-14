@@ -40,14 +40,12 @@ contract MaliciousPool is ILancaCanonicalBridgePool {
             );
 
             bridge.sendToken{value: messageFee}(
+                address(0),
                 amount,
                 dstChainSelector,
-                address(0),
-                ConceroTypes.EvmDstChainData({receiver: dstLcbBridge, gasLimit: 500000}),
-				LCBridgeCallData({
-					tokenReceiver: address(0),
-					receiverData: ""
-				})
+                false,
+                500000,
+                ""
             );
         }
 

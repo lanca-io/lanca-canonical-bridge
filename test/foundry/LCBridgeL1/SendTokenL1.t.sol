@@ -7,6 +7,8 @@
  */
 pragma solidity 0.8.28;
 
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
 import {CommonErrors} from "@concero/messaging-contracts-v2/contracts/common/CommonErrors.sol";
 import {ConceroTypes} from "@concero/messaging-contracts-v2/contracts/ConceroClient/ConceroTypes.sol";
 import {IConceroClientErrors} from "@concero/messaging-contracts-v2/contracts/interfaces/IConceroClientErrors.sol";
@@ -28,11 +30,12 @@ contract SendTokenL1Test is LCBridgeL1Test {
         vm.expectRevert(abi.encodeWithSelector(CommonErrors.InvalidAmount.selector));
 
         lancaCanonicalBridgeL1.sendToken(
-            0,
+            user,
+            ZERO_AMOUNT,
             DST_CHAIN_SELECTOR,
-            address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT}),
-            lcbCallData
+            false,
+            ZERO_AMOUNT,
+            ZERO_BYTES
         );
     }
 
@@ -42,11 +45,12 @@ contract SendTokenL1Test is LCBridgeL1Test {
         );
 
         lancaCanonicalBridgeL1.sendToken(
+            user,
             AMOUNT,
             DST_CHAIN_SELECTOR,
-            address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT}),
-            lcbCallData
+            false,
+            ZERO_AMOUNT,
+            ZERO_BYTES
         );
     }
 
@@ -56,26 +60,12 @@ contract SendTokenL1Test is LCBridgeL1Test {
         vm.expectRevert(abi.encodeWithSelector(LancaCanonicalBridgeL1.InvalidLane.selector));
 
         lancaCanonicalBridgeL1.sendToken(
+            user,
             AMOUNT,
             DST_CHAIN_SELECTOR,
-            address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT}),
-            lcbCallData
-        );
-    }
-
-    function test_sendToken_RevertsInvalidLaneIfReceiverNotLane() public {
-        _addDefaultPool();
-        _addDefaultLane();
-
-        vm.expectRevert(abi.encodeWithSelector(LancaCanonicalBridgeL1.InvalidLane.selector));
-
-        lancaCanonicalBridgeL1.sendToken(
-            AMOUNT,
-            DST_CHAIN_SELECTOR,
-            address(0),
-            ConceroTypes.EvmDstChainData({receiver: address(0), gasLimit: GAS_LIMIT}),
-            lcbCallData
+            false,
+            ZERO_AMOUNT,
+            ZERO_BYTES
         );
     }
 
@@ -83,10 +73,11 @@ contract SendTokenL1Test is LCBridgeL1Test {
         _addDefaultPool();
         _addDefaultLane();
 
-        uint256 messageFee = lancaCanonicalBridgeL1.getMessageFee(
+        uint256 messageFee = lancaCanonicalBridgeL1.getMessageFeeForContract(
             DST_CHAIN_SELECTOR,
             address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT})
+            ZERO_AMOUNT,
+            ZERO_BYTES
         );
 
         vm.expectRevert(
@@ -94,11 +85,12 @@ contract SendTokenL1Test is LCBridgeL1Test {
         );
 
         lancaCanonicalBridgeL1.sendToken(
+            user,
             AMOUNT,
             DST_CHAIN_SELECTOR,
-            address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT}),
-            lcbCallData
+            false,
+            ZERO_AMOUNT,
+            ZERO_BYTES
         );
     }
 
@@ -106,10 +98,11 @@ contract SendTokenL1Test is LCBridgeL1Test {
         _addDefaultPool();
         _addDefaultLane();
 
-        uint256 messageFee = lancaCanonicalBridgeL1.getMessageFee(
+        uint256 messageFee = lancaCanonicalBridgeL1.getMessageFeeForContract(
             DST_CHAIN_SELECTOR,
             address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT})
+            ZERO_AMOUNT,
+            ZERO_BYTES
         );
 
         _approvePool(AMOUNT);
@@ -119,11 +112,12 @@ contract SendTokenL1Test is LCBridgeL1Test {
 
         vm.prank(user);
         lancaCanonicalBridgeL1.sendToken{value: messageFee}(
+            user,
             AMOUNT,
             DST_CHAIN_SELECTOR,
-            address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT}),
-            lcbCallData
+            false,
+            ZERO_AMOUNT,
+            ZERO_BYTES
         );
     }
 
@@ -131,21 +125,23 @@ contract SendTokenL1Test is LCBridgeL1Test {
         _addDefaultPool();
         _addDefaultLane();
 
-        uint256 messageFee = lancaCanonicalBridgeL1.getMessageFee(
+        uint256 messageFee = lancaCanonicalBridgeL1.getMessageFeeForContract(
             DST_CHAIN_SELECTOR,
             address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT})
+            ZERO_AMOUNT,
+            ZERO_BYTES
         );
 
         _approvePool(AMOUNT);
 
         vm.prank(user);
         bytes32 messageId = lancaCanonicalBridgeL1.sendToken{value: messageFee}(
+            user,
             AMOUNT,
             DST_CHAIN_SELECTOR,
-            address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT}),
-            lcbCallData
+            false,
+            ZERO_AMOUNT,
+            ZERO_BYTES
         );
 
         assertEq(messageId, DEFAULT_MESSAGE_ID);
@@ -156,10 +152,11 @@ contract SendTokenL1Test is LCBridgeL1Test {
         _addDefaultPool();
         _addDefaultLane();
 
-        uint256 messageFee = lancaCanonicalBridgeL1.getMessageFee(
+        uint256 messageFee = lancaCanonicalBridgeL1.getMessageFeeForContract(
             DST_CHAIN_SELECTOR,
             address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT})
+            ZERO_AMOUNT,
+            ZERO_BYTES
         );
 
         _approvePool(AMOUNT);
@@ -176,11 +173,12 @@ contract SendTokenL1Test is LCBridgeL1Test {
 
         vm.prank(user);
         lancaCanonicalBridgeL1.sendToken{value: messageFee}(
+            user,
             AMOUNT,
             DST_CHAIN_SELECTOR,
-            address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT}),
-            lcbCallData
+            false,
+            ZERO_AMOUNT,
+            ZERO_BYTES
         );
     }
 
@@ -188,34 +186,32 @@ contract SendTokenL1Test is LCBridgeL1Test {
         _addDefaultPool();
         _addDefaultLane();
 
-        uint256 messageFee = lancaCanonicalBridgeL1.getMessageFee(
+        uint256 messageFee = lancaCanonicalBridgeL1.getMessageFeeForContract(
             DST_CHAIN_SELECTOR,
             address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT})
+            ZERO_AMOUNT,
+            ZERO_BYTES
         );
 
         _approvePool(AMOUNT);
 
         address tokenReceiver = makeAddr("tokenReceiver");
-        string memory testString = "LancaCanonicalBridgeL1";
-        bytes memory receiverData = abi.encode(testString);
+        bytes memory receiverData = abi.encodeCall(ERC20.transfer, (tokenReceiver, AMOUNT));
 
         vm.prank(user);
         lancaCanonicalBridgeL1.sendToken{value: messageFee}(
+            tokenReceiver,
             AMOUNT,
             DST_CHAIN_SELECTOR,
-            address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT}),
-            LCBridgeCallData({tokenReceiver: tokenReceiver, receiverData: receiverData})
+            true,
+            GAS_LIMIT,
+            receiverData
         );
 
-        assertEq(MockConceroRouter(conceroRouter).tokenSender(), user);
-        assertEq(MockConceroRouter(conceroRouter).amount(), AMOUNT);
-        (address decodedTokenReceiver, bytes memory decodedReceiverData) = MockConceroRouter(
-            conceroRouter
-        ).lcbCallData();
-        assertEq(tokenReceiver, decodedTokenReceiver);
-        assertEq(receiverData, decodedReceiverData);
+        assertEq(MockConceroRouter(conceroRouter).tokenReceiver(), tokenReceiver);
+        assertEq(MockConceroRouter(conceroRouter).tokenAmount(), AMOUNT);
+        assertEq(MockConceroRouter(conceroRouter).isContract(), 1);
+		assertEq(MockConceroRouter(conceroRouter).dstCallData(), receiverData);
     }
 
     function test_sendToken_RevertsOnReentrancyAttack() public {
@@ -238,10 +234,11 @@ contract SendTokenL1Test is LCBridgeL1Test {
 
         vm.deal(address(maliciousPool), 1 ether);
 
-        uint256 messageFee = lancaCanonicalBridgeL1.getMessageFee(
+        uint256 messageFee = lancaCanonicalBridgeL1.getMessageFeeForContract(
             DST_CHAIN_SELECTOR,
             address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT})
+            ZERO_AMOUNT,
+            ZERO_BYTES
         );
 
         vm.prank(user);
@@ -253,11 +250,12 @@ contract SendTokenL1Test is LCBridgeL1Test {
 
         vm.prank(user);
         lancaCanonicalBridgeL1.sendToken{value: messageFee}(
+            user,
             AMOUNT,
             DST_CHAIN_SELECTOR,
-            address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeMock, gasLimit: GAS_LIMIT}),
-            lcbCallData
+            false,
+            ZERO_AMOUNT,
+            ZERO_BYTES
         );
     }
 }

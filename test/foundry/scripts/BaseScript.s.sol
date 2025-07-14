@@ -28,6 +28,9 @@ abstract contract BaseScript is Script {
 
     bytes32 public constant DEFAULT_MESSAGE_ID = bytes32(uint256(1));
 
+    bytes public constant ZERO_BYTES = "";
+    uint256 public constant ZERO_AMOUNT = 0;
+
     uint24 public constant SRC_CHAIN_SELECTOR = 1;
     uint24 public constant DST_CHAIN_SELECTOR = 8453;
 
@@ -36,8 +39,6 @@ abstract contract BaseScript is Script {
 
     uint128 public constant MAX_FLOW_AMOUNT = 1000e6; // 1000 USDC max available amount
     uint128 public constant REFILL_SPEED = 10e6; // 10 USDC/sec refill speed
-
-    LCBridgeCallData public lcbCallData;
 
     constructor() {
         deployer = vm.envAddress("DEPLOYER_ADDRESS");

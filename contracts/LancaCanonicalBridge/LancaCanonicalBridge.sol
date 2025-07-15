@@ -128,45 +128,11 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         require(success, CommonErrors.TransferFailed());
     }
 
-    function setOutboundRateLimit(
+    function setRateLimit(
         uint128 maxAmount,
-        uint128 refillSpeed
+        uint128 refillSpeed,
+        bool isOutbound
     ) external onlyRateLimitAdmin {
-        _setRateLimit(i_dstChainSelector, maxAmount, refillSpeed, true);
-    }
-
-    function setInboundRateLimit(
-        uint128 maxAmount,
-        uint128 refillSpeed
-    ) external onlyRateLimitAdmin {
-        _setRateLimit(i_dstChainSelector, maxAmount, refillSpeed, false);
-    }
-
-    function getOutboundRateInfo()
-        external
-        view
-        returns (
-            uint128 availableVolume,
-            uint128 maxAmount,
-            uint128 refillSpeed,
-            uint32 lastUpdate,
-            bool isActive
-        )
-    {
-        return getOutboundRateInfo(i_dstChainSelector);
-    }
-
-    function getInboundRateInfo()
-        external
-        view
-        returns (
-            uint128 availableVolume,
-            uint128 maxAmount,
-            uint128 refillSpeed,
-            uint32 lastUpdate,
-            bool isActive
-        )
-    {
-        return getInboundRateInfo(i_dstChainSelector);
+        _setRateLimit(i_dstChainSelector, maxAmount, refillSpeed, isOutbound);
     }
 }

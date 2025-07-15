@@ -7,13 +7,14 @@
 pragma solidity 0.8.28;
 
 import {CommonErrors} from "@concero/messaging-contracts-v2/contracts/common/CommonErrors.sol";
+
 import {Storage as s} from "./libraries/Storage.sol";
 
 abstract contract RateLimiter {
     using s for s.RateLimits;
 
     error RateLimitExceeded(uint256 requested, uint256 availableVolume);
-    error InvalidRateConfig(uint128 maxAmount, uint128 refillSpeed);
+    error InvalidRateLimitConfig(uint128 maxAmount, uint128 refillSpeed);
 
     event RateLimitSet(
         uint24 indexed dstChainSelector,
@@ -51,13 +52,12 @@ abstract contract RateLimiter {
         // Validate: refill speed cannot exceed max amount to prevent overflow
         // Only validate if maxAmount > 0, since 0 means transfers are disabled
         if (maxAmount > 0 && refillSpeed > maxAmount) {
-            revert InvalidRateConfig(maxAmount, refillSpeed);
+            revert InvalidRateLimitConfig(maxAmount, refillSpeed);
         }
 
-        s.RateLimits storage limits = s.rateLimits();
         RateLimit storage rate = isOutbound
-            ? limits.outboundRates[dstChainSelector]
-            : limits.inboundRates[dstChainSelector];
+            ? s.rateLimits().outboundRates[dstChainSelector]
+            : s.rateLimits().inboundRates[dstChainSelector];
 
         // Update available volume based on time elapsed since last update
         if (rate.lastUpdate > 0) {
@@ -92,10 +92,9 @@ abstract contract RateLimiter {
     function _consumeRate(uint24 dstChainSelector, uint256 amount, bool isOutbound) internal {
         if (amount == 0) return;
 
-        s.RateLimits storage limits = s.rateLimits();
         RateLimit storage rate = isOutbound
-            ? limits.outboundRates[dstChainSelector]
-            : limits.inboundRates[dstChainSelector];
+            ? s.rateLimits().outboundRates[dstChainSelector]
+            : s.rateLimits().inboundRates[dstChainSelector];
 
         uint128 maxAmount = rate.maxAmount;
         uint32 lastUpdate = rate.lastUpdate;
@@ -148,8 +147,9 @@ abstract contract RateLimiter {
         newLastUpdate = uint32(block.timestamp);
     }
 
-    function getOutboundRateInfo(
-        uint24 dstChainSelector
+    function getRateInfo(
+        uint24 dstChainSelector,
+        bool isOutbound
     )
         public
         view
@@ -161,59 +161,19 @@ abstract contract RateLimiter {
             bool isActive
         )
     {
-        RateLimit memory rate = s.rateLimits().outboundRates[dstChainSelector];
-        return _getCurrentRateState(rate);
-    }
+        RateLimit memory rate = isOutbound
+            ? s.rateLimits().outboundRates[dstChainSelector]
+            : s.rateLimits().inboundRates[dstChainSelector];
 
-    function getInboundRateInfo(
-        uint24 dstChainSelector
-    )
-        public
-        view
-        returns (
-            uint128 availableVolume,
-            uint128 maxAmount,
-            uint128 refillSpeed,
-            uint32 lastUpdate,
-            bool isActive
-        )
-    {
-        RateLimit memory rate = s.rateLimits().inboundRates[dstChainSelector];
-        return _getCurrentRateState(rate);
-    }
+		isActive = rate.maxAmount > 0;
 
-    function _getCurrentRateState(
-        RateLimit memory rate
-    )
-        internal
-        view
-        returns (
-            uint128 availableVolume,
-            uint128 maxAmount,
-            uint128 refillSpeed,
-            uint32 lastUpdate,
-            bool isActive
-        )
-    {
-        // Simulate refill for active rates to show current available volume
-        // isActive computed as maxAmount > 0
-        bool rateIsActive = rate.maxAmount > 0;
-        if (rateIsActive && rate.lastUpdate > 0) {
-            uint256 timeElapsed = block.timestamp - rate.lastUpdate;
-            uint256 toAdd = timeElapsed * rate.refillSpeed;
-            uint256 newAvailable = rate.availableVolume + toAdd;
-            // Apply maximum amount capping in simulation
-            rate.availableVolume = uint128(
-                newAvailable > rate.maxAmount ? rate.maxAmount : newAvailable
-            );
-        }
+		(availableVolume, lastUpdate) = _refillRate(
+			rate.availableVolume,
+			rate.refillSpeed,
+			rate.maxAmount,
+			rate.lastUpdate
+		);
 
-        return (
-            rate.availableVolume,
-            rate.maxAmount,
-            rate.refillSpeed,
-            rate.lastUpdate,
-            rateIsActive
-        );
+        return (availableVolume, rate.maxAmount, rate.refillSpeed, lastUpdate, isActive);
     }
 }

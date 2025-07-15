@@ -234,19 +234,12 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         return s.l1Bridge().dstBridges[dstChainSelector];
     }
 
-    function setOutboundRateLimit(
+    function setRateLimit(
         uint24 dstChainSelector,
         uint128 maxAmount,
-        uint128 refillSpeed
+        uint128 refillSpeed,
+        bool isOutbound
     ) public onlyRateLimitAdmin {
-        _setRateLimit(dstChainSelector, maxAmount, refillSpeed, true);
-    }
-
-    function setInboundRateLimit(
-        uint24 dstChainSelector,
-        uint128 maxAmount,
-        uint128 refillSpeed
-    ) public onlyRateLimitAdmin {
-        _setRateLimit(dstChainSelector, maxAmount, refillSpeed, false);
+        _setRateLimit(dstChainSelector, maxAmount, refillSpeed, isOutbound);
     }
 }

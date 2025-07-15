@@ -25,9 +25,10 @@ contract InboundRateLimitsTest is LCBridgeTest {
 
     function test_setInboundRateLimit_RevertsUnauthorized() public {
         vm.expectRevert(CommonErrors.Unauthorized.selector);
-        LancaCanonicalBridge(address(lancaCanonicalBridge)).setInboundRateLimit(
+        LancaCanonicalBridge(address(lancaCanonicalBridge)).setRateLimit(
             MAX_RATE_AMOUNT,
-            REFILL_SPEED
+            REFILL_SPEED,
+            false
         );
     }
 
@@ -36,9 +37,10 @@ contract InboundRateLimitsTest is LCBridgeTest {
         emit RateLimiter.RateLimitSet(SRC_CHAIN_SELECTOR, false, MAX_RATE_AMOUNT, REFILL_SPEED);
 
         vm.prank(deployer);
-        LancaCanonicalBridge(address(lancaCanonicalBridge)).setInboundRateLimit(
+        LancaCanonicalBridge(address(lancaCanonicalBridge)).setRateLimit(
             MAX_RATE_AMOUNT,
-            REFILL_SPEED
+            REFILL_SPEED,
+            false
         );
 
         (
@@ -47,7 +49,10 @@ contract InboundRateLimitsTest is LCBridgeTest {
             uint128 refillSpeed,
             uint32 lastUpdate,
             bool isActive
-        ) = LancaCanonicalBridge(address(lancaCanonicalBridge)).getInboundRateInfo();
+        ) = LancaCanonicalBridge(address(lancaCanonicalBridge)).getRateInfo(
+                SRC_CHAIN_SELECTOR,
+                false
+            );
 
         assertEq(availableVolume, MAX_RATE_AMOUNT);
         assertEq(maxAmount, MAX_RATE_AMOUNT);
@@ -58,50 +63,54 @@ contract InboundRateLimitsTest is LCBridgeTest {
 
     function test_setInboundRateLimit_PreservesStateOnConfigurationUpdate() public {
         vm.prank(deployer);
-        LancaCanonicalBridge(address(lancaCanonicalBridge)).setInboundRateLimit(
+        LancaCanonicalBridge(address(lancaCanonicalBridge)).setRateLimit(
             MAX_RATE_AMOUNT,
-            REFILL_SPEED
+            REFILL_SPEED,
+            false
         );
 
         // Consume some rate
         _performReceive(100 * 1e6);
 
         (uint128 availableBefore, , , , ) = LancaCanonicalBridge(address(lancaCanonicalBridge))
-            .getInboundRateInfo();
+            .getRateInfo(SRC_CHAIN_SELECTOR, false);
         assertEq(availableBefore, MAX_RATE_AMOUNT - 100 * 1e6);
 
         // Update configuration
         vm.prank(deployer);
-        LancaCanonicalBridge(address(lancaCanonicalBridge)).setInboundRateLimit(
+        LancaCanonicalBridge(address(lancaCanonicalBridge)).setRateLimit(
             MAX_RATE_AMOUNT,
-            REFILL_SPEED
+            REFILL_SPEED,
+            false
         );
 
         // State should be preserved
         (uint128 availableAfter, , , , ) = LancaCanonicalBridge(address(lancaCanonicalBridge))
-            .getInboundRateInfo();
+            .getRateInfo(SRC_CHAIN_SELECTOR, false);
         assertEq(availableAfter, MAX_RATE_AMOUNT - 100 * 1e6);
     }
 
     function test_inboundRateLimit_ReceiveWithinLimit() public {
         vm.prank(deployer);
-        LancaCanonicalBridge(address(lancaCanonicalBridge)).setInboundRateLimit(
+        LancaCanonicalBridge(address(lancaCanonicalBridge)).setRateLimit(
             MAX_RATE_AMOUNT,
-            REFILL_SPEED
+            REFILL_SPEED,
+            false
         );
 
         _performReceive(500 * 1e6); // 500 USDC
 
         (uint128 availableVolume, , , , ) = LancaCanonicalBridge(address(lancaCanonicalBridge))
-            .getInboundRateInfo();
+            .getRateInfo(SRC_CHAIN_SELECTOR, false);
         assertEq(availableVolume, 500 * 1e6);
     }
 
     function test_inboundRateLimit_RevertsIfRateExceeded() public {
         vm.prank(deployer);
-        LancaCanonicalBridge(address(lancaCanonicalBridge)).setInboundRateLimit(
+        LancaCanonicalBridge(address(lancaCanonicalBridge)).setRateLimit(
             MAX_RATE_AMOUNT,
-            REFILL_SPEED
+            REFILL_SPEED,
+            false
         );
 
         // First receives accumulate
@@ -109,7 +118,7 @@ contract InboundRateLimitsTest is LCBridgeTest {
         _performReceive(400 * 1e6); // 400 USDC
 
         (uint128 availableVolume, , , , ) = LancaCanonicalBridge(address(lancaCanonicalBridge))
-            .getInboundRateInfo();
+            .getRateInfo(SRC_CHAIN_SELECTOR, false);
         assertEq(availableVolume, 300 * 1e6); // 300 USDC left
 
         // Next receive should fail
@@ -130,16 +139,17 @@ contract InboundRateLimitsTest is LCBridgeTest {
 
     function test_inboundRateLimit_RefillOverTime() public {
         vm.prank(deployer);
-        LancaCanonicalBridge(address(lancaCanonicalBridge)).setInboundRateLimit(
+        LancaCanonicalBridge(address(lancaCanonicalBridge)).setRateLimit(
             MAX_RATE_AMOUNT,
-            REFILL_SPEED
+            REFILL_SPEED,
+            false
         );
 
         // Consume all available rate
         _performReceive(MAX_RATE_AMOUNT);
 
         (uint128 availableVolume, , , , ) = LancaCanonicalBridge(address(lancaCanonicalBridge))
-            .getInboundRateInfo();
+            .getRateInfo(SRC_CHAIN_SELECTOR, false);
         assertEq(availableVolume, 0);
 
         // Wait for 50 seconds -> should refill 500 USDC
@@ -148,16 +158,19 @@ contract InboundRateLimitsTest is LCBridgeTest {
         // Should now be able to receive 500 USDC
         _performReceive(500 * 1e6);
 
-        (availableVolume, , , , ) = LancaCanonicalBridge(address(lancaCanonicalBridge))
-            .getInboundRateInfo();
+        (availableVolume, , , , ) = LancaCanonicalBridge(address(lancaCanonicalBridge)).getRateInfo(
+            SRC_CHAIN_SELECTOR,
+            false
+        );
         assertEq(availableVolume, 0);
     }
 
     function test_inboundRateLimit_MaxAmountCapping() public {
         vm.prank(deployer);
-        LancaCanonicalBridge(address(lancaCanonicalBridge)).setInboundRateLimit(
+        LancaCanonicalBridge(address(lancaCanonicalBridge)).setRateLimit(
             MAX_RATE_AMOUNT,
-            REFILL_SPEED
+            REFILL_SPEED,
+            false
         );
 
         // Consume half the rate
@@ -167,13 +180,13 @@ contract InboundRateLimitsTest is LCBridgeTest {
         vm.warp(block.timestamp + 1000);
 
         (uint128 availableVolume, , , , ) = LancaCanonicalBridge(address(lancaCanonicalBridge))
-            .getInboundRateInfo();
+            .getRateInfo(SRC_CHAIN_SELECTOR, false);
         assertEq(availableVolume, MAX_RATE_AMOUNT);
     }
 
     function test_inboundRateLimit_DisabledWithZeroMaxAmount() public {
         vm.prank(deployer);
-        LancaCanonicalBridge(address(lancaCanonicalBridge)).setInboundRateLimit(0, REFILL_SPEED);
+        LancaCanonicalBridge(address(lancaCanonicalBridge)).setRateLimit(0, REFILL_SPEED, false);
 
         // Transfers should be blocked when maxAmount = 0 (soft pause)
         bytes memory message = _encodeBridgeParams(user, 1000 * 1e6, false, "");
@@ -192,7 +205,7 @@ contract InboundRateLimitsTest is LCBridgeTest {
 
         (uint128 availableVolume, uint128 maxAmount, , , bool isActive) = LancaCanonicalBridge(
             address(lancaCanonicalBridge)
-        ).getInboundRateInfo();
+        ).getRateInfo(SRC_CHAIN_SELECTOR, false);
         assertEq(maxAmount, 0);
         assertFalse(isActive);
         assertEq(availableVolume, 0);
@@ -200,20 +213,22 @@ contract InboundRateLimitsTest is LCBridgeTest {
 
     function test_inboundRateLimit_InvalidConfiguration() public {
         vm.expectRevert(
-            abi.encodeWithSelector(RateLimiter.InvalidRateConfig.selector, 50e6, 100e6)
+            abi.encodeWithSelector(RateLimiter.InvalidRateLimitConfig.selector, 50e6, 100e6)
         );
 
         vm.prank(deployer);
-        LancaCanonicalBridge(address(lancaCanonicalBridge)).setInboundRateLimit(
+        LancaCanonicalBridge(address(lancaCanonicalBridge)).setRateLimit(
             50e6, // maxAmount
-            100e6 // refillSpeed > maxAmount
+            100e6, // refillSpeed > maxAmount
+            false
         );
 
         // But it should be allowed when maxAmount = 0 (disabled state)
         vm.prank(deployer);
-        LancaCanonicalBridge(address(lancaCanonicalBridge)).setInboundRateLimit(
+        LancaCanonicalBridge(address(lancaCanonicalBridge)).setRateLimit(
             0, // maxAmount = 0 (disabled)
-            100e6 // refillSpeed can be anything when disabled
+            100e6, // refillSpeed can be anything when disabled
+            false
         );
 
         (
@@ -222,7 +237,10 @@ contract InboundRateLimitsTest is LCBridgeTest {
             uint128 refillSpeed,
             ,
             bool isActive
-        ) = LancaCanonicalBridge(address(lancaCanonicalBridge)).getInboundRateInfo();
+        ) = LancaCanonicalBridge(address(lancaCanonicalBridge)).getRateInfo(
+                SRC_CHAIN_SELECTOR,
+                false
+            );
         assertEq(maxAmount, 0);
         assertEq(refillSpeed, 100e6);
         assertFalse(isActive);
@@ -231,16 +249,17 @@ contract InboundRateLimitsTest is LCBridgeTest {
 
     function test_inboundRateLimit_PartialRefill() public {
         vm.prank(deployer);
-        LancaCanonicalBridge(address(lancaCanonicalBridge)).setInboundRateLimit(
+        LancaCanonicalBridge(address(lancaCanonicalBridge)).setRateLimit(
             MAX_RATE_AMOUNT,
-            REFILL_SPEED
+            REFILL_SPEED,
+            false
         );
 
         // Consume most of the rate
         _performReceive(900 * 1e6);
 
         (uint128 availableVolume, , , , ) = LancaCanonicalBridge(address(lancaCanonicalBridge))
-            .getInboundRateInfo();
+            .getRateInfo(SRC_CHAIN_SELECTOR, false);
         assertEq(availableVolume, 100 * 1e6);
 
         // Wait for partial refill (20 seconds = 200 USDC)
@@ -249,36 +268,40 @@ contract InboundRateLimitsTest is LCBridgeTest {
         // Should be able to receive 300 USDC (100 + 200)
         _performReceive(300 * 1e6);
 
-        (availableVolume, , , , ) = LancaCanonicalBridge(address(lancaCanonicalBridge))
-            .getInboundRateInfo();
+        (availableVolume, , , , ) = LancaCanonicalBridge(address(lancaCanonicalBridge)).getRateInfo(
+            SRC_CHAIN_SELECTOR,
+            false
+        );
         assertEq(availableVolume, 0);
     }
 
     function test_inboundRateLimit_ReducingMaxAmountCapsAvailable() public {
         vm.prank(deployer);
-        LancaCanonicalBridge(address(lancaCanonicalBridge)).setInboundRateLimit(
+        LancaCanonicalBridge(address(lancaCanonicalBridge)).setRateLimit(
             MAX_RATE_AMOUNT, // 1000 USDC
-            REFILL_SPEED
+            REFILL_SPEED,
+            false
         );
 
         // Consume some rate, leaving 800 USDC available
         _performReceive(200 * 1e6);
 
         (uint128 availableBefore, , , , ) = LancaCanonicalBridge(address(lancaCanonicalBridge))
-            .getInboundRateInfo();
+            .getRateInfo(SRC_CHAIN_SELECTOR, false);
         assertEq(availableBefore, 800 * 1e6);
 
         // Reduce max amount to 500 USDC (less than current available)
         vm.prank(deployer);
-        LancaCanonicalBridge(address(lancaCanonicalBridge)).setInboundRateLimit(
+        LancaCanonicalBridge(address(lancaCanonicalBridge)).setRateLimit(
             500e6, // 500 USDC (new limit)
-            REFILL_SPEED
+            REFILL_SPEED,
+            false
         );
 
         // Available should be capped at new maxAmount
         (uint128 availableAfter, uint128 maxAmount, , , ) = LancaCanonicalBridge(
             address(lancaCanonicalBridge)
-        ).getInboundRateInfo();
+        ).getRateInfo(SRC_CHAIN_SELECTOR, false);
         assertEq(maxAmount, 500e6);
         assertEq(availableAfter, 500e6); // Capped at new limit, not 800
 
@@ -286,7 +309,7 @@ contract InboundRateLimitsTest is LCBridgeTest {
         _performReceive(500 * 1e6);
 
         (uint128 finalAvailable, , , , ) = LancaCanonicalBridge(address(lancaCanonicalBridge))
-            .getInboundRateInfo();
+            .getRateInfo(SRC_CHAIN_SELECTOR, false);
         assertEq(finalAvailable, 0);
     }
 

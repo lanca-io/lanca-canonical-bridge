@@ -11,7 +11,7 @@ type DeployArgs = {
 	conceroRouter: string;
 	usdcAddress: string;
 	lane: string;
-	flowAdmin: string;
+	rateAdmin: string;
 };
 
 type DeploymentFunction = (
@@ -54,10 +54,10 @@ const deployLancaCanonicalBridge: DeploymentFunction = async function (
 		);
 	}
 
-	const flowAdmin = getEnvVar(`TESTNET_FLOW_ADMIN_ADDRESS`);
-	if (!flowAdmin) {
+	const rateAdmin = getEnvVar(`TESTNET_RATE_ADMIN_ADDRESS`);
+	if (!rateAdmin) {
 		throw new Error(
-			`Flow admin address not found. Set FLOW_ADMIN_ADDRESS in environment variables.`,
+			`Flow admin address not found. Set RATE_ADMIN_ADDRESS in environment variables.`,
 		);
 	}
 
@@ -66,7 +66,7 @@ const deployLancaCanonicalBridge: DeploymentFunction = async function (
 		conceroRouter: conceroRouterAddress,
 		usdcAddress: usdcAddress,
 		lane: lane,
-		flowAdmin: flowAdmin,
+		rateAdmin: rateAdmin,
 	};
 
 	const args: DeployArgs = {
@@ -87,7 +87,7 @@ const deployLancaCanonicalBridge: DeploymentFunction = async function (
 			args.conceroRouter,
 			args.usdcAddress,
 			args.lane,
-			args.flowAdmin,
+			args.rateAdmin,
 		],
 		log: true,
 		autoMine: true,

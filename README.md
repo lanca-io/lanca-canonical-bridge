@@ -22,9 +22,9 @@ yarn hardhat deploy-pool [--implementation] [--proxy] [--addpool] [--pause] --ch
 ```bash
 yarn hardhat add-lane --chain <destination_chain_name> --network <network_name>
 ```
-7. [ ] (L1) Set flow limits for new network
+7. [ ] (L1) Set rate limits for new network
 ```bash
-yarn hardhat set-flow-limits [--dstchain <chain_name>] [--outmax <amount>] [--outrefill <speed>] [--inmax <amount>] [--inrefill <speed>] --network <network_name>
+yarn hardhat set-rate-limits [--dstchain <chain_name>] [--outmax <amount>] [--outrefill <speed>] [--inmax <amount>] [--inrefill <speed>] --network <network_name>
 ```
 8. [ ] (L1, L2) Ready, transactions can be sent
 ```bash
@@ -194,33 +194,33 @@ yarn hardhat send-token --from arbitrumSepolia --to baseSepolia --amount 5
 yarn hardhat send-token --from ethereum --to base --amount 100 --gaslimit 200000
 ```
 
-### Set Flow Limits
-Set flow limits for LancaCanonicalBridge contracts (both L1 and L2).
+### Set Rate Limits
+Set rate limits for LancaCanonicalBridge contracts (both L1 and L2).
 
 ```bash
-yarn hardhat set-flow-limits [--dstchain <chain_name>] [--outmax <amount>] [--outrefill <speed>] [--inmax <amount>] [--inrefill <speed>] --network <network_name>
+yarn hardhat set-rate-limits [--dstchain <chain_name>] [--outmax <amount>] [--outrefill <speed>] [--inmax <amount>] [--inrefill <speed>] --network <network_name>
 ```
 
 **Parameters:**
 - `--dstchain` - Destination chain name (required for L1 bridge, omit for L2 bridge)
-- `--outmax` - Maximum outbound flow amount (in USDC)
+- `--outmax` - Maximum outbound rate amount (in USDC)
 - `--outrefill` - Outbound refill speed (USDC per second)
-- `--inmax` - Maximum inbound flow amount (in USDC)
+- `--inmax` - Maximum inbound rate amount (in USDC)
 - `--inrefill` - Inbound refill speed (USDC per second)
 
 **Examples:**
 ```bash
-# Set flow limits for L1 bridge (with destination chain name)
-yarn hardhat set-flow-limits --dstchain base --outmax 1000000 --outrefill 10 --inmax 1000000 --inrefill 10 --network ethereum
+# Set rate limits for L1 bridge (with destination chain name)
+yarn hardhat set-rate-limits --dstchain base --outmax 1000000 --outrefill 10 --inmax 1000000 --inrefill 10 --network ethereum
 
-# Set flow limits for L2 bridge (without destination chain name)
-yarn hardhat set-flow-limits --outmax 500000 --outrefill 5 --inmax 500000 --inrefill 5 --network baseSepolia
+# Set rate limits for L2 bridge (without destination chain name)
+yarn hardhat set-rate-limits --outmax 500000 --outrefill 5 --inmax 500000 --inrefill 5 --network baseSepolia
 
-# Set only outbound flow limits
-yarn hardhat set-flow-limits --dstchain arbitrum --outmax 250000 --outrefill 2 --network ethereum
+# Set only outbound rate limits
+yarn hardhat set-rate-limits --dstchain arbitrum --outmax 250000 --outrefill 2 --network ethereum
 
-# Set only inbound flow limits for L2
-yarn hardhat set-flow-limits --inmax 100000 --inrefill 1 --network arbitrumSepolia
+# Set only inbound rate limits for L2
+yarn hardhat set-rate-limits --inmax 100000 --inrefill 1 --network arbitrumSepolia
 ```
 
 ### ProxyAdmin Owner Management

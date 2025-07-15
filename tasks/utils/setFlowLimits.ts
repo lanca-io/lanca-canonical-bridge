@@ -48,7 +48,7 @@ export async function setFlowLimits(
 				"../../artifacts/contracts/LancaCanonicalBridge/LancaCanonicalBridge.sol/LancaCanonicalBridge.json"
 			);
 
-	const viemAccount = getViemAccount(type, "flowAdmin");
+	const viemAccount = getViemAccount(type, "rateAdmin");
 	const { walletClient, publicClient } = getFallbackClients(
 		conceroNetworks[chainName],
 		viemAccount,
@@ -56,12 +56,12 @@ export async function setFlowLimits(
 
 	try {
 		log(
-			`Setting flow limits for ${isL1Bridge ? "L1" : "L2"} bridge on ${chainName}${isL1Bridge ? ` -> ${dstChainName}` : ""}`,
+			`Setting rate limits for ${isL1Bridge ? "L1" : "L2"} bridge on ${chainName}${isL1Bridge ? ` -> ${dstChainName}` : ""}`,
 			"setFlowLimits",
 			chainName,
 		);
 
-		// Set outbound flow limit if parameters provided
+		// Set outbound rate limit if parameters provided
 		if (outMax !== undefined && outRefill !== undefined) {
 			// Convert from USDC to wei (6 decimals)
 			const outMaxWei = parseUnits(outMax, 6);
@@ -72,7 +72,7 @@ export async function setFlowLimits(
 				: [outMaxWei, outRefillWei];
 
 			log(
-				`Setting outbound flow limit: maxAmount=${outMax} USDC, refillSpeed=${outRefill} USDC/sec${isL1Bridge ? `, dstChain=${dstChainName} (${dstChainId})` : ""}`,
+				`Setting outbound rate limit: maxAmount=${outMax} USDC, refillSpeed=${outRefill} USDC/sec${isL1Bridge ? `, dstChain=${dstChainName} (${dstChainId})` : ""}`,
 				"setFlowLimits",
 				chainName,
 			);
@@ -92,13 +92,13 @@ export async function setFlowLimits(
 			});
 
 			log(
-				`Outbound flow limit set successfully! Transaction: ${outboundTxHash}`,
+				`Outbound rate limit set successfully! Transaction: ${outboundTxHash}`,
 				"setFlowLimits",
 				chainName,
 			);
 		}
 
-		// Set inbound flow limit if parameters provided
+		// Set inbound rate limit if parameters provided
 		if (inMax !== undefined && inRefill !== undefined) {
 			// Convert from USDC to wei (6 decimals)
 			const inMaxWei = parseUnits(inMax, 6);
@@ -109,7 +109,7 @@ export async function setFlowLimits(
 				: [inMaxWei, inRefillWei];
 
 			log(
-				`Setting inbound flow limit: maxAmount=${inMax} USDC, refillSpeed=${inRefill} USDC/sec${isL1Bridge ? `, dstChain=${dstChainName} (${dstChainId})` : ""}`,
+				`Setting inbound rate limit: maxAmount=${inMax} USDC, refillSpeed=${inRefill} USDC/sec${isL1Bridge ? `, dstChain=${dstChainName} (${dstChainId})` : ""}`,
 				"setFlowLimits",
 				chainName,
 			);
@@ -129,7 +129,7 @@ export async function setFlowLimits(
 			});
 
 			log(
-				`Inbound flow limit set successfully! Transaction: ${inboundTxHash}`,
+				`Inbound rate limit set successfully! Transaction: ${inboundTxHash}`,
 				"setFlowLimits",
 				chainName,
 			);
@@ -137,13 +137,13 @@ export async function setFlowLimits(
 
 		if (!outMax && !inMax) {
 			log(
-				"No flow limits to set. Please provide at least one set of parameters.",
+				"No rate limits to set. Please provide at least one set of parameters.",
 				"setFlowLimits",
 				chainName,
 			);
 		}
 	} catch (error) {
-		err(`Failed to set flow limits: ${error}`, "setFlowLimits", chainName);
+		err(`Failed to set rate limits: ${error}`, "setFlowLimits", chainName);
 		throw error;
 	}
 }

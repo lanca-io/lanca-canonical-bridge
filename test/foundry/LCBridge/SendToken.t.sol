@@ -141,8 +141,8 @@ contract SendTokenTest is LCBridgeTest {
         );
 
         vm.startPrank(deployer);
-        newBridge.setOutboundFlowLimit(MAX_FLOW_AMOUNT, REFILL_SPEED);
-        newBridge.setInboundFlowLimit(MAX_FLOW_AMOUNT, REFILL_SPEED);
+        newBridge.setOutboundRateLimit(MAX_RATE_AMOUNT, REFILL_SPEED);
+        newBridge.setInboundRateLimit(MAX_RATE_AMOUNT, REFILL_SPEED);
         vm.stopPrank();
 
         maliciousToken.setMinter(address(newBridge));

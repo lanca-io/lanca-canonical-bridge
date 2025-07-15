@@ -24,8 +24,8 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
     constructor(
         address conceroRouter,
         address usdcAddress,
-        address flowAdmin
-    ) LancaCanonicalBridgeBase(usdcAddress, flowAdmin) ConceroClient(conceroRouter) {}
+        address rateAdmin
+    ) LancaCanonicalBridgeBase(usdcAddress, rateAdmin) ConceroClient(conceroRouter) {}
 
     function sendToken(
         address tokenReceiver,
@@ -45,8 +45,7 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         require(pool != address(0), PoolNotFound(dstChainSelector));
         require(dstBridge != address(0), InvalidDstBridge());
 
-        // Flow limiting check
-        _checkOutboundFlow(dstChainSelector, tokenAmount);
+        _consumeRate(dstChainSelector, tokenAmount, true);
 
         // Process transfer and send message
         if (isContract) {
@@ -101,10 +100,7 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
             false,
             address(0),
             dstChainData,
-			abi.encodePacked(
-				abi.encode(tokenReceiver, tokenAmount),
-				abi.encodePacked(uint8(0))
-			)
+            abi.encodePacked(abi.encode(tokenReceiver, tokenAmount), abi.encodePacked(uint8(0)))
         );
     }
 
@@ -128,10 +124,7 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
             require(msg.value >= fee, InsufficientFee(msg.value, fee));
 
             require(
-                ILancaCanonicalBridgePool(pool).deposit(
-                    msg.sender,
-                    tokenAmount
-                ),
+                ILancaCanonicalBridgePool(pool).deposit(msg.sender, tokenAmount),
                 CommonErrors.TransferFailed()
             );
         }
@@ -168,7 +161,7 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         address pool = s.l1Bridge().pools[srcChainSelector];
         require(pool != address(0), PoolNotFound(srcChainSelector));
 
-        _checkInboundFlow(srcChainSelector, amount);
+        _consumeRate(srcChainSelector, amount, false);
 
         bool success = ILancaCanonicalBridgePool(pool).withdraw(tokenSender, amount);
         require(success, CommonErrors.TransferFailed());
@@ -241,19 +234,19 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         return s.l1Bridge().dstBridges[dstChainSelector];
     }
 
-    function setOutboundFlowLimit(
+    function setOutboundRateLimit(
         uint24 dstChainSelector,
         uint128 maxAmount,
         uint128 refillSpeed
-    ) public onlyFlowAdmin {
-        _setFlowLimit(dstChainSelector, maxAmount, refillSpeed, true);
+    ) public onlyRateLimitAdmin {
+        _setRateLimit(dstChainSelector, maxAmount, refillSpeed, true);
     }
 
-    function setInboundFlowLimit(
+    function setInboundRateLimit(
         uint24 dstChainSelector,
         uint128 maxAmount,
         uint128 refillSpeed
-    ) public onlyFlowAdmin {
-        _setFlowLimit(dstChainSelector, maxAmount, refillSpeed, false);
+    ) public onlyRateLimitAdmin {
+        _setRateLimit(dstChainSelector, maxAmount, refillSpeed, false);
     }
 }

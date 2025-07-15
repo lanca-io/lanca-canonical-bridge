@@ -12,7 +12,7 @@ import {ConceroClient} from "@concero/messaging-contracts-v2/contracts/ConceroCl
 import {ConceroOwnable} from "@concero/messaging-contracts-v2/contracts/common/ConceroOwnable.sol";
 import {ConceroTypes} from "@concero/messaging-contracts-v2/contracts/ConceroClient/ConceroTypes.sol";
 
-import {FlowLimiter} from "./FlowLimiter.sol";
+import {RateLimiter} from "./RateLimiter.sol";
 import {IFiatTokenV1} from "../interfaces/IFiatTokenV1.sol";
 
 struct LCBridgeCallData {
@@ -20,7 +20,7 @@ struct LCBridgeCallData {
     bytes receiverData;
 }
 
-abstract contract LancaCanonicalBridgeBase is ConceroClient, FlowLimiter, ConceroOwnable {
+abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, ConceroOwnable {
     IFiatTokenV1 internal immutable i_usdc;
 
     event TokenSent(
@@ -42,7 +42,7 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, FlowLimiter, Concer
 
     error InvalidSenderBridge();
 
-    constructor(address usdcAddress, address flowAdmin) ConceroOwnable() FlowLimiter(flowAdmin) {
+    constructor(address usdcAddress, address rateAdmin) ConceroOwnable() RateLimiter(rateAdmin) {
         i_usdc = IFiatTokenV1(usdcAddress);
     }
 

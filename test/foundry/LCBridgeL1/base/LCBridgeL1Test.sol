@@ -30,15 +30,15 @@ abstract contract LCBridgeL1Test is DeployLCBridgeL1, BridgeTest {
         vm.deal(user, 1e18);
 
         vm.startPrank(deployer);
-        lancaCanonicalBridgeL1.setOutboundFlowLimit(
+        lancaCanonicalBridgeL1.setOutboundRateLimit(
             DST_CHAIN_SELECTOR,
-            MAX_FLOW_AMOUNT,
+            MAX_RATE_AMOUNT,
             REFILL_SPEED
         );
 
-        lancaCanonicalBridgeL1.setInboundFlowLimit(
+        lancaCanonicalBridgeL1.setInboundRateLimit(
             DST_CHAIN_SELECTOR,
-            MAX_FLOW_AMOUNT,
+            MAX_RATE_AMOUNT,
             REFILL_SPEED
         );
         vm.stopPrank();

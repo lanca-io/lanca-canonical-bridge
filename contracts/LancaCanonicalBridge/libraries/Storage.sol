@@ -6,7 +6,7 @@
  */
 pragma solidity 0.8.28;
 
-import {FlowLimiter} from "../FlowLimiter.sol";
+import {RateLimiter} from "../RateLimiter.sol";
 
 library Namespaces {
     bytes32 internal constant L1_BRIDGE =
@@ -19,9 +19,9 @@ library Namespaces {
             abi.encode(uint256(keccak256(abi.encodePacked("lancabridge.nonreentrant.storage"))) - 1)
         ) & ~bytes32(uint256(0xff));
 
-    bytes32 internal constant FLOW_LIMITS =
+    bytes32 internal constant RATE_LIMITS =
         keccak256(
-            abi.encode(uint256(keccak256(abi.encodePacked("lancabridge.flowlimits.storage"))) - 1)
+            abi.encode(uint256(keccak256(abi.encodePacked("lancabridge.ratelimits.storage"))) - 1)
         ) & ~bytes32(uint256(0xff));
 }
 
@@ -33,11 +33,11 @@ library Storage {
         mapping(uint24 dstChainSelector => address dstBridge) dstBridges;
     }
 
-    struct FlowLimits {
+    struct RateLimits {
         uint256[50] __var_gap;
         uint256[50] __array_gap;
-        mapping(uint24 dstChainSelector => FlowLimiter.FlowLimit) outboundFlows;
-        mapping(uint24 dstChainSelector => FlowLimiter.FlowLimit) inboundFlows;
+        mapping(uint24 dstChainSelector => RateLimiter.RateLimit) outboundRates;
+        mapping(uint24 dstChainSelector => RateLimiter.RateLimit) inboundRates;
     }
 
     struct NonReentrant {
@@ -59,8 +59,8 @@ library Storage {
         }
     }
 
-    function flowLimits() internal pure returns (FlowLimits storage s) {
-        bytes32 slot = Namespaces.FLOW_LIMITS;
+    function rateLimits() internal pure returns (RateLimits storage s) {
+        bytes32 slot = Namespaces.RATE_LIMITS;
         assembly {
             s.slot := slot
         }

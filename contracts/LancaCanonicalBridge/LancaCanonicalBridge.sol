@@ -22,8 +22,8 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         address conceroRouter,
         address usdcAddress,
         address lancaBridgeL1,
-        address flowAdmin
-    ) LancaCanonicalBridgeBase(usdcAddress, flowAdmin) ConceroClient(conceroRouter) {
+        address rateAdmin
+    ) LancaCanonicalBridgeBase(usdcAddress, rateAdmin) ConceroClient(conceroRouter) {
         i_dstChainSelector = dstChainSelector;
         i_lancaBridgeL1 = lancaBridgeL1;
     }
@@ -35,8 +35,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
     ) external payable nonReentrant returns (bytes32 messageId) {
         require(amount > 0, CommonErrors.InvalidAmount());
 
-        // Check outbound rate limit
-        _checkOutboundFlow(i_dstChainSelector, amount);
+        _consumeRate(i_dstChainSelector, amount, true);
 
         // Process transfer and send message
         messageId = _processTransfer(amount, dstChainData);
@@ -89,8 +88,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         (address tokenReceiver, uint256 tokenAmount) = abi.decode(message[:64], (address, uint256));
         bool isContractFlag = uint8(message[64]) > 0;
 
-        // Check inbound rate limit
-        _checkInboundFlow(srcChainSelector, tokenAmount);
+        _consumeRate(srcChainSelector, tokenAmount, false);
 
         if (isContractFlag) {
             _mintToken(tokenReceiver, tokenAmount);
@@ -130,15 +128,21 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         require(success, CommonErrors.TransferFailed());
     }
 
-    function setOutboundFlowLimit(uint128 maxAmount, uint128 refillSpeed) external onlyFlowAdmin {
-        _setFlowLimit(i_dstChainSelector, maxAmount, refillSpeed, true);
+    function setOutboundRateLimit(
+        uint128 maxAmount,
+        uint128 refillSpeed
+    ) external onlyRateLimitAdmin {
+        _setRateLimit(i_dstChainSelector, maxAmount, refillSpeed, true);
     }
 
-    function setInboundFlowLimit(uint128 maxAmount, uint128 refillSpeed) external onlyFlowAdmin {
-        _setFlowLimit(i_dstChainSelector, maxAmount, refillSpeed, false);
+    function setInboundRateLimit(
+        uint128 maxAmount,
+        uint128 refillSpeed
+    ) external onlyRateLimitAdmin {
+        _setRateLimit(i_dstChainSelector, maxAmount, refillSpeed, false);
     }
 
-    function getOutboundFlowInfo()
+    function getOutboundRateInfo()
         external
         view
         returns (
@@ -149,10 +153,10 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
             bool isActive
         )
     {
-        return getOutboundFlowInfo(i_dstChainSelector);
+        return getOutboundRateInfo(i_dstChainSelector);
     }
 
-    function getInboundFlowInfo()
+    function getInboundRateInfo()
         external
         view
         returns (
@@ -163,6 +167,6 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
             bool isActive
         )
     {
-        return getInboundFlowInfo(i_dstChainSelector);
+        return getInboundRateInfo(i_dstChainSelector);
     }
 }

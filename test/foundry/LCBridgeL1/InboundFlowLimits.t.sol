@@ -52,14 +52,14 @@ contract InboundFlowLimitsTest is LCBridgeL1Test {
         );
 
         (
-            uint128 available,
+            uint128 availableVolume,
             uint128 maxAmount,
             uint128 refillSpeed,
             uint32 lastUpdate,
             bool isActive
         ) = lancaCanonicalBridgeL1.getInboundFlowInfo(DST_CHAIN_SELECTOR);
 
-        assertEq(available, MAX_FLOW_AMOUNT); // Start with max available amount
+        assertEq(availableVolume, MAX_FLOW_AMOUNT); // Start with max available amount
         assertEq(maxAmount, MAX_FLOW_AMOUNT);
         assertEq(refillSpeed, REFILL_SPEED);
         assertGt(lastUpdate, 0);
@@ -75,9 +75,9 @@ contract InboundFlowLimitsTest is LCBridgeL1Test {
             REFILL_SPEED
         );
 
-        (available, , , , ) = lancaCanonicalBridgeL1.getInboundFlowInfo(DST_CHAIN_SELECTOR);
+        (availableVolume, , , , ) = lancaCanonicalBridgeL1.getInboundFlowInfo(DST_CHAIN_SELECTOR);
         // After consuming 100 USDC, 900 USDC should remain
-        assertEq(available, MAX_FLOW_AMOUNT - 100 * 1e6);
+        assertEq(availableVolume, MAX_FLOW_AMOUNT - 100 * 1e6);
     }
 
     function test_inboundFlowLimit_TransferWithinLimit() public {
@@ -90,8 +90,10 @@ contract InboundFlowLimitsTest is LCBridgeL1Test {
 
         _performInboundTransfer(500 * 1e6); // 500 USDC
 
-        (uint128 available, , , , ) = lancaCanonicalBridgeL1.getInboundFlowInfo(DST_CHAIN_SELECTOR);
-        assertEq(available, MAX_FLOW_AMOUNT - 500 * 1e6); // 500 USDC available
+        (uint128 availableVolume, , , , ) = lancaCanonicalBridgeL1.getInboundFlowInfo(
+            DST_CHAIN_SELECTOR
+        );
+        assertEq(availableVolume, MAX_FLOW_AMOUNT - 500 * 1e6); // 500 USDC available
     }
 
     function test_inboundFlowLimit_RevertsIfFlowLimitExceeded() public {
@@ -115,8 +117,10 @@ contract InboundFlowLimitsTest is LCBridgeL1Test {
             messageWithFourHundred
         );
 
-        (uint128 available, , , , ) = lancaCanonicalBridgeL1.getInboundFlowInfo(DST_CHAIN_SELECTOR);
-        assertEq(available, 300 * 1e6); // 300 USDC available
+        (uint128 availableVolume, , , , ) = lancaCanonicalBridgeL1.getInboundFlowInfo(
+            DST_CHAIN_SELECTOR
+        );
+        assertEq(availableVolume, 300 * 1e6); // 300 USDC available
 
         // Next transfer should fail
         vm.expectRevert(
@@ -143,15 +147,17 @@ contract InboundFlowLimitsTest is LCBridgeL1Test {
         // Consume all available amount
         _performInboundTransfer(MAX_FLOW_AMOUNT);
 
-        (uint128 available, , , , ) = lancaCanonicalBridgeL1.getInboundFlowInfo(DST_CHAIN_SELECTOR);
-        assertEq(available, 0); // Not enough available amount
+        (uint128 availableVolume, , , , ) = lancaCanonicalBridgeL1.getInboundFlowInfo(
+            DST_CHAIN_SELECTOR
+        );
+        assertEq(availableVolume, 0); // Not enough availableVolume amount
 
         // 60 seconds pass = 600 USDC refill
         vm.warp(block.timestamp + 60);
 
         // Check that it refilled
-        (available, , , , ) = lancaCanonicalBridgeL1.getInboundFlowInfo(DST_CHAIN_SELECTOR);
-        assertEq(available, 600 * 1e6); // Should refill 60 sec * 10 USDC/sec = 600 USDC
+        (availableVolume, , , , ) = lancaCanonicalBridgeL1.getInboundFlowInfo(DST_CHAIN_SELECTOR);
+        assertEq(availableVolume, 600 * 1e6); // Should refill 60 sec * 10 USDC/sec = 600 USDC
 
         // Check that we can use the refilled amount
         bytes memory message = abi.encode(user, 600 * 1e6); // Should pass successfully
@@ -181,9 +187,11 @@ contract InboundFlowLimitsTest is LCBridgeL1Test {
         // Don't touch the flow limit for 1000 seconds
         vm.warp(block.timestamp + 1000);
 
-        (uint128 available, , , , ) = lancaCanonicalBridgeL1.getInboundFlowInfo(DST_CHAIN_SELECTOR);
+        (uint128 availableVolume, , , , ) = lancaCanonicalBridgeL1.getInboundFlowInfo(
+            DST_CHAIN_SELECTOR
+        );
         // Should be limited to max amount, not overflow
-        assertEq(available, MAX_FLOW_AMOUNT);
+        assertEq(availableVolume, MAX_FLOW_AMOUNT);
     }
 
     function test_inboundFlowLimit_DisabledWithZeroMaxAmount() public {
@@ -252,14 +260,16 @@ contract InboundFlowLimitsTest is LCBridgeL1Test {
         // Consume half
         _performInboundTransfer(500 * 1e6);
 
-        (uint128 available, , , , ) = lancaCanonicalBridgeL1.getInboundFlowInfo(DST_CHAIN_SELECTOR);
-        assertEq(available, 500 * 1e6);
+        (uint128 availableVolume, , , , ) = lancaCanonicalBridgeL1.getInboundFlowInfo(
+            DST_CHAIN_SELECTOR
+        );
+        assertEq(availableVolume, 500 * 1e6);
 
         // Wait 30 seconds = 300 USDC refill
         vm.warp(block.timestamp + 30);
 
-        (available, , , , ) = lancaCanonicalBridgeL1.getInboundFlowInfo(DST_CHAIN_SELECTOR);
-        assertEq(available, 800 * 1e6); // 500 + 300 = 800
+        (availableVolume, , , , ) = lancaCanonicalBridgeL1.getInboundFlowInfo(DST_CHAIN_SELECTOR);
+        assertEq(availableVolume, 800 * 1e6); // 500 + 300 = 800
     }
 
     function test_inboundFlowLimit_UpdateConfigPreservesTokens() public {

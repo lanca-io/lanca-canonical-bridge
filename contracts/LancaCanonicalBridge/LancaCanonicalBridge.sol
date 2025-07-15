@@ -142,7 +142,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         external
         view
         returns (
-            uint128 available,
+            uint128 availableVolume,
             uint128 maxAmount,
             uint128 refillSpeed,
             uint32 lastUpdate,
@@ -156,7 +156,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         external
         view
         returns (
-            uint128 available,
+            uint128 availableVolume,
             uint128 maxAmount,
             uint128 refillSpeed,
             uint32 lastUpdate,

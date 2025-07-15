@@ -12,7 +12,7 @@ import {Storage as s} from "./libraries/Storage.sol";
 abstract contract FlowLimiter {
     using s for s.FlowLimits;
 
-    error FlowLimitExceeded(uint256 requested, uint256 available);
+    error FlowLimitExceeded(uint256 requested, uint256 availableVolume);
     error InvalidFlowConfig(uint128 maxAmount, uint128 refillSpeed);
 
     event FlowLimitSet(
@@ -23,7 +23,7 @@ abstract contract FlowLimiter {
     );
 
     struct FlowLimit {
-        uint128 available; // Current available amount for transfers
+        uint128 availableVolume; // Current available volume for transfers
         uint128 maxAmount; // Maximum allowed flow amount
         uint128 refillSpeed; // Amount added per second (refill rate)
         uint32 lastUpdate; // Last update timestamp for refill calculations
@@ -59,15 +59,15 @@ abstract contract FlowLimiter {
             ? limits.outboundFlows[dstChainSelector]
             : limits.inboundFlows[dstChainSelector];
 
-        // Update available amount based on time elapsed since last update
+        // Update available volume based on time elapsed since last update
         if (flow.lastUpdate > 0) {
             (uint128 newAvailable, uint32 newLastUpdate) = _refillFlow(
-                flow.available,
+                flow.availableVolume,
                 flow.refillSpeed,
                 flow.maxAmount,
                 flow.lastUpdate
             );
-            flow.available = newAvailable;
+            flow.availableVolume = newAvailable;
             flow.lastUpdate = newLastUpdate;
         }
 
@@ -75,15 +75,15 @@ abstract contract FlowLimiter {
         flow.refillSpeed = refillSpeed;
         flow.lastUpdate = uint32(block.timestamp);
 
-        // Security: Cap available amount to new max when reducing limits
+        // Security: Cap available volume to new max when reducing limits
         // Prevents bypass of new restrictions with previously accumulated amounts
-        if (flow.available > maxAmount) {
-            flow.available = maxAmount;
+        if (flow.availableVolume > maxAmount) {
+            flow.availableVolume = maxAmount;
         }
 
-        // Initialize available amount for first-time setup
-        if (flow.available == 0 && maxAmount > 0) {
-            flow.available = maxAmount;
+        // Initialize available volume for first-time setup
+        if (flow.availableVolume == 0 && maxAmount > 0) {
+            flow.availableVolume = maxAmount;
         }
 
         emit FlowLimitSet(dstChainSelector, isOutbound, maxAmount, refillSpeed);
@@ -113,9 +113,9 @@ abstract contract FlowLimiter {
             revert FlowLimitExceeded(amount, 0);
         }
 
-        // Update available amount with time-based refill
+        // Update available volume with time-based refill
         (uint128 newAvailable, uint32 newLastUpdate) = _refillFlow(
-            flow.available,
+            flow.availableVolume,
             flow.refillSpeed,
             maxAmount,
             lastUpdate
@@ -130,26 +130,26 @@ abstract contract FlowLimiter {
         newAvailable -= uint128(amount);
 
         // Write back only the changed values
-        flow.available = newAvailable;
+        flow.availableVolume = newAvailable;
         if (newLastUpdate != lastUpdate) {
             flow.lastUpdate = newLastUpdate;
         }
     }
 
     function _refillFlow(
-        uint128 available,
+        uint128 availableVolume,
         uint128 refillSpeed,
         uint128 maxAmount,
         uint32 lastUpdate
     ) internal view returns (uint128 newAvailable, uint32 newLastUpdate) {
         uint256 timeElapsed = block.timestamp - lastUpdate;
         if (timeElapsed == 0) {
-            return (available, lastUpdate);
+            return (availableVolume, lastUpdate);
         }
 
         // Calculate amount to add based on elapsed time and refill rate
         uint256 toAdd = timeElapsed * refillSpeed;
-        uint256 totalAvailable = available + toAdd;
+        uint256 totalAvailable = availableVolume + toAdd;
 
         // Cap at maximum amount to prevent overflow and maintain limits
         newAvailable = uint128(totalAvailable > maxAmount ? maxAmount : totalAvailable);
@@ -162,7 +162,7 @@ abstract contract FlowLimiter {
         public
         view
         returns (
-            uint128 available,
+            uint128 availableVolume,
             uint128 maxAmount,
             uint128 refillSpeed,
             uint32 lastUpdate,
@@ -179,7 +179,7 @@ abstract contract FlowLimiter {
         public
         view
         returns (
-            uint128 available,
+            uint128 availableVolume,
             uint128 maxAmount,
             uint128 refillSpeed,
             uint32 lastUpdate,
@@ -196,24 +196,32 @@ abstract contract FlowLimiter {
         internal
         view
         returns (
-            uint128 available,
+            uint128 availableVolume,
             uint128 maxAmount,
             uint128 refillSpeed,
             uint32 lastUpdate,
             bool isActive
         )
     {
-        // Simulate refill for active flows to show current available amount
+        // Simulate refill for active flows to show current available volume
         // isActive computed as maxAmount > 0
         bool flowIsActive = flow.maxAmount > 0;
         if (flowIsActive && flow.lastUpdate > 0) {
             uint256 timeElapsed = block.timestamp - flow.lastUpdate;
             uint256 toAdd = timeElapsed * flow.refillSpeed;
-            uint256 newAvailable = flow.available + toAdd;
+            uint256 newAvailable = flow.availableVolume + toAdd;
             // Apply maximum amount capping in simulation
-            flow.available = uint128(newAvailable > flow.maxAmount ? flow.maxAmount : newAvailable);
+            flow.availableVolume = uint128(
+                newAvailable > flow.maxAmount ? flow.maxAmount : newAvailable
+            );
         }
 
-        return (flow.available, flow.maxAmount, flow.refillSpeed, flow.lastUpdate, flowIsActive);
+        return (
+            flow.availableVolume,
+            flow.maxAmount,
+            flow.refillSpeed,
+            flow.lastUpdate,
+            flowIsActive
+        );
     }
 }

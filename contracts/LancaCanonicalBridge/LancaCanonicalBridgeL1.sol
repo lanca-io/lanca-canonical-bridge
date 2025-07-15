@@ -171,7 +171,7 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         emit TokenReceived(
             messageId,
             srcChainSelector,
-            address(uint160(uint256(bytes32(sender)))),
+            abi.decode(sender, (address)),
             tokenSender,
             amount
         );

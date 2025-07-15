@@ -116,7 +116,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         emit TokenReceived(
             messageId,
             srcChainSelector,
-            address(uint160(uint256(bytes32(sender)))),
+            abi.decode(sender, (address)),
             address(0), // TODO: do we need from?,
             tokenAmount
         );

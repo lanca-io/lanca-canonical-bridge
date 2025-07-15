@@ -6,11 +6,9 @@
  */
 pragma solidity 0.8.28;
 
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-
 import {ILancaCanonicalBridgeClient} from "../interfaces/ILancaCanonicalBridgeClient.sol";
 
-abstract contract LancaCanonicalBridgeClient is ILancaCanonicalBridgeClient, ERC165 {
+abstract contract LancaCanonicalBridgeClient is ILancaCanonicalBridgeClient {
     error InvalidLancaCanonicalBridge(address bridge);
 
     address internal immutable i_lancaCanonicalBridge;
@@ -18,12 +16,6 @@ abstract contract LancaCanonicalBridgeClient is ILancaCanonicalBridgeClient, ERC
     constructor(address lancaCanonicalBridge) {
         require(lancaCanonicalBridge != address(0), InvalidLancaCanonicalBridge(lancaCanonicalBridge));
         i_lancaCanonicalBridge = lancaCanonicalBridge;
-    }
-
-    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return
-            interfaceId == type(ILancaCanonicalBridgeClient).interfaceId ||
-            super.supportsInterface(interfaceId);
     }
 
     function lancaCanonicalBridgeReceive(

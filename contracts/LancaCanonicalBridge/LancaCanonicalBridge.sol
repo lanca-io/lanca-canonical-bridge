@@ -82,60 +82,43 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         bytes calldata sender,
         bytes calldata message
     ) internal override nonReentrant {
-        address tokenSender;
-        uint256 amount;
-        LCBridgeCallData memory lcbCallData;
-
-        // decode the message
-        if (message.length > 64) {
-            (tokenSender, amount, lcbCallData) = abi.decode(
-                message,
-                (address, uint256, LCBridgeCallData)
-            );
-        } else {
-            (tokenSender, amount) = abi.decode(message, (address, uint256));
-        }
+        // decode the message payload
+        (address tokenReceiver, uint256 tokenAmount) = abi.decode(message[:64], (address, uint256));
+        bool isContractFlag = uint8(message[64]) > 0;
 
         // Check inbound rate limit
-        _checkInboundFlow(srcChainSelector, amount);
+        _checkInboundFlow(srcChainSelector, tokenAmount);
 
-        // check if the receiver is a valid LCB receiver
-        bool isValidLCBReceiver;
-        if (lcbCallData.tokenReceiver != address(0)) {
-            isValidLCBReceiver =
-                Utils.isContract(lcbCallData.tokenReceiver) &&
-                LancaCanonicalBridgeClient(lcbCallData.tokenReceiver).supportsInterface(
-                    type(ILancaCanonicalBridgeClient).interfaceId
-                );
-        }
+        if (isContractFlag) {
+            _mintToken(tokenReceiver, tokenAmount);
 
-        // if the receiver is a valid LancaCanonicalBridge receiver,
-        // mint the token and call receive function
-        if (isValidLCBReceiver) {
-            _mintToken(lcbCallData.tokenReceiver, amount);
+            bytes memory dstCallData = message[65:];
 
-            bytes4 selector = ILancaCanonicalBridgeClient(lcbCallData.tokenReceiver)
-                .lancaCanonicalBridgeReceive(
+            try
+                LancaCanonicalBridgeClient(tokenReceiver).lancaCanonicalBridgeReceive(
                     address(i_usdc),
-                    tokenSender,
-                    amount,
-                    lcbCallData.receiverData
+                    address(0), // TODO: do we need from?
+                    tokenAmount,
+                    dstCallData
+                )
+            returns (bytes4 selector) {
+                require(
+                    selector == ILancaCanonicalBridgeClient.lancaCanonicalBridgeReceive.selector,
+                    ILancaCanonicalBridgeClient.CallFiled()
                 );
-
-            require(
-                selector == ILancaCanonicalBridgeClient.lancaCanonicalBridgeReceive.selector,
-                ILancaCanonicalBridgeClient.CallFiled()
-            );
+            } catch {
+				// TODO: retry logic
+			}
         } else {
-            _mintToken(tokenSender, amount);
+            _mintToken(tokenReceiver, tokenAmount);
         }
 
         emit TokenReceived(
             messageId,
             srcChainSelector,
             address(uint160(uint256(bytes32(sender)))),
-            tokenSender,
-            amount
+            address(0), // TODO: do we need from?,
+            tokenAmount
         );
     }
 

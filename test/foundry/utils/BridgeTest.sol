@@ -15,4 +15,17 @@ abstract contract BridgeTest is BaseScript, Test {
     function setUp() public virtual override {
         super.setUp();
     }
+
+    function _encodeBridgeParams(
+        address tokenReceiver,
+        uint256 tokenAmount,
+        bool isContract,
+        bytes memory dstCallData
+    ) internal pure returns (bytes memory) {
+        return
+            abi.encodePacked(
+                abi.encode(tokenReceiver, tokenAmount),
+                abi.encodePacked(isContract ? uint8(1) : uint8(0), dstCallData)
+            );
+    }
 }

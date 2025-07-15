@@ -113,7 +113,7 @@ contract InboundFlowLimitsTest is LCBridgeTest {
         assertEq(available, 300 * 1e6); // 300 USDC left
 
         // Next receive should fail
-        bytes memory message = abi.encode(user, 400 * 1e6);
+        bytes memory message = _encodeBridgeParams(user, 400 * 1e6, false, "");
 
         vm.expectRevert(
             abi.encodeWithSelector(FlowLimiter.FlowLimitExceeded.selector, 400 * 1e6, 300 * 1e6)
@@ -176,7 +176,7 @@ contract InboundFlowLimitsTest is LCBridgeTest {
         LancaCanonicalBridge(address(lancaCanonicalBridge)).setInboundFlowLimit(0, REFILL_SPEED);
 
         // Transfers should be blocked when maxAmount = 0 (soft pause)
-        bytes memory message = abi.encode(user, 1000 * 1e6);
+        bytes memory message = _encodeBridgeParams(user, 1000 * 1e6, false, "");
 
         vm.expectRevert(
             abi.encodeWithSelector(FlowLimiter.FlowLimitExceeded.selector, 1000 * 1e6, 0)
@@ -293,7 +293,7 @@ contract InboundFlowLimitsTest is LCBridgeTest {
     // --- Helper functions ---
 
     function _performReceive(uint256 amount) internal {
-        bytes memory message = abi.encode(user, amount);
+        bytes memory message = _encodeBridgeParams(user, amount, false, "");
 
         vm.prank(conceroRouter);
         LancaCanonicalBridge(address(lancaCanonicalBridge)).conceroReceive(

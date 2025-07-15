@@ -54,14 +54,14 @@ abstract contract LCBridgeL1Test is DeployLCBridgeL1, BridgeTest {
         lancaCanonicalBridgeL1.addPools(dstChainSelectors, pools);
     }
 
-    function _addDefaultLane() internal {
+    function _addDefaultDstBridge() internal {
         uint24[] memory dstChainSelectors = new uint24[](1);
         dstChainSelectors[0] = DST_CHAIN_SELECTOR;
-        address[] memory lanes = new address[](1);
-        lanes[0] = lancaBridgeMock;
+        address[] memory dstBridges = new address[](1);
+        dstBridges[0] = lancaBridgeMock;
 
         vm.prank(deployer);
-        lancaCanonicalBridgeL1.addLanes(dstChainSelectors, lanes);
+        lancaCanonicalBridgeL1.addDstBridges(dstChainSelectors, dstBridges);
     }
 
     function _approvePool(uint256 amount) internal {

@@ -190,7 +190,7 @@ contract InboundFlowLimitsTest is LCBridgeL1Test {
         vm.prank(deployer);
         lancaCanonicalBridgeL1.setInboundFlowLimit(DST_CHAIN_SELECTOR, 0, 0);
 
-        _addDefaultLane();
+        _addDefaultDstBridge();
         bytes memory message = abi.encode(user, 1000 * 1e6);
 
         // Transfers should be blocked when maxAmount = 0 (soft pause)
@@ -297,7 +297,7 @@ contract InboundFlowLimitsTest is LCBridgeL1Test {
     // --- Helper functions ---
 
     function _performInboundTransfer(uint256 amount) internal {
-        _addDefaultLane();
+        _addDefaultDstBridge();
         bytes memory message = abi.encode(user, amount);
 
         vm.prank(conceroRouter);

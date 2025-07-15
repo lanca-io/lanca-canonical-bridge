@@ -54,10 +54,10 @@ contract SendTokenL1Test is LCBridgeL1Test {
         );
     }
 
-    function test_sendToken_RevertsInvalidLaneIfLaneNotSet() public {
+    function test_sendToken_RevertsInvalidDstBridgeIfDstBridgeNotSet() public {
         _addDefaultPool();
 
-        vm.expectRevert(abi.encodeWithSelector(LancaCanonicalBridgeL1.InvalidLane.selector));
+        vm.expectRevert(abi.encodeWithSelector(LancaCanonicalBridgeL1.InvalidDstBridge.selector));
 
         lancaCanonicalBridgeL1.sendToken(
             user,
@@ -71,7 +71,7 @@ contract SendTokenL1Test is LCBridgeL1Test {
 
     function test_sendToken_RevertsInsufficientFee() public {
         _addDefaultPool();
-        _addDefaultLane();
+        _addDefaultDstBridge();
 
         uint256 messageFee = lancaCanonicalBridgeL1.getMessageFeeForContract(
             DST_CHAIN_SELECTOR,
@@ -96,7 +96,7 @@ contract SendTokenL1Test is LCBridgeL1Test {
 
     function test_sendToken_RevertsTransferFailed() public {
         _addDefaultPool();
-        _addDefaultLane();
+        _addDefaultDstBridge();
 
         uint256 messageFee = lancaCanonicalBridgeL1.getMessageFeeForContract(
             DST_CHAIN_SELECTOR,
@@ -123,7 +123,7 @@ contract SendTokenL1Test is LCBridgeL1Test {
 
     function test_sendToken_Success() public {
         _addDefaultPool();
-        _addDefaultLane();
+        _addDefaultDstBridge();
 
         uint256 messageFee = lancaCanonicalBridgeL1.getMessageFeeForContract(
             DST_CHAIN_SELECTOR,
@@ -150,7 +150,7 @@ contract SendTokenL1Test is LCBridgeL1Test {
 
     function test_sendToken_EmitsTokenSent() public {
         _addDefaultPool();
-        _addDefaultLane();
+        _addDefaultDstBridge();
 
         uint256 messageFee = lancaCanonicalBridgeL1.getMessageFeeForContract(
             DST_CHAIN_SELECTOR,
@@ -184,7 +184,7 @@ contract SendTokenL1Test is LCBridgeL1Test {
 
     function test_sendToken_WithReceiverCallData() public {
         _addDefaultPool();
-        _addDefaultLane();
+        _addDefaultDstBridge();
 
         uint256 messageFee = lancaCanonicalBridgeL1.getMessageFeeForContract(
             DST_CHAIN_SELECTOR,
@@ -211,7 +211,7 @@ contract SendTokenL1Test is LCBridgeL1Test {
         assertEq(MockConceroRouter(conceroRouter).tokenReceiver(), tokenReceiver);
         assertEq(MockConceroRouter(conceroRouter).tokenAmount(), AMOUNT);
         assertEq(MockConceroRouter(conceroRouter).isContract(), 1);
-		assertEq(MockConceroRouter(conceroRouter).dstCallData(), receiverData);
+        assertEq(MockConceroRouter(conceroRouter).dstCallData(), receiverData);
     }
 
     function test_sendToken_RevertsOnReentrancyAttack() public {
@@ -230,7 +230,7 @@ contract SendTokenL1Test is LCBridgeL1Test {
         vm.prank(deployer);
         lancaCanonicalBridgeL1.addPools(dstChainSelectors, pools);
 
-        _addDefaultLane();
+        _addDefaultDstBridge();
 
         vm.deal(address(maliciousPool), 1 ether);
 

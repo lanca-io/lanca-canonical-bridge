@@ -36,7 +36,7 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
     }
 
     function test_conceroReceive_RevertsPoolNotFound() public {
-        _addDefaultLane();
+        _addDefaultDstBridge();
 
         bytes memory message = abi.encode(user, AMOUNT);
 
@@ -55,7 +55,7 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
 
     function test_conceroReceive_RevertsTransferFailed() public {
         _addDefaultPool();
-        _addDefaultLane();
+        _addDefaultDstBridge();
 
         MockUSDC(usdc).setShouldFailTransfer(true);
 
@@ -74,7 +74,7 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
 
     function test_conceroReceive_Success() public {
         _addDefaultPool();
-        _addDefaultLane();
+        _addDefaultDstBridge();
 
         MockUSDC(usdc).mint(address(lancaCanonicalBridgePool), AMOUNT);
 
@@ -94,7 +94,7 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
 
     function test_conceroReceive_EmitsTokenReceived() public {
         _addDefaultPool();
-        _addDefaultLane();
+        _addDefaultDstBridge();
 
         MockUSDC(usdc).mint(address(lancaCanonicalBridgePool), AMOUNT);
 

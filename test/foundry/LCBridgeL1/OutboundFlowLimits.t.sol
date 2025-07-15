@@ -20,7 +20,7 @@ contract OutboundFlowLimitsTest is LCBridgeL1Test {
         super.setUp();
 
         _addDefaultPool();
-        _addDefaultLane();
+        _addDefaultDstBridge();
 
         deal(address(usdc), user, 10_000 * 1e6); // 10K USDC
     }
@@ -125,7 +125,7 @@ contract OutboundFlowLimitsTest is LCBridgeL1Test {
             user,
             400 * 1e6,
             DST_CHAIN_SELECTOR,
-			false,
+            false,
             ZERO_AMOUNT,
             ZERO_BYTES
         );
@@ -198,7 +198,7 @@ contract OutboundFlowLimitsTest is LCBridgeL1Test {
             user,
             1000 * 1e6,
             DST_CHAIN_SELECTOR,
-			false,
+            false,
             ZERO_AMOUNT,
             ZERO_BYTES
         );
@@ -303,7 +303,7 @@ contract OutboundFlowLimitsTest is LCBridgeL1Test {
             user,
             amount,
             DST_CHAIN_SELECTOR,
-			false,
+            false,
             ZERO_AMOUNT,
             ZERO_BYTES
         );

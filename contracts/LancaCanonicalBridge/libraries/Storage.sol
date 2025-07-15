@@ -30,7 +30,7 @@ library Storage {
         uint256[50] __var_gap;
         uint256[50] __array_gap;
         mapping(uint24 dstChainSelector => address pool) pools;
-        mapping(uint24 dstChainSelector => address lane) lanes;
+        mapping(uint24 dstChainSelector => address dstBridge) dstBridges;
     }
 
     struct FlowLimits {

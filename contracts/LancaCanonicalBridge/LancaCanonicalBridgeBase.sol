@@ -40,6 +40,8 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, FlowLimiter, Concer
         uint256 amount
     );
 
+    error InvalidSenderBridge();
+
     constructor(address usdcAddress, address flowAdmin) ConceroOwnable() FlowLimiter(flowAdmin) {
         i_usdc = IFiatTokenV1(usdcAddress);
     }

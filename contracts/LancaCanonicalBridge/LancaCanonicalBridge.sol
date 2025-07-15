@@ -82,6 +82,9 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         bytes calldata sender,
         bytes calldata message
     ) internal override nonReentrant {
+        address messageSender = abi.decode(sender, (address));
+        require(messageSender == i_lancaBridgeL1, InvalidSenderBridge());
+
         // decode the message payload
         (address tokenReceiver, uint256 tokenAmount) = abi.decode(message[:64], (address, uint256));
         bool isContractFlag = uint8(message[64]) > 0;
@@ -107,8 +110,8 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
                     ILancaCanonicalBridgeClient.CallFiled()
                 );
             } catch {
-				// TODO: retry logic
-			}
+                // TODO: retry logic
+            }
         } else {
             _mintToken(tokenReceiver, tokenAmount);
         }
@@ -116,7 +119,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         emit TokenReceived(
             messageId,
             srcChainSelector,
-            abi.decode(sender, (address)),
+            messageSender,
             address(0), // TODO: do we need from?,
             tokenAmount
         );

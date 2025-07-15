@@ -104,7 +104,16 @@ contract InboundFlowLimitsTest is LCBridgeL1Test {
 
         // First transfers accumulate
         _performInboundTransfer(300 * 1e6); // 300 USDC
-        _performInboundTransfer(400 * 1e6); // 400 USDC
+
+        bytes memory messageWithFourHundred = abi.encode(user, 400 * 1e6); // 400 USDC
+
+        vm.prank(conceroRouter);
+        lancaCanonicalBridgeL1.conceroReceive(
+            DEFAULT_MESSAGE_ID,
+            DST_CHAIN_SELECTOR,
+            abi.encode(lancaBridgeMock),
+            messageWithFourHundred
+        );
 
         (uint128 available, , , , ) = lancaCanonicalBridgeL1.getInboundFlowInfo(DST_CHAIN_SELECTOR);
         assertEq(available, 300 * 1e6); // 300 USDC available
@@ -113,7 +122,14 @@ contract InboundFlowLimitsTest is LCBridgeL1Test {
         vm.expectRevert(
             abi.encodeWithSelector(FlowLimiter.FlowLimitExceeded.selector, 400 * 1e6, 300 * 1e6)
         );
-        _performInboundTransfer(400 * 1e6);
+
+        vm.prank(conceroRouter);
+        lancaCanonicalBridgeL1.conceroReceive(
+            DEFAULT_MESSAGE_ID,
+            DST_CHAIN_SELECTOR,
+            abi.encode(lancaBridgeMock),
+            messageWithFourHundred
+        );
     }
 
     function test_inboundFlowLimit_RefillsOverTime() public {
@@ -138,7 +154,15 @@ contract InboundFlowLimitsTest is LCBridgeL1Test {
         assertEq(available, 600 * 1e6); // Should refill 60 sec * 10 USDC/sec = 600 USDC
 
         // Check that we can use the refilled amount
-        _performInboundTransfer(600 * 1e6); // Should pass successfully
+        bytes memory message = abi.encode(user, 600 * 1e6); // Should pass successfully
+
+        vm.prank(conceroRouter);
+        lancaCanonicalBridgeL1.conceroReceive(
+            DEFAULT_MESSAGE_ID,
+            DST_CHAIN_SELECTOR,
+            abi.encode(lancaBridgeMock),
+            message
+        );
 
         (uint128 finalAvailable, , , , ) = lancaCanonicalBridgeL1.getInboundFlowInfo(
             DST_CHAIN_SELECTOR
@@ -166,11 +190,21 @@ contract InboundFlowLimitsTest is LCBridgeL1Test {
         vm.prank(deployer);
         lancaCanonicalBridgeL1.setInboundFlowLimit(DST_CHAIN_SELECTOR, 0, 0);
 
+        _addDefaultLane();
+        bytes memory message = abi.encode(user, 1000 * 1e6);
+
         // Transfers should be blocked when maxAmount = 0 (soft pause)
         vm.expectRevert(
             abi.encodeWithSelector(FlowLimiter.FlowLimitExceeded.selector, 1000 * 1e6, 0)
         );
-        _performInboundTransfer(1000 * 1e6);
+
+        vm.prank(conceroRouter);
+        lancaCanonicalBridgeL1.conceroReceive(
+            DEFAULT_MESSAGE_ID,
+            DST_CHAIN_SELECTOR,
+            abi.encode(lancaBridgeMock),
+            message
+        );
 
         (, uint128 maxAmount, uint128 refillSpeed, , bool isActive) = lancaCanonicalBridgeL1
             .getInboundFlowInfo(DST_CHAIN_SELECTOR);
@@ -263,6 +297,7 @@ contract InboundFlowLimitsTest is LCBridgeL1Test {
     // --- Helper functions ---
 
     function _performInboundTransfer(uint256 amount) internal {
+        _addDefaultLane();
         bytes memory message = abi.encode(user, amount);
 
         vm.prank(conceroRouter);

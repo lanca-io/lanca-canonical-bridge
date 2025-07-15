@@ -115,7 +115,7 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         uint256 dstGasLimit,
         bytes calldata dstCallData,
         address lane,
-		address pool
+        address pool
     ) internal returns (bytes32 messageId) {
         // check fee and deposit in separate scope
         {
@@ -145,10 +145,10 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
                 receiver: lane,
                 gasLimit: BRIDGE_GAS_OVERHEAD + dstGasLimit
             }),
-			abi.encodePacked(
-				abi.encode(tokenReceiver, tokenAmount),
-				abi.encodePacked(uint8(1), dstCallData)
-			)
+            abi.encodePacked(
+                abi.encode(tokenReceiver, tokenAmount),
+                abi.encodePacked(uint8(1), dstCallData)
+            )
         );
     }
 
@@ -158,6 +158,11 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         bytes calldata sender,
         bytes calldata message
     ) internal override nonReentrant {
+        address lane = getLane(srcChainSelector);
+
+        address messageSender = abi.decode(sender, (address));
+        require(messageSender == lane, InvalidSenderBridge());
+
         (address tokenSender, uint256 amount) = abi.decode(message, (address, uint256));
 
         address pool = s.l1Bridge().pools[srcChainSelector];

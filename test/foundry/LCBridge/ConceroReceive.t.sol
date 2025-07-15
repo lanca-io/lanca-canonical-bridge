@@ -43,6 +43,22 @@ contract ConceroReceiveTest is LCBridgeTest {
         assertEq(totalSupplyAfter, totalSupplyBefore + AMOUNT);
     }
 
+    function test_conceroReceive_RevertsInvalidSenderBridge() public {
+        bytes memory message = _encodeBridgeParams(user, AMOUNT, false, "");
+
+        vm.expectRevert(
+            abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidSenderBridge.selector)
+        );
+
+        vm.prank(conceroRouter);
+        lancaCanonicalBridge.conceroReceive(
+            DEFAULT_MESSAGE_ID,
+            SRC_CHAIN_SELECTOR,
+            abi.encode(address(0)),
+            message
+        );
+    }
+
     function test_conceroReceive_RevertsTransferFailed() public {
         MockUSDCe(usdcE).setShouldFailMint(true);
 

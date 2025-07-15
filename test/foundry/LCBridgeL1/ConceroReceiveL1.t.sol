@@ -19,17 +19,35 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
         super.setUp();
     }
 
-    function test_conceroReceive_RevertsPoolNotFound() public {
+    function test_conceroReceive_RevertsInvalidSenderBridge() public {
         bytes memory message = abi.encode(user, AMOUNT);
 
         vm.expectRevert(
-            abi.encodeWithSelector(LancaCanonicalBridgeL1.PoolNotFound.selector, SRC_CHAIN_SELECTOR)
+            abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidSenderBridge.selector)
         );
 
         vm.prank(conceroRouter);
         lancaCanonicalBridgeL1.conceroReceive(
             DEFAULT_MESSAGE_ID,
-            SRC_CHAIN_SELECTOR,
+            DST_CHAIN_SELECTOR,
+            abi.encode(lancaBridgeMock),
+            message
+        );
+    }
+
+    function test_conceroReceive_RevertsPoolNotFound() public {
+        _addDefaultLane();
+
+        bytes memory message = abi.encode(user, AMOUNT);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(LancaCanonicalBridgeL1.PoolNotFound.selector, DST_CHAIN_SELECTOR)
+        );
+
+        vm.prank(conceroRouter);
+        lancaCanonicalBridgeL1.conceroReceive(
+            DEFAULT_MESSAGE_ID,
+            DST_CHAIN_SELECTOR,
             abi.encode(lancaBridgeMock),
             message
         );
@@ -37,6 +55,7 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
 
     function test_conceroReceive_RevertsTransferFailed() public {
         _addDefaultPool();
+        _addDefaultLane();
 
         MockUSDC(usdc).setShouldFailTransfer(true);
 
@@ -55,6 +74,7 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
 
     function test_conceroReceive_Success() public {
         _addDefaultPool();
+        _addDefaultLane();
 
         MockUSDC(usdc).mint(address(lancaCanonicalBridgePool), AMOUNT);
 
@@ -74,6 +94,7 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
 
     function test_conceroReceive_EmitsTokenReceived() public {
         _addDefaultPool();
+        _addDefaultLane();
 
         MockUSDC(usdc).mint(address(lancaCanonicalBridgePool), AMOUNT);
 

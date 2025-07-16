@@ -208,6 +208,7 @@ contract SendTokenL1Test is LCBridgeL1Test {
             receiverData
         );
 
+        assertEq(MockConceroRouter(conceroRouter).tokenSender(), user);
         assertEq(MockConceroRouter(conceroRouter).tokenReceiver(), tokenReceiver);
         assertEq(MockConceroRouter(conceroRouter).tokenAmount(), AMOUNT);
         assertEq(MockConceroRouter(conceroRouter).isContract(), 1);

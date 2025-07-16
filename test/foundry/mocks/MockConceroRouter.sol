@@ -13,6 +13,7 @@ import {IConceroRouter} from "@concero/messaging-contracts-v2/contracts/interfac
 contract MockConceroRouter is IConceroRouter {
     uint256 public constant MESSAGE_FEE = 100;
 
+    address public tokenSender;
     address public tokenReceiver;
     uint256 public tokenAmount;
     uint8 public isContract;
@@ -25,10 +26,20 @@ contract MockConceroRouter is IConceroRouter {
         ConceroTypes.EvmDstChainData memory /* dstChainData */,
         bytes calldata message
     ) external payable returns (bytes32 messageId) {
-        if (message.length > 64) {
-            (tokenReceiver, tokenAmount) = abi.decode(message[:64], (address, uint256));
-            isContract = uint8(message[64]);
-            dstCallData = message[65:];
+        // decode the message payload
+        // payload: [bytes32,bytes32,bytes32,bytes1,bytes]
+        // bytes32: address(tokenSender)   : 0 - 31
+        // bytes32: address(tokenReceiver) : 32 - 63
+        // bytes32: uint256(tokenAmount)   : 64 - 95
+        // bytes1 : uint8(isContractFlag)  : 96
+        // bytes  : bytes(dstCallData)     : 97 - ...
+        if (message.length > 96) {
+            (tokenSender, tokenReceiver, tokenAmount) = abi.decode(
+                message[:96],
+                (address, address, uint256)
+            );
+            isContract = uint8(message[96]);
+            dstCallData = message[97:];
         } else {
             (tokenReceiver, tokenAmount) = abi.decode(message, (address, uint256));
             dstCallData = "";

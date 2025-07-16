@@ -17,6 +17,7 @@ abstract contract BridgeTest is BaseScript, Test {
     }
 
     function _encodeBridgeParams(
+        address tokenSender,
         address tokenReceiver,
         uint256 tokenAmount,
         bool isContract,
@@ -24,7 +25,7 @@ abstract contract BridgeTest is BaseScript, Test {
     ) internal pure returns (bytes memory) {
         return
             abi.encodePacked(
-                abi.encode(tokenReceiver, tokenAmount),
+                abi.encode(tokenSender, tokenReceiver, tokenAmount),
                 abi.encodePacked(isContract ? uint8(1) : uint8(0), dstCallData)
             );
     }

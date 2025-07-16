@@ -45,41 +45,34 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
 
         _consumeRate(dstChainSelector, tokenAmount, true);
 
-        // Process transfer and send message
-        if (isContract) {
-            messageId = _processTransferToContract(
-                tokenReceiver,
-                tokenAmount,
-                dstChainSelector,
-                dstGasLimit,
-                dstCallData,
-                dstBridge,
-                pool
-            );
-        } else {
-            messageId = _processTransferToEOA(
-                tokenReceiver,
-                tokenAmount,
-                dstChainSelector,
-                dstBridge,
-                pool
-            );
-        }
+        messageId = _processTransfer(
+            tokenReceiver,
+            tokenAmount,
+            dstChainSelector,
+            isContract,
+            dstGasLimit,
+            dstCallData,
+            dstBridge,
+            pool
+        );
 
         // TODO: fix it
         emit TokenSent(messageId, dstBridge, dstChainSelector, msg.sender, tokenAmount, msg.value);
     }
 
-    function _processTransferToEOA(
+    function _processTransfer(
         address tokenReceiver,
         uint256 tokenAmount,
         uint24 dstChainSelector,
-        address dstBridge,
-        address pool
+        bool isContract,
+        uint256 dstGasLimit,
+        bytes calldata dstCallData,
+		address dstBridge,
+		address pool
     ) internal returns (bytes32 messageId) {
         ConceroTypes.EvmDstChainData memory dstChainData = ConceroTypes.EvmDstChainData({
             receiver: dstBridge,
-            gasLimit: BRIDGE_GAS_OVERHEAD
+            gasLimit: isContract ? BRIDGE_GAS_OVERHEAD + dstGasLimit : BRIDGE_GAS_OVERHEAD
         });
 
         // check fee
@@ -92,54 +85,18 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
             CommonErrors.TransferFailed()
         );
 
+        bytes memory message = abi.encodePacked(
+            abi.encode(msg.sender, tokenReceiver, tokenAmount),
+            isContract ? abi.encodePacked(uint8(1), dstCallData) : abi.encodePacked(uint8(0))
+        );
+
         // send message
         messageId = IConceroRouter(i_conceroRouter).conceroSend{value: msg.value}(
             dstChainSelector,
             false,
             address(0),
             dstChainData,
-            abi.encodePacked(abi.encode(tokenReceiver, tokenAmount), abi.encodePacked(uint8(0)))
-        );
-    }
-
-    function _processTransferToContract(
-        address tokenReceiver,
-        uint256 tokenAmount,
-        uint24 dstChainSelector,
-        uint256 dstGasLimit,
-        bytes calldata dstCallData,
-        address dstBridge,
-        address pool
-    ) internal returns (bytes32 messageId) {
-        // check fee and deposit in separate scope
-        {
-            uint256 fee = getMessageFeeForContract(
-                dstChainSelector,
-                address(0),
-                dstGasLimit,
-                dstCallData
-            );
-            require(msg.value >= fee, InsufficientFee(msg.value, fee));
-
-            require(
-                ILancaCanonicalBridgePool(pool).deposit(msg.sender, tokenAmount),
-                CommonErrors.TransferFailed()
-            );
-        }
-
-        // send message
-        messageId = IConceroRouter(i_conceroRouter).conceroSend{value: msg.value}(
-            dstChainSelector,
-            false,
-            address(0),
-            ConceroTypes.EvmDstChainData({
-                receiver: dstBridge,
-                gasLimit: BRIDGE_GAS_OVERHEAD + dstGasLimit
-            }),
-            abi.encodePacked(
-                abi.encode(tokenReceiver, tokenAmount),
-                abi.encodePacked(uint8(1), dstCallData)
-            )
+            message
         );
     }
 

@@ -24,7 +24,7 @@ contract ConceroReceiveTest is LCBridgeTest {
     // --- Tests for conceroReceive with no call ---
 
     function test_conceroReceive_Success() public {
-        bytes memory message = _encodeBridgeParams(user, AMOUNT, false, "");
+        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, false, "");
         uint256 userBalanceBefore = MockUSDCe(usdcE).balanceOf(user);
         uint256 totalSupplyBefore = MockUSDCe(usdcE).totalSupply();
 
@@ -44,7 +44,7 @@ contract ConceroReceiveTest is LCBridgeTest {
     }
 
     function test_conceroReceive_RevertsInvalidSenderBridge() public {
-        bytes memory message = _encodeBridgeParams(user, AMOUNT, false, "");
+        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, false, "");
 
         vm.expectRevert(
             abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidSenderBridge.selector)
@@ -62,7 +62,7 @@ contract ConceroReceiveTest is LCBridgeTest {
     function test_conceroReceive_RevertsTransferFailed() public {
         MockUSDCe(usdcE).setShouldFailMint(true);
 
-        bytes memory message = _encodeBridgeParams(user, AMOUNT, false, "");
+        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, false, "");
 
         vm.expectRevert(abi.encodeWithSelector(CommonErrors.TransferFailed.selector));
 
@@ -76,14 +76,14 @@ contract ConceroReceiveTest is LCBridgeTest {
     }
 
     function test_conceroReceive_EmitsTokenReceived() public {
-        bytes memory message = _encodeBridgeParams(user, AMOUNT, false, "");
+        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, false, "");
 
         vm.expectEmit(true, true, true, true);
         emit LancaCanonicalBridgeBase.TokenReceived(
             DEFAULT_MESSAGE_ID,
             SRC_CHAIN_SELECTOR,
             address(lancaBridgeL1Mock),
-            address(0), // TODO: fix it
+            user,
             AMOUNT
         );
 
@@ -102,6 +102,7 @@ contract ConceroReceiveTest is LCBridgeTest {
         MockInvalidLCBridgeClient invalidLCBridgeClient = new MockInvalidLCBridgeClient();
 
         bytes memory message = _encodeBridgeParams(
+			user,
             address(invalidLCBridgeClient),
             AMOUNT,
             true,
@@ -123,6 +124,7 @@ contract ConceroReceiveTest is LCBridgeTest {
         string memory testString = "LancaCanonicalBridgeL1";
 
         bytes memory message = _encodeBridgeParams(
+            user,
             address(lcBridgeClient),
             AMOUNT,
             true,
@@ -138,7 +140,7 @@ contract ConceroReceiveTest is LCBridgeTest {
         );
 
         assertEq(lcBridgeClient.token(), address(usdcE));
-        assertEq(lcBridgeClient.tokenSender(), address(0)); // TODO: fix it
+        assertEq(lcBridgeClient.tokenSender(), user);
         assertEq(lcBridgeClient.tokenAmount(), AMOUNT);
         assertEq(lcBridgeClient.testString(), testString);
     }

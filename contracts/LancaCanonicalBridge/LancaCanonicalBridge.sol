@@ -89,20 +89,29 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         require(messageSender == i_lancaBridgeL1, InvalidSenderBridge());
 
         // decode the message payload
-        (address tokenReceiver, uint256 tokenAmount) = abi.decode(message[:64], (address, uint256));
-        bool isContractFlag = uint8(message[64]) > 0;
+        // payload: [bytes32,bytes32,bytes32,bytes1,bytes]
+        // bytes32: address(tokenSender)   : 0 - 31
+        // bytes32: address(tokenReceiver) : 32 - 63
+        // bytes32: uint256(tokenAmount)   : 64 - 95
+        // bytes1 : uint8(isContractFlag)  : 96
+        // bytes  : bytes(dstCallData)     : 97 - ...
+        (address tokenSender, address tokenReceiver, uint256 tokenAmount) = abi.decode(
+            message[:96],
+            (address, address, uint256)
+        );
+        bool isContractFlag = uint8(message[96]) > 0;
 
         _consumeRate(srcChainSelector, tokenAmount, false);
 
         if (isContractFlag) {
             _mintToken(tokenReceiver, tokenAmount);
 
-            bytes memory dstCallData = message[65:];
+            bytes memory dstCallData = message[97:];
 
             try
                 LancaCanonicalBridgeClient(tokenReceiver).lancaCanonicalBridgeReceive(
                     address(i_usdc),
-                    address(0), // TODO: do we need from?
+                    tokenSender,
                     tokenAmount,
                     dstCallData
                 )
@@ -118,13 +127,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
             _mintToken(tokenReceiver, tokenAmount);
         }
 
-        emit TokenReceived(
-            messageId,
-            srcChainSelector,
-            messageSender,
-            address(0), // TODO: do we need from?,
-            tokenAmount
-        );
+        emit TokenReceived(messageId, srcChainSelector, messageSender, tokenSender, tokenAmount);
     }
 
     function _mintToken(address to, uint256 amount) internal {

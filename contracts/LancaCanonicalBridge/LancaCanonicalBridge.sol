@@ -14,8 +14,14 @@ import {LancaCanonicalBridgeClient} from "../LancaCanonicalBridgeClient/LancaCan
 import {ReentrancyGuard} from "../common/ReentrancyGuard.sol";
 
 contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
+    uint8 internal constant IS_CONTRACT_FLAG_OFFSET = 96;
+    uint8 internal constant MIN_MESSAGE_LENGTH = IS_CONTRACT_FLAG_OFFSET + 1;
+    uint8 internal constant DST_CALL_DATA_OFFSET = IS_CONTRACT_FLAG_OFFSET + 1;
+
     uint24 internal immutable i_dstChainSelector;
     address internal immutable i_lancaBridgeL1;
+
+    error InvalidMessageLength(uint256 length);
 
     constructor(
         uint24 dstChainSelector,
@@ -88,6 +94,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
     ) internal override nonReentrant {
         address messageSender = abi.decode(sender, (address));
         require(messageSender == i_lancaBridgeL1, InvalidSenderBridge());
+        require(message.length >= MIN_MESSAGE_LENGTH, InvalidMessageLength(message.length));
 
         // decode the message payload
         // payload: [bytes32,bytes32,bytes32,bytes1,bytes]
@@ -97,17 +104,20 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         // bytes1 : uint8(isContractFlag)  : 96
         // bytes  : bytes(dstCallData)     : 97 - ...
         (address tokenSender, address tokenReceiver, uint256 tokenAmount) = abi.decode(
-            message[:96],
+            message[:IS_CONTRACT_FLAG_OFFSET],
             (address, address, uint256)
         );
-        bool isContractFlag = uint8(message[96]) > 0;
+        bool isContractFlag = uint8(message[IS_CONTRACT_FLAG_OFFSET]) > 0;
 
         _consumeRate(srcChainSelector, tokenAmount, false);
 
         if (isContractFlag) {
             _mintToken(tokenReceiver, tokenAmount);
 
-            bytes memory dstCallData = message[97:];
+            bytes memory dstCallData;
+            if (message.length > IS_CONTRACT_FLAG_OFFSET) {
+                dstCallData = message[DST_CALL_DATA_OFFSET:];
+            }
 
             bytes4 magicValue = LancaCanonicalBridgeClient(tokenReceiver)
                 .lancaCanonicalBridgeReceive(

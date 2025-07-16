@@ -45,8 +45,10 @@ export async function sendToken(
 	const usdcAddress = getEnvVar(`FIAT_TOKEN_PROXY_${getNetworkEnvKey(srcChain)}`);
 	if (!usdcAddress) return;
 
-	const laneAddress = getEnvVar(`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChain)}`);
-	if (!laneAddress) return;
+	const dstBridgeAddress = getEnvVar(
+		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChain)}`,
+	);
+	if (!dstBridgeAddress) return;
 
 	// Determine if we need to approve to pool or bridge
 	const isEthereumChain = srcChain.startsWith("ethereum");
@@ -88,20 +90,15 @@ export async function sendToken(
 	const { walletClient, publicClient } = getFallbackClients(srcNetwork, viemAccount);
 
 	const amountInWei = parseUnits(amount, 6);
-	const gasLimitBigInt = BigInt(gasLimit);
-
-	const dstChainData = {
-		receiver: laneAddress as `0x${string}`,
-		gasLimit: gasLimitBigInt,
-	};
-
-	const lcbCallData = {
-		tokenReceiver: ADDRESS_ZERO as `0x${string}`,
-		receiverData: "0x",
-	};
 
 	try {
 		log("Getting message fee...", "sendToken", srcChain);
+
+		const dstChainData = {
+			receiver: dstBridgeAddress as `0x${string}`,
+			gasLimit: BigInt(gasLimit),
+		};
+
 		const messageFee = await publicClient.readContract({
 			address: bridgeAddress as `0x${string}`,
 			abi: bridgeAbi,
@@ -114,7 +111,7 @@ export async function sendToken(
 		});
 
 		log(
-			`Message fee: ${formatEther(messageFee as bigint)} ETH (${messageFee} wei)`,
+			`Message fee: ${formatEther(messageFee)} ETH (${messageFee} wei)`,
 			"sendToken",
 			srcChain,
 		);
@@ -140,27 +137,27 @@ export async function sendToken(
 
 		// Send token - prepare arguments based on contract type
 		log(
-			`Sending ${amount} USDC to ${dstChain} (lane: ${laneAddress})...`,
+			`Sending ${amount} USDC to ${dstChain} (dstBridge: ${dstBridgeAddress})...`,
 			"sendToken",
 			srcChain,
 		);
 
 		let sendTokenArgs: any[];
 		if (isEthereumChain) {
-			// L1 contract: sendToken(amount, dstChainSelector, feeToken, dstChainData)
+			// L1 contract: sendToken(tokenReceiver, tokenAmount, dstChainSelector, isContract, dstGasLimit, dstCallData)
 			sendTokenArgs = [
-				amountInWei,
-				dstChainSelector,
-				ADDRESS_ZERO, // feeToken
-				dstChainData,
-				lcbCallData,
+				viemAccount.address as `0x${string}`, // tokenReceiver
+				amountInWei, // tokenAmount
+				dstChainSelector, // dstChainSelector
+				false, // isContract (simple transfer)
+				BigInt(0), // dstGasLimit (not needed for simple transfer)
+				"0x", // dstCallData (empty for simple transfer)
 			];
 		} else {
-			// L2 contract: sendToken(amount, feeToken, dstChainData)
+			// L2 contract: sendToken(tokenReceiver, tokenAmount)
 			sendTokenArgs = [
-				amountInWei,
-				ADDRESS_ZERO, // feeToken
-				dstChainData,
+				viemAccount.address as `0x${string}`, // tokenReceiver
+				amountInWei, // tokenAmount
 			];
 		}
 
@@ -170,7 +167,7 @@ export async function sendToken(
 			functionName: "sendToken",
 			account: viemAccount,
 			args: sendTokenArgs,
-			value: messageFee as bigint,
+			value: messageFee,
 			chain: viemChain,
 		});
 

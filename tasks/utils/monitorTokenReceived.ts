@@ -90,7 +90,7 @@ export async function monitorTokenReceived(
 						) {
 							const args = decoded.args as any;
 
-							const senderAddress = args.sender;
+							const senderAddress = args.srcBridge;
 
 							log(`✅ TokenReceived event found!`, "monitorTokenReceived", dstChain);
 							log(
@@ -105,7 +105,12 @@ export async function monitorTokenReceived(
 								dstChain,
 							);
 							log(
-								`   Amount: ${args.amount} wei (${formatUnits(args.amount, 6)} USDC)`,
+								`   TokenReceiver: ${args.tokenReceiver}`,
+								"monitorTokenReceived",
+								dstChain,
+							);
+							log(
+								`   TokenAmount: ${args.tokenAmount} wei (${formatUnits(args.tokenAmount, 6)} USDC)`,
 								"monitorTokenReceived",
 								dstChain,
 							);

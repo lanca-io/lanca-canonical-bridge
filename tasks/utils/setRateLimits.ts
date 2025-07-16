@@ -7,7 +7,7 @@ import { getNetworkEnvKey } from "@concero/contract-utils";
 import { conceroNetworks, getViemReceiptConfig } from "../../constants";
 import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils";
 
-export async function setFlowLimits(
+export async function setRateLimits(
 	hre: HardhatRuntimeEnvironment,
 	dstChainName?: string,
 	outMax?: string,
@@ -21,15 +21,15 @@ export async function setFlowLimits(
 	// Determine if this is L1 or L2 bridge based on presence of dstChainName
 	const isL1Bridge = !!dstChainName;
 
-	// Get destination chain ID if this is L1 bridge
-	let dstChainId: bigint | undefined;
+	// Get destination chain selector if this is L1 bridge
+	let dstChainSelector: bigint | undefined;
 	if (isL1Bridge) {
 		const dstChain = conceroNetworks[dstChainName!];
 		if (!dstChain) {
-			err(`Destination network ${dstChainName} not found`, "setFlowLimits", chainName);
+			err(`Destination network ${dstChainName} not found`, "setRateLimits", chainName);
 			return;
 		}
-		dstChainId = BigInt(dstChain.chainId);
+		dstChainSelector = dstChain.chainSelector;
 	}
 
 	// Get the bridge contract address (both L1 and L2 use the same env var)
@@ -57,7 +57,7 @@ export async function setFlowLimits(
 	try {
 		log(
 			`Setting rate limits for ${isL1Bridge ? "L1" : "L2"} bridge on ${chainName}${isL1Bridge ? ` -> ${dstChainName}` : ""}`,
-			"setFlowLimits",
+			"setRateLimits",
 			chainName,
 		);
 
@@ -68,19 +68,19 @@ export async function setFlowLimits(
 			const outRefillWei = parseUnits(outRefill, 6);
 
 			const outboundArgs = isL1Bridge
-				? [dstChainId!, outMaxWei, outRefillWei]
-				: [outMaxWei, outRefillWei];
+				? [dstChainSelector!, outMaxWei, outRefillWei, true]
+				: [outMaxWei, outRefillWei, true];
 
 			log(
-				`Setting outbound rate limit: maxAmount=${outMax} USDC, refillSpeed=${outRefill} USDC/sec${isL1Bridge ? `, dstChain=${dstChainName} (${dstChainId})` : ""}`,
-				"setFlowLimits",
+				`Setting outbound rate limit: maxAmount=${outMax} USDC, refillSpeed=${outRefill} USDC/sec${isL1Bridge ? `, dstChain=${dstChainName} (${dstChainSelector})` : ""}`,
+				"setRateLimits",
 				chainName,
 			);
 
 			const outboundTxHash = await walletClient.writeContract({
 				address: contractAddress as `0x${string}`,
 				abi: bridgeAbi,
-				functionName: "setOutboundFlowLimit",
+				functionName: "setRateLimit",
 				account: viemAccount,
 				args: outboundArgs,
 				chain: viemChain,
@@ -93,7 +93,7 @@ export async function setFlowLimits(
 
 			log(
 				`Outbound rate limit set successfully! Transaction: ${outboundTxHash}`,
-				"setFlowLimits",
+				"setRateLimits",
 				chainName,
 			);
 		}
@@ -105,19 +105,19 @@ export async function setFlowLimits(
 			const inRefillWei = parseUnits(inRefill, 6);
 
 			const inboundArgs = isL1Bridge
-				? [dstChainId!, inMaxWei, inRefillWei]
-				: [inMaxWei, inRefillWei];
+				? [dstChainSelector!, inMaxWei, inRefillWei, false]
+				: [inMaxWei, inRefillWei, false];
 
 			log(
-				`Setting inbound rate limit: maxAmount=${inMax} USDC, refillSpeed=${inRefill} USDC/sec${isL1Bridge ? `, dstChain=${dstChainName} (${dstChainId})` : ""}`,
-				"setFlowLimits",
+				`Setting inbound rate limit: maxAmount=${inMax} USDC, refillSpeed=${inRefill} USDC/sec${isL1Bridge ? `, dstChain=${dstChainName} (${dstChainSelector})` : ""}`,
+				"setRateLimits",
 				chainName,
 			);
 
 			const inboundTxHash = await walletClient.writeContract({
 				address: contractAddress as `0x${string}`,
 				abi: bridgeAbi,
-				functionName: "setInboundFlowLimit",
+				functionName: "setRateLimit",
 				account: viemAccount,
 				args: inboundArgs,
 				chain: viemChain,
@@ -130,7 +130,7 @@ export async function setFlowLimits(
 
 			log(
 				`Inbound rate limit set successfully! Transaction: ${inboundTxHash}`,
-				"setFlowLimits",
+				"setRateLimits",
 				chainName,
 			);
 		}
@@ -138,12 +138,12 @@ export async function setFlowLimits(
 		if (!outMax && !inMax) {
 			log(
 				"No rate limits to set. Please provide at least one set of parameters.",
-				"setFlowLimits",
+				"setRateLimits",
 				chainName,
 			);
 		}
 	} catch (error) {
-		err(`Failed to set rate limits: ${error}`, "setFlowLimits", chainName);
+		err(`Failed to set rate limits: ${error}`, "setRateLimits", chainName);
 		throw error;
 	}
 }

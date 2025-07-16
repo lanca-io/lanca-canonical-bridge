@@ -10,7 +10,7 @@ type DeployArgs = {
 	dstChainSelector: bigint;
 	conceroRouter: string;
 	usdcAddress: string;
-	lane: string;
+	dstBridgeAddress: string;
 	rateLimitAdmin: string;
 };
 
@@ -47,10 +47,10 @@ const deployLancaCanonicalBridge: DeploymentFunction = async function (
 		);
 	}
 
-	const lane = getEnvVar(`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChainName)}`);
-	if (!lane) {
+	const dstBridgeAddress = getEnvVar(`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChainName)}`);
+	if (!dstBridgeAddress) {
 		throw new Error(
-			`Lane address not found. Set LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChainName)} in environment variables.`,
+			`DST Bridge address not found. Set LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChainName)} in environment variables.`,
 		);
 	}
 
@@ -65,7 +65,7 @@ const deployLancaCanonicalBridge: DeploymentFunction = async function (
 		dstChainSelector: BigInt(dstChain.chainId),
 		conceroRouter: conceroRouterAddress,
 		usdcAddress: usdcAddress,
-		lane: lane,
+		dstBridgeAddress: dstBridgeAddress,
 		rateLimitAdmin: rateLimitAdmin,
 	};
 
@@ -78,7 +78,7 @@ const deployLancaCanonicalBridge: DeploymentFunction = async function (
 	log(`  dstChainSelector: ${args.dstChainSelector}`, "deployLancaCanonicalBridge", name);
 	log(`  conceroRouter: ${args.conceroRouter}`, "deployLancaCanonicalBridge", name);
 	log(`  usdcAddress: ${args.usdcAddress}`, "deployLancaCanonicalBridge", name);
-	log(`  lane: ${args.lane}`, "deployLancaCanonicalBridge", name);
+	log(`  dstBridgeAddress: ${args.dstBridgeAddress}`, "deployLancaCanonicalBridge", name);
 
 	const deployment = await deploy("LancaCanonicalBridge", {
 		from: deployer,
@@ -86,7 +86,7 @@ const deployLancaCanonicalBridge: DeploymentFunction = async function (
 			args.dstChainSelector,
 			args.conceroRouter,
 			args.usdcAddress,
-			args.lane,
+			args.dstBridgeAddress,
 			args.rateLimitAdmin,
 		],
 		log: true,

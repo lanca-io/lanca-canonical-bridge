@@ -18,9 +18,9 @@ yarn hardhat configure-minter [--bridge] [--test] --network <network_name>
 ```bash
 yarn hardhat deploy-pool [--implementation] [--proxy] [--addpool] [--pause] --chain <chain_name> --network <network_name>
 ```
-6. [ ] (L1) Add lane for new network in L1
+6. [ ] (L1) Add destination bridge for new network in L1
 ```bash
-yarn hardhat add-lane --chain <destination_chain_name> --network <network_name>
+yarn hardhat add-dst-bridge --chain <destination_chain_name> --network <network_name>
 ```
 7. [ ] (L1) Set rate limits for new network
 ```bash
@@ -156,20 +156,20 @@ yarn hardhat configure-minter [--bridge] [--test] --network <network_name>
 - `--bridge` - Configure Minter for bridge
 - `--test` - Configure Minter for test
 
-### Add Lane
-Add lane to LancaCanonicalBridge contract.
+### Add Destination Bridge
+Add destination bridge to LancaCanonicalBridgeL1 contract.
 
 ```bash
-yarn hardhat add-lane --chain <destination_chain_name> --network <network_name>
+yarn hardhat add-dst-bridge --chain <destination_chain_name> --network <network_name>
 ```
 
 **Parameters:**
-- `--chain` - Destination chain name for the lane (required)
+- `--chain` - Destination chain name for the bridge (required)
 
 **Examples:**
 ```bash
-# Add lane for Arbitrum chain
-yarn hardhat add-lane --chain base --network ethereum
+# Add destination bridge for Arbitrum chain
+yarn hardhat add-dst-bridge --chain arbitrum --network ethereum
 ```
 
 ### Send Tokens

@@ -1,10 +1,10 @@
 import { task } from "hardhat/config";
 import { type HardhatRuntimeEnvironment } from "hardhat/types";
 
-import { setFlowLimits } from "../utils";
+import { setRateLimits } from "../utils";
 
-async function setFlowLimitsTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
-	await setFlowLimits(
+async function setRateLimitsTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
+	await setRateLimits(
 		hre,
 		taskArgs.dstchain,
 		taskArgs.outmax,
@@ -20,12 +20,12 @@ task("set-rate-limits", "Set rate limits for LancaCanonicalBridge contracts")
 		"dstchain",
 		"Destination chain name (required for L1 bridge, omit for L2 bridge)",
 	)
-	.addOptionalParam("outmax", "Maximum outbound rate amount (in wei)")
-	.addOptionalParam("outrefill", "Outbound refill speed (tokens per second in wei)")
-	.addOptionalParam("inmax", "Maximum inbound rate amount (in wei)")
-	.addOptionalParam("inrefill", "Inbound refill speed (tokens per second in wei)")
+	.addOptionalParam("outmax", "Maximum outbound rate amount (in USDC)")
+	.addOptionalParam("outrefill", "Outbound refill speed (USDC per second)")
+	.addOptionalParam("inmax", "Maximum inbound rate amount (in USDC)")
+	.addOptionalParam("inrefill", "Inbound refill speed (USDC per second)")
 	.setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
-		await setFlowLimitsTask(taskArgs, hre);
+		await setRateLimitsTask(taskArgs, hre);
 	});
 
-export { setFlowLimitsTask };
+export { setRateLimitsTask };

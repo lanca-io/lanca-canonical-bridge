@@ -6,6 +6,6 @@ export { initializeFiatToken } from "./initializeFiatToken";
 export { configureMinter } from "./configureMinter";
 export { configureMinterTest } from "./configureMinterTest";
 export { addPool } from "./addPool";
-export { addLane } from "./addLane";
+export { addDstBridge } from "./addDstBridge";
 export { sendToken } from "./sendToken";
-export { setFlowLimits } from "./setFlowLimits";
+export { setRateLimits } from "./setRateLimits";

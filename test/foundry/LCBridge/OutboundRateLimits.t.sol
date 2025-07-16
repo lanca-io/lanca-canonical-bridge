@@ -128,9 +128,8 @@ contract OutboundRateLimitsTest is LCBridgeTest {
             abi.encodeWithSelector(RateLimiter.RateLimitExceeded.selector, 400 * 1e6, 300 * 1e6)
         );
         LancaCanonicalBridge(address(lancaCanonicalBridge)).sendToken{value: messageFee}(
-            400 * 1e6,
-            address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeL1Mock, gasLimit: GAS_LIMIT})
+            user,
+            400 * 1e6
         );
         vm.stopPrank();
     }
@@ -195,9 +194,8 @@ contract OutboundRateLimitsTest is LCBridgeTest {
             abi.encodeWithSelector(RateLimiter.RateLimitExceeded.selector, 1000 * 1e6, 0)
         );
         LancaCanonicalBridge(address(lancaCanonicalBridge)).sendToken{value: messageFee}(
-            1000 * 1e6,
-            address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeL1Mock, gasLimit: GAS_LIMIT})
+            user,
+            1000 * 1e6
         );
         vm.stopPrank();
 
@@ -317,9 +315,8 @@ contract OutboundRateLimitsTest is LCBridgeTest {
         vm.startPrank(user);
         MockUSDCe(usdcE).approve(address(lancaCanonicalBridge), amount);
         LancaCanonicalBridge(address(lancaCanonicalBridge)).sendToken{value: _getMessageFee()}(
-            amount,
-            address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeL1Mock, gasLimit: GAS_LIMIT})
+            user,
+            amount
         );
         vm.stopPrank();
     }

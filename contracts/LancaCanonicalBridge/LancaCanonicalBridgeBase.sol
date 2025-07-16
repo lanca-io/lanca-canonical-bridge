@@ -23,6 +23,8 @@ struct LCBridgeCallData {
 abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, ConceroOwnable {
     IFiatTokenV1 internal immutable i_usdc;
 
+	uint256 internal constant BRIDGE_GAS_OVERHEAD = 100_000;
+
     event TokenSent(
         bytes32 indexed messageId,
         address indexed dstBridgeAddress,

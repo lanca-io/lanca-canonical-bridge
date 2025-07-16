@@ -29,43 +29,47 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
     }
 
     function sendToken(
-        uint256 amount,
-        address /* feeToken */,
-        ConceroTypes.EvmDstChainData memory dstChainData
+        address tokenReceiver,
+        uint256 tokenAmount
     ) external payable nonReentrant returns (bytes32 messageId) {
-        require(amount > 0, CommonErrors.InvalidAmount());
+        require(tokenAmount > 0, CommonErrors.InvalidAmount());
 
-        _consumeRate(i_dstChainSelector, amount, true);
+        _consumeRate(i_dstChainSelector, tokenAmount, true);
 
         // Process transfer and send message
-        messageId = _processTransfer(amount, dstChainData);
+        messageId = _processTransfer(tokenReceiver, tokenAmount);
 
         emit TokenSent(
             messageId,
             i_lancaBridgeL1,
             i_dstChainSelector,
             msg.sender,
-            amount,
+            tokenAmount,
             msg.value
         );
     }
 
     function _processTransfer(
-        uint256 amount,
-        ConceroTypes.EvmDstChainData memory dstChainData
+        address tokenReceiver,
+        uint256 tokenAmount
     ) internal returns (bytes32 messageId) {
+        ConceroTypes.EvmDstChainData memory dstChainData = ConceroTypes.EvmDstChainData({
+            receiver: i_lancaBridgeL1,
+            gasLimit: BRIDGE_GAS_OVERHEAD
+        });
+
         // check fee
         uint256 fee = getMessageFee(i_dstChainSelector, address(0), dstChainData);
         require(msg.value >= fee, InsufficientFee(msg.value, fee));
 
         // transfer tokens and burn
-        bool success = i_usdc.transferFrom(msg.sender, address(this), amount);
+        bool success = i_usdc.transferFrom(msg.sender, address(this), tokenAmount);
         require(success, CommonErrors.TransferFailed());
 
-        i_usdc.burn(amount);
+        i_usdc.burn(tokenAmount);
 
         // send message
-        bytes memory message = abi.encode(msg.sender, amount);
+        bytes memory message = abi.encode(tokenReceiver, tokenAmount);
         messageId = IConceroRouter(i_conceroRouter).conceroSend{value: msg.value}(
             i_dstChainSelector,
             false,

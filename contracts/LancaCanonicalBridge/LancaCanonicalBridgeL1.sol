@@ -14,8 +14,6 @@ import {ReentrancyGuard} from "../common/ReentrancyGuard.sol";
 contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
     using s for s.L1Bridge;
 
-    uint256 internal constant BRIDGE_GAS_OVERHEAD = 100_000;
-
     error InvalidDstBridge();
     error PoolNotFound(uint24 dstChainSelector);
     error PoolAlreadyExists(uint24 dstChainSelector);

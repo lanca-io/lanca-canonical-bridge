@@ -6,8 +6,10 @@
  */
 pragma solidity 0.8.28;
 
+import {CommonErrors} from "@concero/messaging-contracts-v2/contracts/common/CommonErrors.sol";
+
+import {LancaCanonicalBridgeBase, ConceroClient, ConceroTypes, IConceroRouter} from "./LancaCanonicalBridgeBase.sol";
 import {Storage as s} from "./libraries/Storage.sol";
-import {LancaCanonicalBridgeBase, ConceroClient, CommonErrors, ConceroTypes, IConceroRouter} from "./LancaCanonicalBridgeBase.sol";
 import {ILancaCanonicalBridgePool} from "../interfaces/ILancaCanonicalBridgePool.sol";
 import {ReentrancyGuard} from "../common/ReentrancyGuard.sol";
 
@@ -22,8 +24,8 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
     constructor(
         address conceroRouter,
         address usdcAddress,
-        address rateAdmin
-    ) LancaCanonicalBridgeBase(usdcAddress, rateAdmin) ConceroClient(conceroRouter) {}
+        address rateLimitAdmin
+    ) LancaCanonicalBridgeBase(usdcAddress, rateLimitAdmin) ConceroClient(conceroRouter) {}
 
     function sendToken(
         address tokenReceiver,
@@ -45,6 +47,7 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
 
         _consumeRate(dstChainSelector, tokenAmount, true);
 
+        // Process transfer and send message
         messageId = _processTransfer(
             tokenReceiver,
             tokenAmount,
@@ -174,6 +177,15 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         }
     }
 
+    function setRateLimit(
+        uint24 dstChainSelector,
+        uint128 maxAmount,
+        uint128 refillSpeed,
+        bool isOutbound
+    ) public onlyRateLimitAdmin {
+        _setRateLimit(dstChainSelector, maxAmount, refillSpeed, isOutbound);
+    }
+
     function getMessageFeeForContract(
         uint24 dstChainSelector,
         address feeToken,
@@ -197,14 +209,5 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
 
     function getBridgeAddress(uint24 dstChainSelector) public view returns (address) {
         return s.l1Bridge().dstBridges[dstChainSelector];
-    }
-
-    function setRateLimit(
-        uint24 dstChainSelector,
-        uint128 maxAmount,
-        uint128 refillSpeed,
-        bool isOutbound
-    ) public onlyRateLimitAdmin {
-        _setRateLimit(dstChainSelector, maxAmount, refillSpeed, isOutbound);
     }
 }

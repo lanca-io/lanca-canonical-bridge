@@ -13,8 +13,7 @@ import {Storage as s} from "./libraries/Storage.sol";
 abstract contract RateLimiter {
     using s for s.RateLimits;
 
-    error RateLimitExceeded(uint256 requested, uint256 availableVolume);
-    error InvalidRateLimitConfig(uint128 maxAmount, uint128 refillSpeed);
+    address public immutable i_rateLimitAdmin;
 
     event RateLimitSet(
         uint24 indexed dstChainSelector,
@@ -23,14 +22,15 @@ abstract contract RateLimiter {
         uint128 refillSpeed
     );
 
+    error RateLimitExceeded(uint256 requested, uint256 availableVolume);
+    error InvalidRateLimitConfig(uint128 maxAmount, uint128 refillSpeed);
+
     struct RateLimit {
         uint128 availableVolume; // Current available volume for transfers
         uint128 maxAmount; // Maximum allowed rate amount
         uint128 refillSpeed; // Amount added per second (refill rate)
         uint32 lastUpdate; // Last update timestamp for refill calculations
     }
-
-    address public immutable i_rateLimitAdmin;
 
     modifier onlyRateLimitAdmin() {
         if (msg.sender != i_rateLimitAdmin) {
@@ -165,14 +165,14 @@ abstract contract RateLimiter {
             ? s.rateLimits().outboundRates[dstChainSelector]
             : s.rateLimits().inboundRates[dstChainSelector];
 
-		isActive = rate.maxAmount > 0;
+        isActive = rate.maxAmount > 0;
 
-		(availableVolume, lastUpdate) = _refillRate(
-			rate.availableVolume,
-			rate.refillSpeed,
-			rate.maxAmount,
-			rate.lastUpdate
-		);
+        (availableVolume, lastUpdate) = _refillRate(
+            rate.availableVolume,
+            rate.refillSpeed,
+            rate.maxAmount,
+            rate.lastUpdate
+        );
 
         return (availableVolume, rate.maxAmount, rate.refillSpeed, lastUpdate, isActive);
     }

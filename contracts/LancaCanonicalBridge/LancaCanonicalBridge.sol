@@ -6,11 +6,11 @@
  */
 pragma solidity 0.8.28;
 
-import {Utils} from "@concero/messaging-contracts-v2/contracts/common/libraries/Utils.sol";
+import {CommonErrors} from "@concero/messaging-contracts-v2/contracts/common/CommonErrors.sol";
 
-import {LancaCanonicalBridgeBase, ConceroClient, CommonErrors, ConceroTypes, IConceroRouter, LCBridgeCallData} from "./LancaCanonicalBridgeBase.sol";
-import {LancaCanonicalBridgeClient} from "../LancaCanonicalBridgeClient/LancaCanonicalBridgeClient.sol";
+import {LancaCanonicalBridgeBase, ConceroClient, ConceroTypes, IConceroRouter} from "./LancaCanonicalBridgeBase.sol";
 import {ILancaCanonicalBridgeClient} from "../interfaces/ILancaCanonicalBridgeClient.sol";
+import {LancaCanonicalBridgeClient} from "../LancaCanonicalBridgeClient/LancaCanonicalBridgeClient.sol";
 import {ReentrancyGuard} from "../common/ReentrancyGuard.sol";
 
 contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
@@ -22,8 +22,8 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         address conceroRouter,
         address usdcAddress,
         address lancaBridgeL1,
-        address rateAdmin
-    ) LancaCanonicalBridgeBase(usdcAddress, rateAdmin) ConceroClient(conceroRouter) {
+        address rateLimitAdmin
+    ) LancaCanonicalBridgeBase(usdcAddress, rateLimitAdmin) ConceroClient(conceroRouter) {
         i_dstChainSelector = dstChainSelector;
         i_lancaBridgeL1 = lancaBridgeL1;
     }
@@ -109,21 +109,18 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
 
             bytes memory dstCallData = message[97:];
 
-            try
-                LancaCanonicalBridgeClient(tokenReceiver).lancaCanonicalBridgeReceive(
+            bytes4 magicValue = LancaCanonicalBridgeClient(tokenReceiver)
+                .lancaCanonicalBridgeReceive(
                     address(i_usdc),
                     tokenSender,
                     tokenAmount,
                     dstCallData
-                )
-            returns (bytes4 selector) {
-                require(
-                    selector == ILancaCanonicalBridgeClient.lancaCanonicalBridgeReceive.selector,
-                    ILancaCanonicalBridgeClient.CallFiled()
                 );
-            } catch {
-                // TODO: retry logic
-            }
+
+            require(
+                magicValue == ILancaCanonicalBridgeClient.lancaCanonicalBridgeReceive.selector,
+                ILancaCanonicalBridgeClient.CallFiled()
+            );
         } else {
             _mintToken(tokenReceiver, tokenAmount);
         }

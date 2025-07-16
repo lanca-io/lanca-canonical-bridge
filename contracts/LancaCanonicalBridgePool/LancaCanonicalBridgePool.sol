@@ -12,8 +12,8 @@ import {IFiatTokenV1} from "../interfaces/IFiatTokenV1.sol";
 import {ILancaCanonicalBridgePool} from "../interfaces/ILancaCanonicalBridgePool.sol";
 
 contract LancaCanonicalBridgePool is ILancaCanonicalBridgePool {
-    address public immutable i_owner;
     IFiatTokenV1 private immutable i_usdc;
+    address public immutable i_owner;
     uint24 private immutable i_dstChainSelector;
 
     modifier onlyOwner() {
@@ -23,8 +23,8 @@ contract LancaCanonicalBridgePool is ILancaCanonicalBridgePool {
 
     constructor(address usdcAddress, address lancaCanonicalBridge, uint24 dstChainSelector) {
         i_usdc = IFiatTokenV1(usdcAddress);
-        i_dstChainSelector = dstChainSelector;
         i_owner = lancaCanonicalBridge;
+        i_dstChainSelector = dstChainSelector;
     }
 
     function deposit(address from, uint256 amount) external onlyOwner returns (bool success) {
@@ -32,7 +32,6 @@ contract LancaCanonicalBridgePool is ILancaCanonicalBridgePool {
     }
 
     function withdraw(address to, uint256 amount) external onlyOwner returns (bool success) {
-        // TODO: add limit?
         success = i_usdc.transfer(to, amount);
     }
 

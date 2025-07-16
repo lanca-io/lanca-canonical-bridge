@@ -18,7 +18,7 @@ import {MockConceroRouter} from "../mocks/MockConceroRouter.sol";
 import {MaliciousPool} from "../mocks/MaliciousPool.sol";
 import {MockUSDC} from "../mocks/MockUSDC.sol";
 import {ReentrancyGuard} from "contracts/common/ReentrancyGuard.sol";
-import {LancaCanonicalBridgeBase, LCBridgeCallData} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
+import {LancaCanonicalBridgeBase} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
 import {LancaCanonicalBridgeL1} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol";
 
 contract SendTokenL1Test is LCBridgeL1Test {

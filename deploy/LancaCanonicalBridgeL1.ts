@@ -9,7 +9,7 @@ import { getEnvVar, log, updateEnvVariable } from "../utils/";
 type DeployArgs = {
 	conceroRouter: string;
 	usdcAddress: string;
-	rateAdmin: string;
+	rateLimitAdmin: string;
 };
 
 type DeploymentFunction = (
@@ -44,17 +44,17 @@ const deployLancaCanonicalBridgeL1: DeploymentFunction = async function (
 		);
 	}
 
-	const rateAdmin = getEnvVar(`TESTNET_RATE_ADMIN_ADDRESS`);
-	if (!rateAdmin) {
+	const rateLimitAdmin = getEnvVar(`TESTNET_RATE_LIMIT_ADMIN_ADDRESS`);
+	if (!rateLimitAdmin) {
 		throw new Error(
-			`Flow admin address not found. Set RATE_ADMIN_ADDRESS in environment variables.`,
+			`Flow admin address not found. Set RATE_LIMIT_ADMIN_ADDRESS in environment variables.`,
 		);
 	}
 
 	const defaultArgs: DeployArgs = {
 		conceroRouter: conceroRouterAddress,
 		usdcAddress: usdcAddress,
-		rateAdmin: rateAdmin,
+		rateLimitAdmin: rateLimitAdmin,
 	};
 
 	const args: DeployArgs = {
@@ -68,7 +68,7 @@ const deployLancaCanonicalBridgeL1: DeploymentFunction = async function (
 
 	const deployment = await deploy("LancaCanonicalBridgeL1", {
 		from: deployer,
-		args: [args.conceroRouter, args.usdcAddress, args.rateAdmin],
+		args: [args.conceroRouter, args.usdcAddress, args.rateLimitAdmin],
 		log: true,
 		autoMine: true,
 	});

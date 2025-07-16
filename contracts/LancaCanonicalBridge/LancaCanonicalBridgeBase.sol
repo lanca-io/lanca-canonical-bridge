@@ -6,31 +6,25 @@
  */
 pragma solidity 0.8.28;
 
-import {IConceroRouter} from "@concero/messaging-contracts-v2/contracts/interfaces/IConceroRouter.sol";
-import {CommonErrors} from "@concero/messaging-contracts-v2/contracts/common/CommonErrors.sol";
 import {ConceroClient} from "@concero/messaging-contracts-v2/contracts/ConceroClient/ConceroClient.sol";
 import {ConceroOwnable} from "@concero/messaging-contracts-v2/contracts/common/ConceroOwnable.sol";
 import {ConceroTypes} from "@concero/messaging-contracts-v2/contracts/ConceroClient/ConceroTypes.sol";
+import {IConceroRouter} from "@concero/messaging-contracts-v2/contracts/interfaces/IConceroRouter.sol";
 
 import {RateLimiter} from "./RateLimiter.sol";
 import {IFiatTokenV1} from "../interfaces/IFiatTokenV1.sol";
 
-struct LCBridgeCallData {
-    address tokenReceiver;
-    bytes receiverData;
-}
-
 abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, ConceroOwnable {
-    IFiatTokenV1 internal immutable i_usdc;
+    uint256 internal constant BRIDGE_GAS_OVERHEAD = 100_000;
 
-	uint256 internal constant BRIDGE_GAS_OVERHEAD = 100_000;
+    IFiatTokenV1 internal immutable i_usdc;
 
     event TokenSent(
         bytes32 indexed messageId,
         address indexed dstBridge,
         uint24 indexed dstChainSelector,
         address tokenSender,
-		address tokenReceiver,
+        address tokenReceiver,
         uint256 tokenAmount,
         uint256 fee
     );
@@ -46,7 +40,10 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, Concer
 
     error InvalidSenderBridge();
 
-    constructor(address usdcAddress, address rateAdmin) ConceroOwnable() RateLimiter(rateAdmin) {
+    constructor(
+        address usdcAddress,
+        address rateLimitAdmin
+    ) ConceroOwnable() RateLimiter(rateLimitAdmin) {
         i_usdc = IFiatTokenV1(usdcAddress);
     }
 

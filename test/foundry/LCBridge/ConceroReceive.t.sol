@@ -13,7 +13,7 @@ import {LCBridgeTest} from "./base/LCBridgeTest.sol";
 import {MockInvalidLCBridgeClient} from "../mocks/MockInvalidLCBridgeClient.sol";
 import {MockUSDCe} from "../mocks/MockUSDCe.sol";
 import {ILancaCanonicalBridgeClient} from "contracts/interfaces/ILancaCanonicalBridgeClient.sol";
-import {LancaCanonicalBridgeBase, LCBridgeCallData} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
+import {LancaCanonicalBridgeBase} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
 import {LancaCanonicalBridge} from "contracts/LancaCanonicalBridge/LancaCanonicalBridge.sol";
 
 contract ConceroReceiveTest is LCBridgeTest {

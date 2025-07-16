@@ -13,8 +13,6 @@ import {DeployMockUSDC} from "./deploy/DeployMockUSDC.s.sol";
 import {DeployMockUSDCe} from "./deploy/DeployMockUSDCe.s.sol";
 import {DeployMockConceroRouter} from "./deploy/DeployMockConceroRouter.s.sol";
 
-import {LCBridgeCallData} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
-
 abstract contract BaseScript is Script {
     address public immutable deployer;
     address public immutable proxyDeployer;

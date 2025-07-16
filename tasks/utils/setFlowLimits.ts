@@ -48,7 +48,7 @@ export async function setFlowLimits(
 				"../../artifacts/contracts/LancaCanonicalBridge/LancaCanonicalBridge.sol/LancaCanonicalBridge.json"
 			);
 
-	const viemAccount = getViemAccount(type, "rateAdmin");
+	const viemAccount = getViemAccount(type, "rateLimitAdmin");
 	const { walletClient, publicClient } = getFallbackClients(
 		conceroNetworks[chainName],
 		viemAccount,

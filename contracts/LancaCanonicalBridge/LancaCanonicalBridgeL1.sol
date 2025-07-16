@@ -56,8 +56,15 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
             pool
         );
 
-        // TODO: fix it
-        emit TokenSent(messageId, dstBridge, dstChainSelector, msg.sender, tokenAmount, msg.value);
+        emit TokenSent(
+            messageId,
+            dstBridge,
+            dstChainSelector,
+            msg.sender,
+            tokenReceiver,
+            tokenAmount,
+            msg.value
+        );
     }
 
     function _processTransfer(
@@ -67,8 +74,8 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         bool isContract,
         uint256 dstGasLimit,
         bytes calldata dstCallData,
-		address dstBridge,
-		address pool
+        address dstBridge,
+        address pool
     ) internal returns (bytes32 messageId) {
         ConceroTypes.EvmDstChainData memory dstChainData = ConceroTypes.EvmDstChainData({
             receiver: dstBridge,
@@ -106,27 +113,30 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         bytes calldata sender,
         bytes calldata message
     ) internal override nonReentrant {
-        address dstBridge = getDstBridge(srcChainSelector);
-
+        address srcBridge = getBridgeAddress(srcChainSelector);
         address messageSender = abi.decode(sender, (address));
-        require(messageSender == dstBridge, InvalidSenderBridge());
+        require(messageSender == srcBridge, InvalidSenderBridge());
 
-        (address tokenSender, uint256 amount) = abi.decode(message, (address, uint256));
+        (address tokenSender, address tokenReceiver, uint256 tokenAmount) = abi.decode(
+            message,
+            (address, address, uint256)
+        );
 
         address pool = s.l1Bridge().pools[srcChainSelector];
         require(pool != address(0), PoolNotFound(srcChainSelector));
 
-        _consumeRate(srcChainSelector, amount, false);
+        _consumeRate(srcChainSelector, tokenAmount, false);
 
-        bool success = ILancaCanonicalBridgePool(pool).withdraw(tokenSender, amount);
+        bool success = ILancaCanonicalBridgePool(pool).withdraw(tokenReceiver, tokenAmount);
         require(success, CommonErrors.TransferFailed());
 
         emit TokenReceived(
             messageId,
+            srcBridge,
             srcChainSelector,
-            abi.decode(sender, (address)),
             tokenSender,
-            amount
+            tokenReceiver,
+            tokenAmount
         );
     }
 
@@ -175,7 +185,7 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
                 dstChainSelector,
                 feeToken,
                 ConceroTypes.EvmDstChainData({
-                    receiver: getDstBridge(dstChainSelector),
+                    receiver: getBridgeAddress(dstChainSelector),
                     gasLimit: BRIDGE_GAS_OVERHEAD + dstGasLimit
                 })
             );
@@ -185,7 +195,7 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         return s.l1Bridge().pools[dstChainSelector];
     }
 
-    function getDstBridge(uint24 dstChainSelector) public view returns (address) {
+    function getBridgeAddress(uint24 dstChainSelector) public view returns (address) {
         return s.l1Bridge().dstBridges[dstChainSelector];
     }
 

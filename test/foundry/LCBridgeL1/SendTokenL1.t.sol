@@ -167,6 +167,7 @@ contract SendTokenL1Test is LCBridgeL1Test {
             lancaBridgeMock,
             DST_CHAIN_SELECTOR,
             user,
+            user,
             AMOUNT,
             messageFee
         );

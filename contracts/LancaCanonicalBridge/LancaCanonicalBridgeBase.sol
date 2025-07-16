@@ -27,19 +27,21 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, Concer
 
     event TokenSent(
         bytes32 indexed messageId,
-        address indexed dstBridgeAddress,
+        address indexed dstBridge,
         uint24 indexed dstChainSelector,
         address tokenSender,
-        uint256 amount,
+		address tokenReceiver,
+        uint256 tokenAmount,
         uint256 fee
     );
 
     event TokenReceived(
         bytes32 indexed messageId,
+        address indexed srcBridge,
         uint24 indexed srcChainSelector,
-        address sender,
         address tokenSender,
-        uint256 amount
+        address tokenReceiver,
+        uint256 tokenAmount
     );
 
     error InvalidSenderBridge();

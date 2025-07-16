@@ -20,7 +20,7 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
     }
 
     function test_conceroReceive_RevertsInvalidSenderBridge() public {
-        bytes memory message = abi.encode(user, AMOUNT);
+        bytes memory message = _encodeBridgeParams(user, user, AMOUNT);
 
         vm.expectRevert(
             abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidSenderBridge.selector)
@@ -38,7 +38,7 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
     function test_conceroReceive_RevertsPoolNotFound() public {
         _addDefaultDstBridge();
 
-        bytes memory message = abi.encode(user, AMOUNT);
+        bytes memory message = _encodeBridgeParams(user, user, AMOUNT);
 
         vm.expectRevert(
             abi.encodeWithSelector(LancaCanonicalBridgeL1.PoolNotFound.selector, DST_CHAIN_SELECTOR)
@@ -59,7 +59,7 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
 
         MockUSDC(usdc).setShouldFailTransfer(true);
 
-        bytes memory message = abi.encode(user, AMOUNT);
+        bytes memory message = _encodeBridgeParams(user, user, AMOUNT);
 
         vm.expectRevert(abi.encodeWithSelector(CommonErrors.TransferFailed.selector));
 
@@ -78,7 +78,7 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
 
         MockUSDC(usdc).mint(address(lancaCanonicalBridgePool), AMOUNT);
 
-        bytes memory message = abi.encode(user, AMOUNT);
+        bytes memory message = _encodeBridgeParams(user, user, AMOUNT);
         uint256 userBalanceBefore = MockUSDC(usdc).balanceOf(user);
 
         vm.prank(conceroRouter);
@@ -98,13 +98,14 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
 
         MockUSDC(usdc).mint(address(lancaCanonicalBridgePool), AMOUNT);
 
-        bytes memory message = abi.encode(user, AMOUNT);
+        bytes memory message = _encodeBridgeParams(user, user, AMOUNT);
 
         vm.expectEmit(true, true, true, true);
         emit LancaCanonicalBridgeBase.TokenReceived(
             DEFAULT_MESSAGE_ID,
-            DST_CHAIN_SELECTOR,
             address(lancaBridgeMock),
+            DST_CHAIN_SELECTOR,
+            user,
             user,
             AMOUNT
         );

@@ -70,4 +70,12 @@ abstract contract LCBridgeL1Test is DeployLCBridgeL1, BridgeTest {
         vm.prank(user);
         MockUSDC(usdc).approve(address(lancaCanonicalBridgePool), amount);
     }
+
+    function _encodeBridgeParams(
+        address tokenSender,
+        address tokenReceiver,
+        uint256 tokenAmount
+    ) internal pure returns (bytes memory) {
+        return abi.encode(tokenSender, tokenReceiver, tokenAmount);
+    }
 }

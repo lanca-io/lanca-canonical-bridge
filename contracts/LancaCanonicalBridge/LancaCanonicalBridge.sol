@@ -44,6 +44,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
             i_lancaBridgeL1,
             i_dstChainSelector,
             msg.sender,
+            tokenReceiver,
             tokenAmount,
             msg.value
         );
@@ -69,7 +70,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         i_usdc.burn(tokenAmount);
 
         // send message
-        bytes memory message = abi.encode(tokenReceiver, tokenAmount);
+        bytes memory message = abi.encode(msg.sender, tokenReceiver, tokenAmount);
         messageId = IConceroRouter(i_conceroRouter).conceroSend{value: msg.value}(
             i_dstChainSelector,
             false,
@@ -127,7 +128,14 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
             _mintToken(tokenReceiver, tokenAmount);
         }
 
-        emit TokenReceived(messageId, srcChainSelector, messageSender, tokenSender, tokenAmount);
+        emit TokenReceived(
+            messageId,
+            i_lancaBridgeL1,
+            srcChainSelector,
+            tokenSender,
+            tokenReceiver,
+            tokenAmount
+        );
     }
 
     function _mintToken(address to, uint256 amount) internal {

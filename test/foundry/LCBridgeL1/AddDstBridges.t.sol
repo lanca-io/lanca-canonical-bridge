@@ -66,7 +66,7 @@ contract AddDstBridgesTest is LCBridgeL1Test {
         vm.prank(deployer);
         lancaCanonicalBridgeL1.addDstBridges(dstChainSelectors, dstBridges);
 
-        assertEq(lancaCanonicalBridgeL1.getDstBridge(DST_CHAIN_SELECTOR), dstBridges[0]);
+        assertEq(lancaCanonicalBridgeL1.getBridgeAddress(DST_CHAIN_SELECTOR), dstBridges[0]);
     }
 
     function test_addDstBridges_MultipleDstBridges() public {
@@ -83,8 +83,8 @@ contract AddDstBridgesTest is LCBridgeL1Test {
         vm.prank(deployer);
         lancaCanonicalBridgeL1.addDstBridges(dstChainSelectors, dstBridges);
 
-        assertEq(lancaCanonicalBridgeL1.getDstBridge(1), dstBridges[0]);
-        assertEq(lancaCanonicalBridgeL1.getDstBridge(2), dstBridges[1]);
-        assertEq(lancaCanonicalBridgeL1.getDstBridge(3), dstBridges[2]);
+        assertEq(lancaCanonicalBridgeL1.getBridgeAddress(1), dstBridges[0]);
+        assertEq(lancaCanonicalBridgeL1.getBridgeAddress(2), dstBridges[1]);
+        assertEq(lancaCanonicalBridgeL1.getBridgeAddress(3), dstBridges[2]);
     }
 }

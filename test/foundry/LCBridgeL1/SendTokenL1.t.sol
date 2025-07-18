@@ -80,10 +80,13 @@ contract SendTokenL1Test is LCBridgeL1Test {
             ZERO_BYTES
         );
 
+        _approvePool(AMOUNT);
+
         vm.expectRevert(
             abi.encodeWithSelector(IConceroClientErrors.InsufficientFee.selector, 0, messageFee)
         );
 
+        vm.prank(user);
         lancaCanonicalBridgeL1.sendToken(
             user,
             AMOUNT,
@@ -142,6 +145,33 @@ contract SendTokenL1Test is LCBridgeL1Test {
             false,
             ZERO_AMOUNT,
             ZERO_BYTES
+        );
+
+        assertEq(messageId, DEFAULT_MESSAGE_ID);
+        assertEq(MockUSDC(usdc).balanceOf(address(lancaCanonicalBridgePool)), AMOUNT);
+    }
+
+    function test_sendToken_WithContractCall() public {
+        _addDefaultPool();
+        _addDefaultDstBridge();
+
+        uint256 messageFee = lancaCanonicalBridgeL1.getMessageFeeForContract(
+            DST_CHAIN_SELECTOR,
+            address(0),
+            GAS_LIMIT,
+            abi.encode("test")
+        );
+
+        _approvePool(AMOUNT);
+
+        vm.prank(user);
+        bytes32 messageId = lancaCanonicalBridgeL1.sendToken{value: messageFee}(
+            user,
+            AMOUNT,
+            DST_CHAIN_SELECTOR,
+            true,
+            GAS_LIMIT,
+            abi.encode("test")
         );
 
         assertEq(messageId, DEFAULT_MESSAGE_ID);
@@ -209,44 +239,50 @@ contract SendTokenL1Test is LCBridgeL1Test {
             receiverData
         );
 
-        assertEq(MockConceroRouter(conceroRouter).tokenSender(), user);
-        assertEq(MockConceroRouter(conceroRouter).tokenReceiver(), tokenReceiver);
-        assertEq(MockConceroRouter(conceroRouter).tokenAmount(), AMOUNT);
-        assertEq(MockConceroRouter(conceroRouter).isContract(), 1);
-        assertEq(MockConceroRouter(conceroRouter).dstCallData(), receiverData);
+        assertEq(MockConceroRouter(conceroRouter).s_tokenSender(), user);
+        assertEq(MockConceroRouter(conceroRouter).s_tokenReceiver(), tokenReceiver);
+        assertEq(MockConceroRouter(conceroRouter).s_tokenAmount(), AMOUNT);
+        assertEq(MockConceroRouter(conceroRouter).s_isContract(), 1);
+        assertEq(MockConceroRouter(conceroRouter).s_dstCallData(), receiverData);
     }
 
     function test_sendToken_RevertsOnReentrancyAttack() public {
-        MaliciousPool maliciousPool = new MaliciousPool(
-            usdc,
-            address(lancaCanonicalBridgeL1),
-            DST_CHAIN_SELECTOR,
-            lancaBridgeMock
-        );
+        uint24 attackChainSelector = 1337; // Use different chain selector
+
+        MaliciousPool maliciousPool = new MaliciousPool();
+        maliciousPool.setTarget(address(lancaCanonicalBridgeL1));
+        maliciousPool.setAttackMode(true);
 
         uint24[] memory dstChainSelectors = new uint24[](1);
-        dstChainSelectors[0] = DST_CHAIN_SELECTOR;
+        dstChainSelectors[0] = attackChainSelector;
         address[] memory pools = new address[](1);
         pools[0] = address(maliciousPool);
 
         vm.prank(deployer);
         lancaCanonicalBridgeL1.addPools(dstChainSelectors, pools);
 
-        _addDefaultDstBridge();
+        uint24[] memory dstChainSelectors2 = new uint24[](1);
+        dstChainSelectors2[0] = attackChainSelector;
+        address[] memory dstBridges = new address[](1);
+        dstBridges[0] = lancaBridgeMock;
 
-        vm.deal(address(maliciousPool), 1 ether);
+        vm.prank(deployer);
+        lancaCanonicalBridgeL1.addDstBridges(dstChainSelectors2, dstBridges);
+
+        vm.prank(deployer);
+        lancaCanonicalBridgeL1.setRateLimit(
+            attackChainSelector,
+            MAX_RATE_AMOUNT,
+            REFILL_SPEED,
+            true
+        );
 
         uint256 messageFee = lancaCanonicalBridgeL1.getMessageFeeForContract(
-            DST_CHAIN_SELECTOR,
+            attackChainSelector,
             address(0),
             ZERO_AMOUNT,
             ZERO_BYTES
         );
-
-        vm.prank(user);
-        MockUSDC(usdc).approve(address(maliciousPool), AMOUNT * 2);
-
-        maliciousPool.setAttackMode(true);
 
         vm.expectRevert(abi.encodeWithSelector(ReentrancyGuard.ReentrantCall.selector));
 
@@ -254,7 +290,7 @@ contract SendTokenL1Test is LCBridgeL1Test {
         lancaCanonicalBridgeL1.sendToken{value: messageFee}(
             user,
             AMOUNT,
-            DST_CHAIN_SELECTOR,
+            attackChainSelector,
             false,
             ZERO_AMOUNT,
             ZERO_BYTES

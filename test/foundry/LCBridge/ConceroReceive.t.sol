@@ -59,69 +59,21 @@ contract ConceroReceiveTest is LCBridgeTest {
         );
     }
 
-    function test_conceroReceive_RevertsInvalidMessageLength() public {
-        // Create message with insufficient length (less than 97 bytes)
-        bytes memory shortMessage = abi.encode(user, user); // Only 64 bytes (2 addresses)
-
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                LancaCanonicalBridge.InvalidMessageLength.selector,
-                shortMessage.length
-            )
+    function test_conceroReceive_RevertsInvalidMessageType() public {
+        bytes memory invalidMessage = abi.encode(
+            uint8(3),
+            abi.encode(user, user, AMOUNT)
         );
+
+		vm.expectRevert(abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidMessageType.selector));
 
         vm.prank(conceroRouter);
         lancaCanonicalBridge.conceroReceive(
             DEFAULT_MESSAGE_ID,
             SRC_CHAIN_SELECTOR,
             abi.encode(lancaBridgeL1Mock),
-            shortMessage
+            invalidMessage
         );
-    }
-
-    function test_conceroReceive_RevertsInvalidMessageLength_EdgeCase() public {
-        // Create message with exactly 96 bytes (should fail as minimum is 97)
-        bytes memory edgeCaseMessage = abi.encode(user, user, AMOUNT); // Exactly 96 bytes (3 * 32 bytes)
-
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                LancaCanonicalBridge.InvalidMessageLength.selector,
-                edgeCaseMessage.length
-            )
-        );
-
-        vm.prank(conceroRouter);
-        lancaCanonicalBridge.conceroReceive(
-            DEFAULT_MESSAGE_ID,
-            SRC_CHAIN_SELECTOR,
-            abi.encode(lancaBridgeL1Mock),
-            edgeCaseMessage
-        );
-    }
-
-    function test_conceroReceive_MinimumMessageLength() public {
-        // Create message with exact minimum length (97 bytes: 96 bytes + 1 byte for flag)
-        bytes memory minMessage = abi.encodePacked(
-            abi.encode(user, user, AMOUNT), // 96 bytes (3 * 32 bytes)
-            uint8(0) // 1 byte for isContract flag
-        );
-
-        uint256 userBalanceBefore = MockUSDCe(usdcE).balanceOf(user);
-        uint256 totalSupplyBefore = MockUSDCe(usdcE).totalSupply();
-
-        vm.prank(conceroRouter);
-        lancaCanonicalBridge.conceroReceive(
-            DEFAULT_MESSAGE_ID,
-            SRC_CHAIN_SELECTOR,
-            abi.encode(lancaBridgeL1Mock),
-            minMessage
-        );
-
-        uint256 userBalanceAfter = MockUSDCe(usdcE).balanceOf(user);
-        uint256 totalSupplyAfter = MockUSDCe(usdcE).totalSupply();
-
-        assertEq(userBalanceAfter, userBalanceBefore + AMOUNT);
-        assertEq(totalSupplyAfter, totalSupplyBefore + AMOUNT);
     }
 
     function test_conceroReceive_RevertsTransferFailed() public {
@@ -187,7 +139,7 @@ contract ConceroReceiveTest is LCBridgeTest {
     }
 
     function test_conceroReceive_WithCall() public {
-        string memory testString = "LancaCanonicalBridgeL1";
+        string memory testString = "LancaCanonicalBridge";
 
         bytes memory message = _encodeBridgeParams(
             user,
@@ -209,5 +161,22 @@ contract ConceroReceiveTest is LCBridgeTest {
         assertEq(lcBridgeClient.tokenSender(), user);
         assertEq(lcBridgeClient.tokenAmount(), AMOUNT);
         assertEq(lcBridgeClient.testString(), testString);
+    }
+
+    function test_conceroReceive_WithCall_EmptyCallData() public {
+        bytes memory message = _encodeBridgeParams(user, address(lcBridgeClient), AMOUNT, true, "");
+
+        vm.prank(conceroRouter);
+        lancaCanonicalBridge.conceroReceive(
+            DEFAULT_MESSAGE_ID,
+            SRC_CHAIN_SELECTOR,
+            abi.encode(lancaBridgeL1Mock),
+            message
+        );
+
+        assertEq(lcBridgeClient.token(), address(usdcE));
+        assertEq(lcBridgeClient.tokenSender(), user);
+        assertEq(lcBridgeClient.tokenAmount(), AMOUNT);
+        assertEq(lcBridgeClient.testString(), "");
     }
 }

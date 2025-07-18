@@ -31,7 +31,10 @@ contract LancaCanonicalBridgeClientExample is LancaCanonicalBridgeClient {
         tokenSender = _from;
         tokenAmount = _value;
 
-        string memory _testString = abi.decode(_data, (string));
+        string memory _testString;
+        if (_data.length > 0) {
+            _testString = abi.decode(_data, (string));
+        }
         testString = _testString;
 
         require(IERC20(_token).balanceOf(address(this)) >= _value, TransferFailed());

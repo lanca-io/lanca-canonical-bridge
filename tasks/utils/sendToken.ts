@@ -158,6 +158,9 @@ export async function sendToken(
 			sendTokenArgs = [
 				viemAccount.address as `0x${string}`, // tokenReceiver
 				amountInWei, // tokenAmount
+				false, // isContract (simple transfer)
+				BigInt(0), // dstGasLimit (not needed for simple transfer)
+				"0x", // dstCallData (empty for simple transfer)
 			];
 		}
 

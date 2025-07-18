@@ -20,7 +20,7 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
     }
 
     function test_conceroReceive_RevertsInvalidSenderBridge() public {
-        bytes memory message = _encodeBridgeParams(user, user, AMOUNT);
+        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, false, "");
 
         vm.expectRevert(
             abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidSenderBridge.selector)
@@ -38,7 +38,7 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
     function test_conceroReceive_RevertsPoolNotFound() public {
         _addDefaultDstBridge();
 
-        bytes memory message = _encodeBridgeParams(user, user, AMOUNT);
+        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, false, "");
 
         vm.expectRevert(
             abi.encodeWithSelector(LancaCanonicalBridgeL1.PoolNotFound.selector, DST_CHAIN_SELECTOR)
@@ -59,7 +59,7 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
 
         MockUSDC(usdc).setShouldFailTransfer(true);
 
-        bytes memory message = _encodeBridgeParams(user, user, AMOUNT);
+        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, false, "");
 
         vm.expectRevert(abi.encodeWithSelector(CommonErrors.TransferFailed.selector));
 
@@ -78,8 +78,10 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
 
         MockUSDC(usdc).mint(address(lancaCanonicalBridgePool), AMOUNT);
 
-        bytes memory message = _encodeBridgeParams(user, user, AMOUNT);
         uint256 userBalanceBefore = MockUSDC(usdc).balanceOf(user);
+        uint256 poolBalanceBefore = MockUSDC(usdc).balanceOf(address(lancaCanonicalBridgePool));
+
+        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, false, "");
 
         vm.prank(conceroRouter);
         lancaCanonicalBridgeL1.conceroReceive(
@@ -89,7 +91,11 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
             message
         );
 
-        assertEq(MockUSDC(usdc).balanceOf(user), userBalanceBefore + AMOUNT);
+        uint256 userBalanceAfter = MockUSDC(usdc).balanceOf(user);
+        uint256 poolBalanceAfter = MockUSDC(usdc).balanceOf(address(lancaCanonicalBridgePool));
+
+        assertEq(userBalanceAfter, userBalanceBefore + AMOUNT);
+        assertEq(poolBalanceAfter, poolBalanceBefore - AMOUNT);
     }
 
     function test_conceroReceive_EmitsTokenReceived() public {
@@ -98,12 +104,12 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
 
         MockUSDC(usdc).mint(address(lancaCanonicalBridgePool), AMOUNT);
 
-        bytes memory message = _encodeBridgeParams(user, user, AMOUNT);
+        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, false, "");
 
         vm.expectEmit(true, true, true, true);
         emit LancaCanonicalBridgeBase.TokenReceived(
             DEFAULT_MESSAGE_ID,
-            address(lancaBridgeMock),
+            lancaBridgeMock,
             DST_CHAIN_SELECTOR,
             user,
             user,

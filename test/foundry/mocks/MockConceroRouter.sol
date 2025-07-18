@@ -10,14 +10,16 @@ pragma solidity 0.8.28;
 import {ConceroTypes} from "@concero/messaging-contracts-v2/contracts/ConceroClient/ConceroTypes.sol";
 import {IConceroRouter} from "@concero/messaging-contracts-v2/contracts/interfaces/IConceroRouter.sol";
 
+import {LancaCanonicalBridgeBase} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
+
 contract MockConceroRouter is IConceroRouter {
     uint256 public constant MESSAGE_FEE = 100;
 
-    address public tokenSender;
-    address public tokenReceiver;
-    uint256 public tokenAmount;
-    uint8 public isContract;
-    bytes public dstCallData;
+    address public s_tokenSender;
+    address public s_tokenReceiver;
+    uint256 public s_tokenAmount;
+    uint8 public s_isContract;
+    bytes public s_dstCallData;
 
     function conceroSend(
         uint24 /* dstChainSelector */,
@@ -26,26 +28,41 @@ contract MockConceroRouter is IConceroRouter {
         ConceroTypes.EvmDstChainData memory /* dstChainData */,
         bytes calldata message
     ) external payable returns (bytes32 messageId) {
-        // decode the message payload
-        // payload: [bytes32,bytes32,bytes32,bytes1,bytes]
-        // bytes32: address(tokenSender)   : 0 - 31
-        // bytes32: address(tokenReceiver) : 32 - 63
-        // bytes32: uint256(tokenAmount)   : 64 - 95
-        // bytes1 : uint8(isContractFlag)  : 96
-        // bytes  : bytes(dstCallData)     : 97 - ...
-        if (message.length > 96) {
+        (s_tokenSender, s_tokenReceiver, s_tokenAmount, s_isContract, s_dstCallData) = _decodeMessage(
+            message
+        );
+        return bytes32(uint256(1));
+    }
+
+    function _decodeMessage(
+        bytes calldata message
+    )
+        internal
+        pure
+        returns (
+            address tokenSender,
+            address tokenReceiver,
+            uint256 tokenAmount,
+            uint8 messageType,
+            bytes memory dstCallData
+        )
+    {
+        bytes memory decodedMessage;
+        (messageType, decodedMessage) = abi.decode(message, (uint8, bytes));
+
+        if (messageType == uint8(LancaCanonicalBridgeBase.MessageType.TRANSFER)) {
             (tokenSender, tokenReceiver, tokenAmount) = abi.decode(
-                message[:96],
+                decodedMessage,
                 (address, address, uint256)
             );
-            isContract = uint8(message[96]);
-            dstCallData = message[97:];
+        } else if (messageType == uint8(LancaCanonicalBridgeBase.MessageType.TRANSFER_AND_CALL)) {
+            (tokenSender, tokenReceiver, tokenAmount, dstCallData) = abi.decode(
+                decodedMessage,
+                (address, address, uint256, bytes)
+            );
         } else {
-            (tokenReceiver, tokenAmount) = abi.decode(message, (address, uint256));
-            dstCallData = "";
+            revert LancaCanonicalBridgeBase.InvalidMessageType();
         }
-
-        return bytes32(uint256(1));
     }
 
     function getMessageFee(

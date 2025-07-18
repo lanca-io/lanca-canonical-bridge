@@ -13,51 +13,36 @@ import {LancaCanonicalBridgeL1} from "contracts/LancaCanonicalBridge/LancaCanoni
 import {ILancaCanonicalBridgePool} from "contracts/interfaces/ILancaCanonicalBridgePool.sol";
 
 contract MaliciousPool is ILancaCanonicalBridgePool {
-    LancaCanonicalBridgeL1 public immutable i_bridge;
-    address public immutable i_usdc;
-    address public immutable i_dstLcbBridge;
-    uint24 public immutable i_dstChainSelector;
-
+    address public target;
     bool public shouldAttack;
 
-    constructor(address _usdc, address _bridge, uint24 _dstChainSelector, address _dstLcbBridge) {
-        i_usdc = _usdc;
-        i_bridge = LancaCanonicalBridgeL1(_bridge);
-        i_dstChainSelector = _dstChainSelector;
-        i_dstLcbBridge = _dstLcbBridge;
+    function setTarget(address _target) external {
+        target = _target;
     }
 
-    function deposit(address from, uint256 amount) external returns (bool) {
-        bool success = IERC20(i_usdc).transferFrom(from, address(this), amount);
-
+    function deposit(address /* from */, uint256 amount) external returns (bool) {
         if (shouldAttack) {
             shouldAttack = false;
 
-            uint256 messageFee = i_bridge.getMessageFee(
-                i_dstChainSelector,
-                address(0),
-                ConceroTypes.EvmDstChainData({receiver: i_dstLcbBridge, gasLimit: 500000})
-            );
-
-            i_bridge.sendToken{value: messageFee}(
+            LancaCanonicalBridgeL1(target).sendToken(
                 address(0),
                 amount,
-                i_dstChainSelector,
+                8453, // DST_CHAIN_SELECTOR
                 false,
-                500000,
+                0,
                 ""
             );
         }
 
-        return success;
+        return true;
     }
 
-    function withdraw(address to, uint256 amount) external returns (bool) {
-        return IERC20(i_usdc).transfer(to, amount);
+    function withdraw(address /* to */, uint256 /* amount */) external returns (bool) {
+        return true;
     }
 
-    function getPoolInfo() external view returns (uint24, uint256) {
-        return (i_dstChainSelector, IERC20(i_usdc).balanceOf(address(this)));
+    function getPoolInfo() external pure returns (uint24, uint256) {
+        return (8453, 0);
     }
 
     function setAttackMode(bool _shouldAttack) external {

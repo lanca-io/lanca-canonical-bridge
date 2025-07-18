@@ -28,21 +28,24 @@ contract SendTokenTest is LCBridgeTest {
 
         vm.expectRevert(abi.encodeWithSelector(CommonErrors.InvalidAmount.selector));
 
-        lancaCanonicalBridge.sendToken(user, invalidAmount);
+        lancaCanonicalBridge.sendToken(user, invalidAmount, false, ZERO_AMOUNT, ZERO_BYTES);
     }
 
     function test_sendToken_RevertsInsufficientFee() public {
         uint256 messageFee = lancaCanonicalBridge.getMessageFee(
             SRC_CHAIN_SELECTOR,
             address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeL1Mock, gasLimit: 100_000})
+            ConceroTypes.EvmDstChainData({receiver: lancaBridgeL1Mock, gasLimit: GAS_LIMIT})
         );
+
+        _approveBridge(AMOUNT);
 
         vm.expectRevert(
             abi.encodeWithSelector(IConceroClientErrors.InsufficientFee.selector, 0, messageFee)
         );
 
-        lancaCanonicalBridge.sendToken(user, AMOUNT);
+        vm.prank(user);
+        lancaCanonicalBridge.sendToken(user, AMOUNT, false, ZERO_AMOUNT, ZERO_BYTES);
     }
 
     function test_sendToken_RevertsTransferFailed() public {
@@ -58,7 +61,13 @@ contract SendTokenTest is LCBridgeTest {
         vm.expectRevert(abi.encodeWithSelector(CommonErrors.TransferFailed.selector));
 
         vm.prank(user);
-        lancaCanonicalBridge.sendToken{value: messageFee}(user, AMOUNT);
+        lancaCanonicalBridge.sendToken{value: messageFee}(
+            user,
+            AMOUNT,
+            false,
+            ZERO_AMOUNT,
+            ZERO_BYTES
+        );
     }
 
     function test_sendToken_Success() public {
@@ -74,7 +83,13 @@ contract SendTokenTest is LCBridgeTest {
         uint256 totalSupplyBefore = MockUSDCe(usdcE).totalSupply();
 
         vm.prank(user);
-        bytes32 messageId = lancaCanonicalBridge.sendToken{value: messageFee}(user, AMOUNT);
+        bytes32 messageId = lancaCanonicalBridge.sendToken{value: messageFee}(
+            user,
+            AMOUNT,
+            false,
+            ZERO_AMOUNT,
+            ZERO_BYTES
+        );
 
         uint256 userBalanceAfter = MockUSDCe(usdcE).balanceOf(user);
         uint256 totalSupplyAfter = MockUSDCe(usdcE).totalSupply();
@@ -105,7 +120,39 @@ contract SendTokenTest is LCBridgeTest {
         );
 
         vm.prank(user);
-        lancaCanonicalBridge.sendToken{value: messageFee}(user, AMOUNT);
+        lancaCanonicalBridge.sendToken{value: messageFee}(
+            user,
+            AMOUNT,
+            false,
+            ZERO_AMOUNT,
+            ZERO_BYTES
+        );
+    }
+
+    function test_sendToken_WithContractCall() public {
+        uint256 messageFee = lancaCanonicalBridge.getMessageFee(
+            SRC_CHAIN_SELECTOR,
+            address(0),
+            ConceroTypes.EvmDstChainData({
+                receiver: lancaBridgeL1Mock,
+                gasLimit: GAS_LIMIT + GAS_LIMIT
+            })
+        );
+
+        _approveBridge(AMOUNT);
+
+        bytes memory callData = abi.encode("test data");
+
+        vm.prank(user);
+        bytes32 messageId = lancaCanonicalBridge.sendToken{value: messageFee}(
+            address(lcBridgeClient),
+            AMOUNT,
+            true,
+            GAS_LIMIT,
+            callData
+        );
+
+        assertEq(messageId, DEFAULT_MESSAGE_ID);
     }
 
     function test_sendToken_RevertsOnReentrancyAttack() public {
@@ -145,6 +192,6 @@ contract SendTokenTest is LCBridgeTest {
         vm.expectRevert(abi.encodeWithSelector(ReentrancyGuard.ReentrantCall.selector));
 
         vm.prank(user);
-        newBridge.sendToken{value: messageFee}(user, AMOUNT);
+        newBridge.sendToken{value: messageFee}(user, AMOUNT, false, ZERO_AMOUNT, ZERO_BYTES);
     }
 }

@@ -20,7 +20,7 @@ contract MaliciousToken is MockUSDCe {
         if (shouldAttack) {
             shouldAttack = false;
 
-            LancaCanonicalBridge(attackTarget).sendToken(address(this), amount);
+            LancaCanonicalBridge(attackTarget).sendToken(address(this), amount, false, 0, "");
         }
 
         return super.transferFrom(from, to, amount);

@@ -129,7 +129,10 @@ contract OutboundRateLimitsTest is LCBridgeTest {
         );
         LancaCanonicalBridge(address(lancaCanonicalBridge)).sendToken{value: messageFee}(
             user,
-            400 * 1e6
+            400 * 1e6,
+			false,
+			0,
+			""
         );
         vm.stopPrank();
     }
@@ -195,7 +198,10 @@ contract OutboundRateLimitsTest is LCBridgeTest {
         );
         LancaCanonicalBridge(address(lancaCanonicalBridge)).sendToken{value: messageFee}(
             user,
-            1000 * 1e6
+            1000 * 1e6,
+            false,
+            0,
+            ""
         );
         vm.stopPrank();
 
@@ -316,7 +322,10 @@ contract OutboundRateLimitsTest is LCBridgeTest {
         MockUSDCe(usdcE).approve(address(lancaCanonicalBridge), amount);
         LancaCanonicalBridge(address(lancaCanonicalBridge)).sendToken{value: _getMessageFee()}(
             user,
-            amount
+            amount,
+            false,
+            0,
+            ""
         );
         vm.stopPrank();
     }

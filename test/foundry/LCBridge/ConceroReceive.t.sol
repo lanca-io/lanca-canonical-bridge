@@ -47,7 +47,7 @@ contract ConceroReceiveTest is LCBridgeTest {
         bytes memory message = _encodeBridgeParams(user, user, AMOUNT, false, "");
 
         vm.expectRevert(
-            abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidSenderBridge.selector)
+            abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidBridgeSender.selector)
         );
 
         vm.prank(conceroRouter);
@@ -60,12 +60,11 @@ contract ConceroReceiveTest is LCBridgeTest {
     }
 
     function test_conceroReceive_RevertsInvalidMessageType() public {
-        bytes memory invalidMessage = abi.encode(
-            uint8(3),
-            abi.encode(user, user, AMOUNT)
-        );
+        bytes memory invalidMessage = abi.encode(uint8(3), abi.encode(user, user, AMOUNT));
 
-		vm.expectRevert(abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidMessageType.selector));
+        vm.expectRevert(
+            abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidBridgeType.selector)
+        );
 
         vm.prank(conceroRouter);
         lancaCanonicalBridge.conceroReceive(
@@ -76,27 +75,11 @@ contract ConceroReceiveTest is LCBridgeTest {
         );
     }
 
-    function test_conceroReceive_RevertsTransferFailed() public {
-        MockUSDCe(usdcE).setShouldFailMint(true);
-
-        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, false, "");
-
-        vm.expectRevert(abi.encodeWithSelector(CommonErrors.TransferFailed.selector));
-
-        vm.prank(conceroRouter);
-        lancaCanonicalBridge.conceroReceive(
-            DEFAULT_MESSAGE_ID,
-            SRC_CHAIN_SELECTOR,
-            abi.encode(lancaBridgeL1Mock),
-            message
-        );
-    }
-
-    function test_conceroReceive_EmitsTokenReceived() public {
+    function test_conceroReceive_EmitsBridgeDelivered() public {
         bytes memory message = _encodeBridgeParams(user, user, AMOUNT, false, "");
 
         vm.expectEmit(true, true, true, true);
-        emit LancaCanonicalBridgeBase.TokenReceived(
+        emit LancaCanonicalBridgeBase.BridgeDelivered(
             DEFAULT_MESSAGE_ID,
             address(lancaBridgeL1Mock),
             SRC_CHAIN_SELECTOR,

@@ -33,7 +33,7 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         address tokenReceiver,
         uint256 tokenAmount,
         uint24 dstChainSelector,
-        bool isContract,
+        bool isTokenReceiverContract,
         uint256 dstGasLimit,
         bytes calldata dstCallData
     ) external payable nonReentrant returns (bytes32 messageId) {
@@ -53,21 +53,14 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
             tokenReceiver,
             tokenAmount,
             dstChainSelector,
-            isContract,
+            isTokenReceiverContract,
             dstGasLimit,
             dstCallData,
             dstBridge
         );
 
-        emit TokenSent(
-            messageId,
-            dstBridge,
-            dstChainSelector,
-            msg.sender,
-            tokenReceiver,
-            tokenAmount,
-            msg.value
-        );
+        emit TokenSent(messageId, msg.sender, tokenReceiver, tokenAmount);
+        emit SentToDestinationBridge(dstChainSelector, dstBridge);
     }
 
     function _conceroReceive(
@@ -78,7 +71,7 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
     ) internal override nonReentrant {
         address srcBridge = getBridgeAddress(srcChainSelector);
         address messageSender = abi.decode(sender, (address));
-        require(messageSender == srcBridge, InvalidSenderBridge());
+        require(messageSender == srcBridge, InvalidBridgeSender());
 
         address pool = s.l1Bridge().pools[srcChainSelector];
         require(pool != address(0), PoolNotFound(srcChainSelector));
@@ -87,20 +80,20 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
             address tokenSender,
             address tokenReceiver,
             uint256 tokenAmount,
-            uint8 messageType,
+            uint8 bridgeType,
             bytes memory dstCallData
         ) = _decodeMessage(message);
 
         _consumeRate(srcChainSelector, tokenAmount, false);
 
-        if (messageType == uint8(MessageType.TRANSFER_AND_CALL)) {
+        if (bridgeType == uint8(BridgeType.CONTRACT_TRANSFER)) {
             _withdrawFromPool(pool, tokenReceiver, tokenAmount);
             _callTokenReceiver(tokenSender, tokenReceiver, tokenAmount, dstCallData);
         } else {
             _withdrawFromPool(pool, tokenReceiver, tokenAmount);
         }
 
-        emit TokenReceived(
+        emit BridgeDelivered(
             messageId,
             srcBridge,
             srcChainSelector,
@@ -113,15 +106,11 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
     /* ------- Private Functions ------- */
 
     function _depositToPool(address tokenSender, uint256 tokenAmount, address pool) private {
-        require(
-            ILancaCanonicalBridgePool(pool).deposit(tokenSender, tokenAmount),
-            CommonErrors.TransferFailed()
-        );
+        ILancaCanonicalBridgePool(pool).deposit(tokenSender, tokenAmount);
     }
 
     function _withdrawFromPool(address pool, address tokenReceiver, uint256 tokenAmount) private {
-        bool success = ILancaCanonicalBridgePool(pool).withdraw(tokenReceiver, tokenAmount);
-        require(success, CommonErrors.TransferFailed());
+        ILancaCanonicalBridgePool(pool).withdraw(tokenReceiver, tokenAmount);
     }
 
     /* ------- Admin Functions ------- */
@@ -160,13 +149,18 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         }
     }
 
-    function setRateLimit(
-        uint24 dstChainSelector,
-        uint128 maxAmount,
-        uint128 refillSpeed,
-        bool isOutbound
-    ) public onlyRateLimitAdmin {
-        _setRateLimit(dstChainSelector, maxAmount, refillSpeed, isOutbound);
+    function removePools(uint24[] calldata dstChainSelectors) external onlyOwner {
+        s.L1Bridge storage l1BridgeStorage = s.l1Bridge();
+        for (uint256 i = 0; i < dstChainSelectors.length; i++) {
+            delete l1BridgeStorage.pools[dstChainSelectors[i]];
+        }
+    }
+
+    function removeDstBridges(uint24[] calldata dstChainSelectors) external onlyOwner {
+        s.L1Bridge storage l1BridgeStorage = s.l1Bridge();
+        for (uint256 i = 0; i < dstChainSelectors.length; i++) {
+            delete l1BridgeStorage.dstBridges[dstChainSelectors[i]];
+        }
     }
 
     /* ------- View Functions ------- */

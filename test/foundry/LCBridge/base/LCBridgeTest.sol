@@ -29,12 +29,14 @@ abstract contract LCBridgeTest is DeployLCBridge, BridgeTest {
 
         vm.startPrank(deployer);
         LancaCanonicalBridge(address(lancaCanonicalBridge)).setRateLimit(
+			SRC_CHAIN_SELECTOR,
             MAX_RATE_AMOUNT,
             REFILL_SPEED,
             true
         );
 
         LancaCanonicalBridge(address(lancaCanonicalBridge)).setRateLimit(
+			SRC_CHAIN_SELECTOR,
             MAX_RATE_AMOUNT,
             REFILL_SPEED,
             false

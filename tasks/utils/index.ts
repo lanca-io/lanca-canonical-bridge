@@ -9,3 +9,4 @@ export { addPool } from "./addPool";
 export { addDstBridge } from "./addDstBridge";
 export { sendToken } from "./sendToken";
 export { setRateLimits } from "./setRateLimits";
+export { monitorBridgeDelivered } from "./monitorBridgeDelivered";

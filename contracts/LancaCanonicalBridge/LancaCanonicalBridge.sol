@@ -6,6 +6,8 @@
  */
 pragma solidity 0.8.28;
 
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 import {CommonErrors} from "@concero/messaging-contracts-v2/contracts/common/CommonErrors.sol";
 
 import {LancaCanonicalBridgeBase, ConceroClient, ConceroTypes, IConceroRouter} from "./LancaCanonicalBridgeBase.sol";
@@ -33,7 +35,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
     function sendToken(
         address tokenReceiver,
         uint256 tokenAmount,
-        bool isContract,
+        bool isTokenReceiverContract,
         uint256 dstGasLimit,
         bytes calldata dstCallData
     ) external payable nonReentrant returns (bytes32 messageId) {
@@ -46,21 +48,13 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
             tokenReceiver,
             tokenAmount,
             i_dstChainSelector,
-            isContract,
+            isTokenReceiverContract,
             dstGasLimit,
             dstCallData,
             i_lancaBridgeL1
         );
 
-        emit TokenSent(
-            messageId,
-            i_lancaBridgeL1,
-            i_dstChainSelector,
-            msg.sender,
-            tokenReceiver,
-            tokenAmount,
-            msg.value
-        );
+        emit TokenSent(messageId, msg.sender, tokenReceiver, tokenAmount);
     }
 
     function _conceroReceive(
@@ -70,26 +64,26 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         bytes calldata message
     ) internal override nonReentrant {
         address messageSender = abi.decode(sender, (address));
-        require(messageSender == i_lancaBridgeL1, InvalidSenderBridge());
+        require(messageSender == i_lancaBridgeL1, InvalidBridgeSender());
 
         (
             address tokenSender,
             address tokenReceiver,
             uint256 tokenAmount,
-            uint8 messageType,
+            uint8 bridgeType,
             bytes memory dstCallData
         ) = _decodeMessage(message);
 
         _consumeRate(srcChainSelector, tokenAmount, false);
 
-        if (messageType == uint8(MessageType.TRANSFER_AND_CALL)) {
+        if (bridgeType == uint8(BridgeType.CONTRACT_TRANSFER)) {
             _mintToken(tokenReceiver, tokenAmount);
             _callTokenReceiver(tokenSender, tokenReceiver, tokenAmount, dstCallData);
         } else {
             _mintToken(tokenReceiver, tokenAmount);
         }
 
-        emit TokenReceived(
+        emit BridgeDelivered(
             messageId,
             i_lancaBridgeL1,
             srcChainSelector,
@@ -102,25 +96,12 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
     /* ------- Private Functions ------- */
 
     function _processTransferAndBurn(address tokenSender, uint256 tokenAmount) private {
-        bool success = i_usdc.transferFrom(tokenSender, address(this), tokenAmount);
-        require(success, CommonErrors.TransferFailed());
-
+        SafeERC20.safeTransferFrom(i_usdc, tokenSender, address(this), tokenAmount);
         i_usdc.burn(tokenAmount);
     }
 
     function _mintToken(address to, uint256 amount) private {
-        bool success = i_usdc.mint(to, amount);
-        require(success, CommonErrors.TransferFailed());
-    }
-
-    /* ------- Admin Functions ------- */
-
-    function setRateLimit(
-        uint128 maxAmount,
-        uint128 refillSpeed,
-        bool isOutbound
-    ) external onlyRateLimitAdmin {
-        _setRateLimit(i_dstChainSelector, maxAmount, refillSpeed, isOutbound);
+        i_usdc.mint(to, amount);
     }
 
     /* ------- View Functions ------- */

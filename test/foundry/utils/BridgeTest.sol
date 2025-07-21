@@ -22,19 +22,19 @@ abstract contract BridgeTest is BaseScript, Test {
         address tokenSender,
         address tokenReceiver,
         uint256 tokenAmount,
-        bool isContract,
+        bool isTokenReceiverContract,
         bytes memory dstCallData
     ) internal pure returns (bytes memory) {
-        if (isContract) {
+        if (isTokenReceiverContract) {
             return
                 abi.encode(
-                    uint8(LancaCanonicalBridgeBase.MessageType.TRANSFER_AND_CALL),
+                    uint8(LancaCanonicalBridgeBase.BridgeType.CONTRACT_TRANSFER),
                     abi.encode(tokenSender, tokenReceiver, tokenAmount, dstCallData)
                 );
         } else {
             return
                 abi.encode(
-                    uint8(LancaCanonicalBridgeBase.MessageType.TRANSFER),
+                    uint8(LancaCanonicalBridgeBase.BridgeType.EOA_TRANSFER),
                     abi.encode(tokenSender, tokenReceiver, tokenAmount)
                 );
         }

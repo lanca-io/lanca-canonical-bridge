@@ -20,7 +20,7 @@ contract MaliciousPool is ILancaCanonicalBridgePool {
         target = _target;
     }
 
-    function deposit(address /* from */, uint256 amount) external returns (bool) {
+    function deposit(address /* from */, uint256 amount) external {
         if (shouldAttack) {
             shouldAttack = false;
 
@@ -33,13 +33,9 @@ contract MaliciousPool is ILancaCanonicalBridgePool {
                 ""
             );
         }
-
-        return true;
     }
 
-    function withdraw(address /* to */, uint256 /* amount */) external returns (bool) {
-        return true;
-    }
+    function withdraw(address /* to */, uint256 /* amount */) external {}
 
     function getPoolInfo() external pure returns (uint24, uint256) {
         return (8453, 0);

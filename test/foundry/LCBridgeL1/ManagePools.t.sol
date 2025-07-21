@@ -12,7 +12,7 @@ import {CommonErrors} from "@concero/messaging-contracts-v2/contracts/common/Com
 import {LCBridgeL1Test} from "./base/LCBridgeL1Test.sol";
 import {LancaCanonicalBridgeL1} from "../../../contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol";
 
-contract AddPoolsTest is LCBridgeL1Test {
+contract ManagePoolsTest is LCBridgeL1Test {
     function setUp() public override {
         super.setUp();
     }
@@ -86,5 +86,55 @@ contract AddPoolsTest is LCBridgeL1Test {
         assertEq(lancaCanonicalBridgeL1.getPool(1), pools[0]);
         assertEq(lancaCanonicalBridgeL1.getPool(2), pools[1]);
         assertEq(lancaCanonicalBridgeL1.getPool(3), pools[2]);
+    }
+
+    function test_removePools_Unauthorized() public {
+        uint24[] memory dstChainSelectors = new uint24[](0);
+
+        vm.expectRevert(CommonErrors.Unauthorized.selector);
+
+        lancaCanonicalBridgeL1.removePools(dstChainSelectors);
+    }
+
+    function test_removePools_Success() public {
+        _addDefaultPool();
+        assertEq(
+            lancaCanonicalBridgeL1.getPool(DST_CHAIN_SELECTOR),
+            address(lancaCanonicalBridgePool)
+        );
+
+        uint24[] memory dstChainSelectors = new uint24[](1);
+        dstChainSelectors[0] = DST_CHAIN_SELECTOR;
+
+        vm.prank(deployer);
+        lancaCanonicalBridgeL1.removePools(dstChainSelectors);
+
+        assertEq(lancaCanonicalBridgeL1.getPool(DST_CHAIN_SELECTOR), address(0));
+    }
+
+    function test_removePools_MultiplePools() public {
+        uint24[] memory dstChainSelectors = new uint24[](3);
+        dstChainSelectors[0] = 1;
+        dstChainSelectors[1] = 2;
+        dstChainSelectors[2] = 3;
+
+        address[] memory pools = new address[](3);
+        pools[0] = makeAddr("pool1");
+        pools[1] = makeAddr("pool2");
+        pools[2] = makeAddr("pool3");
+
+        vm.prank(deployer);
+        lancaCanonicalBridgeL1.addPools(dstChainSelectors, pools);
+
+        assertEq(lancaCanonicalBridgeL1.getPool(1), pools[0]);
+        assertEq(lancaCanonicalBridgeL1.getPool(2), pools[1]);
+        assertEq(lancaCanonicalBridgeL1.getPool(3), pools[2]);
+
+        vm.prank(deployer);
+        lancaCanonicalBridgeL1.removePools(dstChainSelectors);
+
+        assertEq(lancaCanonicalBridgeL1.getPool(1), address(0));
+        assertEq(lancaCanonicalBridgeL1.getPool(2), address(0));
+        assertEq(lancaCanonicalBridgeL1.getPool(3), address(0));
     }
 }

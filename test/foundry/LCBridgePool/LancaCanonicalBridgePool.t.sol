@@ -26,10 +26,9 @@ contract LancaCanonicalBridgePoolTest is LCBridgePoolTest {
     function test_deposit_Success() public {
         _approvePool(AMOUNT);
 
-        vm.prank(deployer);
-        bool success = lancaCanonicalBridgePool.deposit(deployer, AMOUNT);
+        vm.prank(lancaBridgeL1Mock);
+        lancaCanonicalBridgePool.deposit(deployer, AMOUNT);
 
-        assertTrue(success);
         assertEq(MockUSDC(usdc).balanceOf(address(lancaCanonicalBridgePool)), AMOUNT);
     }
 
@@ -43,17 +42,16 @@ contract LancaCanonicalBridgePoolTest is LCBridgePoolTest {
     function test_withdraw_Success() public {
         _approvePool(AMOUNT);
 
-        vm.prank(deployer);
+        vm.prank(lancaBridgeL1Mock);
         lancaCanonicalBridgePool.deposit(deployer, AMOUNT);
 
         uint256 deployerBalanceBefore = MockUSDC(usdc).balanceOf(deployer);
 
-        vm.prank(deployer);
-        bool success = lancaCanonicalBridgePool.withdraw(deployer, AMOUNT);
+        vm.prank(lancaBridgeL1Mock);
+        lancaCanonicalBridgePool.withdraw(deployer, AMOUNT);
 
         assertEq(MockUSDC(usdc).balanceOf(deployer), deployerBalanceBefore + AMOUNT);
         assertEq(MockUSDC(usdc).balanceOf(address(lancaCanonicalBridgePool)), 0);
-        assertEq(success, true);
     }
 
     function test_getPoolInfo() public {

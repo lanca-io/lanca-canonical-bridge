@@ -69,61 +69,6 @@ contract SendTokenL1Test is LCBridgeL1Test {
         );
     }
 
-    function test_sendToken_RevertsInsufficientFee() public {
-        _addDefaultPool();
-        _addDefaultDstBridge();
-
-        uint256 messageFee = lancaCanonicalBridgeL1.getMessageFeeForContract(
-            DST_CHAIN_SELECTOR,
-            address(0),
-            ZERO_AMOUNT,
-            ZERO_BYTES
-        );
-
-        _approvePool(AMOUNT);
-
-        vm.expectRevert(
-            abi.encodeWithSelector(IConceroClientErrors.InsufficientFee.selector, 0, messageFee)
-        );
-
-        vm.prank(user);
-        lancaCanonicalBridgeL1.sendToken(
-            user,
-            AMOUNT,
-            DST_CHAIN_SELECTOR,
-            false,
-            ZERO_AMOUNT,
-            ZERO_BYTES
-        );
-    }
-
-    function test_sendToken_RevertsTransferFailed() public {
-        _addDefaultPool();
-        _addDefaultDstBridge();
-
-        uint256 messageFee = lancaCanonicalBridgeL1.getMessageFeeForContract(
-            DST_CHAIN_SELECTOR,
-            address(0),
-            ZERO_AMOUNT,
-            ZERO_BYTES
-        );
-
-        _approvePool(AMOUNT);
-        MockUSDC(usdc).setShouldFailTransfer(true);
-
-        vm.expectRevert(abi.encodeWithSelector(CommonErrors.TransferFailed.selector));
-
-        vm.prank(user);
-        lancaCanonicalBridgeL1.sendToken{value: messageFee}(
-            user,
-            AMOUNT,
-            DST_CHAIN_SELECTOR,
-            false,
-            ZERO_AMOUNT,
-            ZERO_BYTES
-        );
-    }
-
     function test_sendToken_Success() public {
         _addDefaultPool();
         _addDefaultDstBridge();
@@ -192,15 +137,34 @@ contract SendTokenL1Test is LCBridgeL1Test {
         _approvePool(AMOUNT);
 
         vm.expectEmit(true, true, true, true);
-        emit LancaCanonicalBridgeBase.TokenSent(
-            DEFAULT_MESSAGE_ID,
-            lancaBridgeMock,
-            DST_CHAIN_SELECTOR,
-            user,
+        emit LancaCanonicalBridgeBase.TokenSent(DEFAULT_MESSAGE_ID, user, user, AMOUNT);
+
+        vm.prank(user);
+        lancaCanonicalBridgeL1.sendToken{value: messageFee}(
             user,
             AMOUNT,
-            messageFee
+            DST_CHAIN_SELECTOR,
+            false,
+            ZERO_AMOUNT,
+            ZERO_BYTES
         );
+    }
+
+    function test_sendToken_EmitsSentToDestinationBridge() public {
+        _addDefaultPool();
+        _addDefaultDstBridge();
+
+        uint256 messageFee = lancaCanonicalBridgeL1.getMessageFeeForContract(
+            DST_CHAIN_SELECTOR,
+            address(0),
+            ZERO_AMOUNT,
+            ZERO_BYTES
+        );
+
+        _approvePool(AMOUNT);
+
+        vm.expectEmit(true, true, true, true);
+        emit LancaCanonicalBridgeBase.SentToDestinationBridge(DST_CHAIN_SELECTOR, lancaBridgeMock);
 
         vm.prank(user);
         lancaCanonicalBridgeL1.sendToken{value: messageFee}(

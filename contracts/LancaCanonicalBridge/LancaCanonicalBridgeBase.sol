@@ -20,22 +20,21 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, Concer
 
     IFiatTokenV1 internal immutable i_usdc;
 
-    enum MessageType {
-        TRANSFER,
-        TRANSFER_AND_CALL
+    enum BridgeType {
+        EOA_TRANSFER,
+        CONTRACT_TRANSFER
     }
 
     event TokenSent(
         bytes32 indexed messageId,
-        address indexed dstBridge,
-        uint24 indexed dstChainSelector,
-        address tokenSender,
-        address tokenReceiver,
-        uint256 tokenAmount,
-        uint256 fee
+        address indexed tokenSender,
+        address indexed tokenReceiver,
+        uint256 tokenAmount
     );
 
-    event TokenReceived(
+    event SentToDestinationBridge(uint24 indexed dstChainSelector, address indexed dstBridge);
+
+    event BridgeDelivered(
         bytes32 indexed messageId,
         address indexed srcBridge,
         uint24 indexed srcChainSelector,
@@ -44,8 +43,8 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, Concer
         uint256 tokenAmount
     );
 
-    error InvalidSenderBridge();
-    error InvalidMessageType();
+    error InvalidBridgeSender();
+    error InvalidBridgeType();
 
     constructor(
         address usdcAddress,
@@ -58,34 +57,33 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, Concer
         address tokenReceiver,
         uint256 tokenAmount,
         uint24 dstChainSelector,
-        bool isContract,
+        bool isTokenReceiverContract,
         uint256 dstGasLimit,
         bytes calldata dstCallData,
         address dstBridge
     ) internal returns (bytes32 messageId) {
-        ConceroTypes.EvmDstChainData memory dstChainData = ConceroTypes.EvmDstChainData({
-            receiver: dstBridge,
-            gasLimit: isContract ? BRIDGE_GAS_OVERHEAD + dstGasLimit : BRIDGE_GAS_OVERHEAD
-        });
-
-        uint256 fee = getMessageFee(dstChainSelector, address(0), dstChainData);
-        require(msg.value >= fee, InsufficientFee(msg.value, fee));
-
-        bytes memory message;
-        if (isContract) {
-            message = abi.encode(msg.sender, tokenReceiver, tokenAmount, dstCallData);
+        bytes memory bridgeData;
+        if (isTokenReceiverContract) {
+            bridgeData = abi.encode(msg.sender, tokenReceiver, tokenAmount, dstCallData);
         } else {
-            message = abi.encode(msg.sender, tokenReceiver, tokenAmount);
+            bridgeData = abi.encode(msg.sender, tokenReceiver, tokenAmount);
         }
 
         messageId = IConceroRouter(i_conceroRouter).conceroSend{value: msg.value}(
             dstChainSelector,
             false,
             address(0),
-            dstChainData,
+            ConceroTypes.EvmDstChainData({
+                receiver: dstBridge,
+                gasLimit: isTokenReceiverContract
+                    ? BRIDGE_GAS_OVERHEAD + dstGasLimit
+                    : BRIDGE_GAS_OVERHEAD
+            }),
             abi.encode(
-                isContract ? uint8(MessageType.TRANSFER_AND_CALL) : uint8(MessageType.TRANSFER),
-                message
+                isTokenReceiverContract
+                    ? uint8(BridgeType.CONTRACT_TRANSFER)
+                    : uint8(BridgeType.EOA_TRANSFER),
+                bridgeData
             )
         );
     }
@@ -99,25 +97,25 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, Concer
             address tokenSender,
             address tokenReceiver,
             uint256 tokenAmount,
-            uint8 messageType,
+            uint8 bridgeType,
             bytes memory dstCallData
         )
     {
-        bytes memory decodedMessage;
-        (messageType, decodedMessage) = abi.decode(message, (uint8, bytes));
+        bytes memory bridgeData;
+        (bridgeType, bridgeData) = abi.decode(message, (uint8, bytes));
 
-        if (messageType == uint8(MessageType.TRANSFER)) {
+        if (bridgeType == uint8(BridgeType.EOA_TRANSFER)) {
             (tokenSender, tokenReceiver, tokenAmount) = abi.decode(
-                decodedMessage,
+                bridgeData,
                 (address, address, uint256)
             );
-        } else if (messageType == uint8(MessageType.TRANSFER_AND_CALL)) {
+        } else if (bridgeType == uint8(BridgeType.CONTRACT_TRANSFER)) {
             (tokenSender, tokenReceiver, tokenAmount, dstCallData) = abi.decode(
-                decodedMessage,
+                bridgeData,
                 (address, address, uint256, bytes)
             );
         } else {
-            revert InvalidMessageType();
+            revert InvalidBridgeType();
         }
     }
 
@@ -127,15 +125,11 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, Concer
         uint256 tokenAmount,
         bytes memory dstCallData
     ) internal {
-        bytes4 magicValue = LancaCanonicalBridgeClient(tokenReceiver).lancaCanonicalBridgeReceive(
-            address(i_usdc),
-            tokenSender,
-            tokenAmount,
-            dstCallData
-        );
+        bytes4 expectedSelector = LancaCanonicalBridgeClient(tokenReceiver)
+            .lancaCanonicalBridgeReceive(address(i_usdc), tokenSender, tokenAmount, dstCallData);
 
         require(
-            magicValue == ILancaCanonicalBridgeClient.lancaCanonicalBridgeReceive.selector,
+            expectedSelector == ILancaCanonicalBridgeClient.lancaCanonicalBridgeReceive.selector,
             ILancaCanonicalBridgeClient.CallFiled()
         );
     }

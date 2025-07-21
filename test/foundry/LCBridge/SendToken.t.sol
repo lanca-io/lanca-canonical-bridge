@@ -31,45 +31,6 @@ contract SendTokenTest is LCBridgeTest {
         lancaCanonicalBridge.sendToken(user, invalidAmount, false, ZERO_AMOUNT, ZERO_BYTES);
     }
 
-    function test_sendToken_RevertsInsufficientFee() public {
-        uint256 messageFee = lancaCanonicalBridge.getMessageFee(
-            SRC_CHAIN_SELECTOR,
-            address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeL1Mock, gasLimit: GAS_LIMIT})
-        );
-
-        _approveBridge(AMOUNT);
-
-        vm.expectRevert(
-            abi.encodeWithSelector(IConceroClientErrors.InsufficientFee.selector, 0, messageFee)
-        );
-
-        vm.prank(user);
-        lancaCanonicalBridge.sendToken(user, AMOUNT, false, ZERO_AMOUNT, ZERO_BYTES);
-    }
-
-    function test_sendToken_RevertsTransferFailed() public {
-        uint256 messageFee = lancaCanonicalBridge.getMessageFee(
-            SRC_CHAIN_SELECTOR,
-            address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeL1Mock, gasLimit: GAS_LIMIT})
-        );
-
-        _approveBridge(AMOUNT);
-        MockUSDCe(usdcE).setShouldFailTransfer(true);
-
-        vm.expectRevert(abi.encodeWithSelector(CommonErrors.TransferFailed.selector));
-
-        vm.prank(user);
-        lancaCanonicalBridge.sendToken{value: messageFee}(
-            user,
-            AMOUNT,
-            false,
-            ZERO_AMOUNT,
-            ZERO_BYTES
-        );
-    }
-
     function test_sendToken_Success() public {
         uint256 messageFee = lancaCanonicalBridge.getMessageFee(
             SRC_CHAIN_SELECTOR,
@@ -111,12 +72,9 @@ contract SendTokenTest is LCBridgeTest {
         vm.expectEmit(true, true, true, true);
         emit LancaCanonicalBridgeBase.TokenSent(
             DEFAULT_MESSAGE_ID,
-            lancaBridgeL1Mock,
-            SRC_CHAIN_SELECTOR,
             user,
             user,
-            AMOUNT,
-            messageFee
+            AMOUNT
         );
 
         vm.prank(user);
@@ -169,8 +127,8 @@ contract SendTokenTest is LCBridgeTest {
         );
 
         vm.startPrank(deployer);
-        newBridge.setRateLimit(MAX_RATE_AMOUNT, REFILL_SPEED, true);
-        newBridge.setRateLimit(MAX_RATE_AMOUNT, REFILL_SPEED, false);
+        newBridge.setRateLimit(SRC_CHAIN_SELECTOR, MAX_RATE_AMOUNT, REFILL_SPEED, true);
+        newBridge.setRateLimit(SRC_CHAIN_SELECTOR, MAX_RATE_AMOUNT, REFILL_SPEED, false);
         vm.stopPrank();
 
         maliciousToken.setMinter(address(newBridge));

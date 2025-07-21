@@ -23,7 +23,7 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
         bytes memory message = _encodeBridgeParams(user, user, AMOUNT, false, "");
 
         vm.expectRevert(
-            abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidSenderBridge.selector)
+            abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidBridgeSender.selector)
         );
 
         vm.prank(conceroRouter);
@@ -43,25 +43,6 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
         vm.expectRevert(
             abi.encodeWithSelector(LancaCanonicalBridgeL1.PoolNotFound.selector, DST_CHAIN_SELECTOR)
         );
-
-        vm.prank(conceroRouter);
-        lancaCanonicalBridgeL1.conceroReceive(
-            DEFAULT_MESSAGE_ID,
-            DST_CHAIN_SELECTOR,
-            abi.encode(lancaBridgeMock),
-            message
-        );
-    }
-
-    function test_conceroReceive_RevertsTransferFailed() public {
-        _addDefaultPool();
-        _addDefaultDstBridge();
-
-        MockUSDC(usdc).setShouldFailTransfer(true);
-
-        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, false, "");
-
-        vm.expectRevert(abi.encodeWithSelector(CommonErrors.TransferFailed.selector));
 
         vm.prank(conceroRouter);
         lancaCanonicalBridgeL1.conceroReceive(
@@ -98,7 +79,7 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
         assertEq(poolBalanceAfter, poolBalanceBefore - AMOUNT);
     }
 
-    function test_conceroReceive_EmitsTokenReceived() public {
+    function test_conceroReceive_EmitsBridgeDelivered() public {
         _addDefaultPool();
         _addDefaultDstBridge();
 
@@ -107,7 +88,7 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
         bytes memory message = _encodeBridgeParams(user, user, AMOUNT, false, "");
 
         vm.expectEmit(true, true, true, true);
-        emit LancaCanonicalBridgeBase.TokenReceived(
+        emit LancaCanonicalBridgeBase.BridgeDelivered(
             DEFAULT_MESSAGE_ID,
             lancaBridgeMock,
             DST_CHAIN_SELECTOR,

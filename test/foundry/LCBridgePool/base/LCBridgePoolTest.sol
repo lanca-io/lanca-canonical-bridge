@@ -17,7 +17,7 @@ abstract contract LCBridgePoolTest is DeployLCBridgePool, BridgeTest {
         super.setUp();
 
         lancaCanonicalBridgePool = LancaCanonicalBridgePool(
-            deploy(usdc, deployer, DST_CHAIN_SELECTOR)
+            deploy(usdc, lancaBridgeL1Mock, DST_CHAIN_SELECTOR)
         );
     }
 

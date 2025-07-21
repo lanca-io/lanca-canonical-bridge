@@ -6,7 +6,7 @@ import { getNetworkEnvKey } from "@concero/contract-utils";
 
 import { conceroNetworks, getViemReceiptConfig } from "../../constants";
 import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils";
-import { monitorTokenReceived } from "./monitorTokenReceived";
+import { monitorBridgeDelivered } from "./monitorBridgeDelivered";
 
 interface SendTokenParams {
 	srcChain: string;
@@ -144,12 +144,12 @@ export async function sendToken(
 
 		let sendTokenArgs: any[];
 		if (isEthereumChain) {
-			// L1 contract: sendToken(tokenReceiver, tokenAmount, dstChainSelector, isContract, dstGasLimit, dstCallData)
+			// L1 contract: sendToken(tokenReceiver, tokenAmount, dstChainSelector, isTokenReceiverContract, dstGasLimit, dstCallData)
 			sendTokenArgs = [
 				viemAccount.address as `0x${string}`, // tokenReceiver
 				amountInWei, // tokenAmount
 				dstChainSelector, // dstChainSelector
-				false, // isContract (simple transfer)
+				false, // isTokenReceiverContract (simple transfer)
 				BigInt(0), // dstGasLimit (not needed for simple transfer)
 				"0x", // dstCallData (empty for simple transfer)
 			];
@@ -158,7 +158,7 @@ export async function sendToken(
 			sendTokenArgs = [
 				viemAccount.address as `0x${string}`, // tokenReceiver
 				amountInWei, // tokenAmount
-				false, // isContract (simple transfer)
+				false, // isTokenReceiverContract (simple transfer)
 				BigInt(0), // dstGasLimit (not needed for simple transfer)
 				"0x", // dstCallData (empty for simple transfer)
 			];
@@ -205,7 +205,7 @@ export async function sendToken(
 				log(`📡 MessageId: ${messageId}`, "sendToken", srcChain);
 				log(`🔄 Starting cross-chain monitoring...`, "sendToken", srcChain);
 
-				await monitorTokenReceived(messageId, srcChain, dstChain, amount);
+				await monitorBridgeDelivered(messageId, srcChain, dstChain, amount);
 			} else {
 				log(`⚠️ TokenSent event not found in transaction receipt`, "sendToken", srcChain);
 			}

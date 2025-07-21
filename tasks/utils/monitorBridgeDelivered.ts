@@ -5,7 +5,7 @@ import { getNetworkEnvKey } from "@concero/contract-utils";
 import { conceroNetworks } from "../../constants";
 import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils";
 
-export async function monitorTokenReceived(
+export async function monitorBridgeDelivered(
 	messageId: string,
 	srcChain: string,
 	dstChain: string,
@@ -14,7 +14,7 @@ export async function monitorTokenReceived(
 ): Promise<void> {
 	const dstNetwork = conceroNetworks[dstChain];
 	if (!dstNetwork) {
-		err(`Destination network ${dstChain} not found`, "monitorTokenReceived", dstChain);
+		err(`Destination network ${dstChain} not found`, "monitorBridgeDelivered", dstChain);
 		return;
 	}
 
@@ -40,8 +40,8 @@ export async function monitorTokenReceived(
 	const { publicClient } = getFallbackClients(dstNetwork, viemAccount);
 
 	log(
-		`🔍 Monitoring TokenReceived event on ${dstChain} for messageId: ${messageId}`,
-		"monitorTokenReceived",
+		`🔍 Monitoring BridgeDelivered event on ${dstChain} for messageId: ${messageId}`,
+		"monitorBridgeDelivered",
 		dstChain,
 	);
 
@@ -56,15 +56,15 @@ export async function monitorTokenReceived(
 				// Check timeout
 				if (currentTime - startTime > timeoutMs) {
 					err(
-						`❌ Timeout: TokenReceived event not found after ${timeoutMs / 1000} seconds`,
-						"monitorTokenReceived",
+						`❌ Timeout: BridgeDelivered event not found after ${timeoutMs / 1000} seconds`,
+						"monitorBridgeDelivered",
 						dstChain,
 					);
-					reject(new Error("Timeout waiting for TokenReceived event"));
+					reject(new Error("Timeout waiting for BridgeDelivered event"));
 					return;
 				}
 
-				// Get TokenReceived events from recent blocks
+				// Get BridgeDelivered events from recent blocks
 				const currentBlock = await publicClient.getBlockNumber();
 				const fromBlock = currentBlock - 100n; // Check last 100 blocks
 
@@ -84,7 +84,7 @@ export async function monitorTokenReceived(
 						});
 
 						if (
-							decoded.eventName === "TokenReceived" &&
+							decoded.eventName === "BridgeDelivered" &&
 							decoded.args &&
 							(decoded.args as any).messageId === messageId
 						) {
@@ -92,41 +92,45 @@ export async function monitorTokenReceived(
 
 							const senderAddress = args.srcBridge;
 
-							log(`✅ TokenReceived event found!`, "monitorTokenReceived", dstChain);
 							log(
-								`   MessageId: ${args.messageId}`,
-								"monitorTokenReceived",
+								`✅ BridgeDelivered event found!`,
+								"monitorBridgeDelivered",
 								dstChain,
 							);
-							log(`   Sender: ${senderAddress}`, "monitorTokenReceived", dstChain);
+							log(
+								`   MessageId: ${args.messageId}`,
+								"monitorBridgeDelivered",
+								dstChain,
+							);
+							log(`   Sender: ${senderAddress}`, "monitorBridgeDelivered", dstChain);
 							log(
 								`   TokenSender: ${args.tokenSender}`,
-								"monitorTokenReceived",
+								"monitorBridgeDelivered",
 								dstChain,
 							);
 							log(
 								`   TokenReceiver: ${args.tokenReceiver}`,
-								"monitorTokenReceived",
+								"monitorBridgeDelivered",
 								dstChain,
 							);
 							log(
 								`   TokenAmount: ${args.tokenAmount} wei (${formatUnits(args.tokenAmount, 6)} USDC)`,
-								"monitorTokenReceived",
+								"monitorBridgeDelivered",
 								dstChain,
 							);
 							log(
 								`   Transaction Hash: ${event.transactionHash}`,
-								"monitorTokenReceived",
+								"monitorBridgeDelivered",
 								dstChain,
 							);
 							log(
 								`   Block Number: ${event.blockNumber}`,
-								"monitorTokenReceived",
+								"monitorBridgeDelivered",
 								dstChain,
 							);
 							log(
 								`🎉 Cross-chain transfer completed successfully!`,
-								"monitorTokenReceived",
+								"monitorBridgeDelivered",
 								dstChain,
 							);
 
@@ -141,15 +145,15 @@ export async function monitorTokenReceived(
 
 				// If event not found, continue searching
 				log(
-					`⏳ Waiting for TokenReceived event... (${Math.floor((currentTime - startTime) / 1000)}s elapsed)`,
-					"monitorTokenReceived",
+					`⏳ Waiting for BridgeDelivered event... (${Math.floor((currentTime - startTime) / 1000)}s elapsed)`,
+					"monitorBridgeDelivered",
 					dstChain,
 				);
 				setTimeout(pollForEvent, pollInterval);
 			} catch (error) {
 				err(
-					`Error monitoring TokenReceived event: ${error}`,
-					"monitorTokenReceived",
+					`Error monitoring BridgeDelivered event: ${error}`,
+					"monitorBridgeDelivered",
 					dstChain,
 				);
 				reject(error);

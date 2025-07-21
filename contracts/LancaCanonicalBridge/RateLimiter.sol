@@ -43,12 +43,12 @@ abstract contract RateLimiter {
         i_rateLimitAdmin = _rateLimitAdmin;
     }
 
-    function _setRateLimit(
+    function setRateLimit(
         uint24 dstChainSelector,
         uint128 maxAmount,
         uint128 refillSpeed,
         bool isOutbound
-    ) internal {
+    ) external onlyRateLimitAdmin {
         // Validate: refill speed cannot exceed max amount to prevent overflow
         // Only validate if maxAmount > 0, since 0 means transfers are disabled
         if (maxAmount > 0 && refillSpeed > maxAmount) {
@@ -61,7 +61,7 @@ abstract contract RateLimiter {
 
         // Update available volume based on time elapsed since last update
         if (rate.lastUpdate > 0) {
-            (uint128 newAvailable, uint32 newLastUpdate) = _refillRate(
+            (uint128 newAvailable, uint32 newLastUpdate) = _getRefillRate(
                 rate.availableVolume,
                 rate.refillSpeed,
                 rate.maxAmount,
@@ -105,7 +105,7 @@ abstract contract RateLimiter {
         }
 
         // Update available volume with time-based refill
-        (uint128 newAvailable, uint32 newLastUpdate) = _refillRate(
+        (uint128 newAvailable, uint32 newLastUpdate) = _getRefillRate(
             rate.availableVolume,
             rate.refillSpeed,
             maxAmount,
@@ -127,7 +127,7 @@ abstract contract RateLimiter {
         }
     }
 
-    function _refillRate(
+    function _getRefillRate(
         uint128 availableVolume,
         uint128 refillSpeed,
         uint128 maxAmount,
@@ -167,7 +167,7 @@ abstract contract RateLimiter {
 
         isActive = rate.maxAmount > 0;
 
-        (availableVolume, lastUpdate) = _refillRate(
+        (availableVolume, lastUpdate) = _getRefillRate(
             rate.availableVolume,
             rate.refillSpeed,
             rate.maxAmount,

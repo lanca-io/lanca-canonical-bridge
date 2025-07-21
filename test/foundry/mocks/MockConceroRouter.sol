@@ -28,9 +28,13 @@ contract MockConceroRouter is IConceroRouter {
         ConceroTypes.EvmDstChainData memory /* dstChainData */,
         bytes calldata message
     ) external payable returns (bytes32 messageId) {
-        (s_tokenSender, s_tokenReceiver, s_tokenAmount, s_isContract, s_dstCallData) = _decodeMessage(
-            message
-        );
+        (
+            s_tokenSender,
+            s_tokenReceiver,
+            s_tokenAmount,
+            s_isContract,
+            s_dstCallData
+        ) = _decodeMessage(message);
         return bytes32(uint256(1));
     }
 
@@ -43,25 +47,25 @@ contract MockConceroRouter is IConceroRouter {
             address tokenSender,
             address tokenReceiver,
             uint256 tokenAmount,
-            uint8 messageType,
+            uint8 bridgeType,
             bytes memory dstCallData
         )
     {
         bytes memory decodedMessage;
-        (messageType, decodedMessage) = abi.decode(message, (uint8, bytes));
+        (bridgeType, decodedMessage) = abi.decode(message, (uint8, bytes));
 
-        if (messageType == uint8(LancaCanonicalBridgeBase.MessageType.TRANSFER)) {
+        if (bridgeType == uint8(LancaCanonicalBridgeBase.BridgeType.EOA_TRANSFER)) {
             (tokenSender, tokenReceiver, tokenAmount) = abi.decode(
                 decodedMessage,
                 (address, address, uint256)
             );
-        } else if (messageType == uint8(LancaCanonicalBridgeBase.MessageType.TRANSFER_AND_CALL)) {
+        } else if (bridgeType == uint8(LancaCanonicalBridgeBase.BridgeType.CONTRACT_TRANSFER)) {
             (tokenSender, tokenReceiver, tokenAmount, dstCallData) = abi.decode(
                 decodedMessage,
                 (address, address, uint256, bytes)
             );
         } else {
-            revert LancaCanonicalBridgeBase.InvalidMessageType();
+            revert LancaCanonicalBridgeBase.InvalidBridgeType();
         }
     }
 

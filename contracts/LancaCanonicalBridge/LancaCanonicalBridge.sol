@@ -10,24 +10,22 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 
 import {CommonErrors} from "@concero/messaging-contracts-v2/contracts/common/CommonErrors.sol";
 
-import {LancaCanonicalBridgeBase, ConceroClient, ConceroTypes, IConceroRouter} from "./LancaCanonicalBridgeBase.sol";
+import {LancaCanonicalBridgeBase, ConceroClient} from "./LancaCanonicalBridgeBase.sol";
 import {ReentrancyGuard} from "../common/ReentrancyGuard.sol";
-import {LancaCanonicalBridgeClient} from "../LancaCanonicalBridgeClient/LancaCanonicalBridgeClient.sol";
-import {ILancaCanonicalBridgeClient} from "../interfaces/ILancaCanonicalBridgeClient.sol";
 
 contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
     uint24 internal immutable i_dstChainSelector;
-    address internal immutable i_lancaBridgeL1;
+    address internal immutable i_lancaCanonicalBridgeL1;
 
     constructor(
         uint24 dstChainSelector,
         address conceroRouter,
         address usdcAddress,
-        address lancaBridgeL1,
+        address lancaCanonicalBridgeL1,
         address rateLimitAdmin
     ) LancaCanonicalBridgeBase(usdcAddress, rateLimitAdmin) ConceroClient(conceroRouter) {
         i_dstChainSelector = dstChainSelector;
-        i_lancaBridgeL1 = lancaBridgeL1;
+        i_lancaCanonicalBridgeL1 = lancaCanonicalBridgeL1;
     }
 
     /* ------- Main Functions ------- */
@@ -51,7 +49,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
             isTokenReceiverContract,
             dstGasLimit,
             dstCallData,
-            i_lancaBridgeL1
+            i_lancaCanonicalBridgeL1
         );
 
         emit TokenSent(messageId, msg.sender, tokenReceiver, tokenAmount);
@@ -64,7 +62,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         bytes calldata message
     ) internal override nonReentrant {
         address messageSender = abi.decode(sender, (address));
-        require(messageSender == i_lancaBridgeL1, InvalidBridgeSender());
+        require(messageSender == i_lancaCanonicalBridgeL1, InvalidBridgeSender());
 
         (
             address tokenSender,
@@ -85,7 +83,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
 
         emit BridgeDelivered(
             messageId,
-            i_lancaBridgeL1,
+            i_lancaCanonicalBridgeL1,
             srcChainSelector,
             tokenSender,
             tokenReceiver,
@@ -114,7 +112,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         return
             _getMessageFeeForContract(
                 i_dstChainSelector,
-                i_lancaBridgeL1,
+                i_lancaCanonicalBridgeL1,
                 feeToken,
                 dstGasLimit,
                 dstCallData

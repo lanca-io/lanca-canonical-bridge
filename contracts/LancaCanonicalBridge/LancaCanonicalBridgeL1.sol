@@ -8,7 +8,7 @@ pragma solidity 0.8.28;
 
 import {CommonErrors} from "@concero/messaging-contracts-v2/contracts/common/CommonErrors.sol";
 
-import {LancaCanonicalBridgeBase, ConceroClient, ConceroTypes, IConceroRouter} from "./LancaCanonicalBridgeBase.sol";
+import {LancaCanonicalBridgeBase, ConceroClient} from "./LancaCanonicalBridgeBase.sol";
 import {Storage as s} from "./libraries/Storage.sol";
 import {ILancaCanonicalBridgePool} from "../interfaces/ILancaCanonicalBridgePool.sol";
 import {ReentrancyGuard} from "../common/ReentrancyGuard.sol";

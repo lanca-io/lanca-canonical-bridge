@@ -32,7 +32,11 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, Concer
         uint256 tokenAmount
     );
 
-    event SentToDestinationBridge(uint24 indexed dstChainSelector, address indexed dstBridge);
+    event SentToDestinationBridge(
+        bytes32 indexed messageId,
+        uint24 indexed dstChainSelector,
+        address indexed dstBridge
+    );
 
     event BridgeDelivered(
         bytes32 indexed messageId,

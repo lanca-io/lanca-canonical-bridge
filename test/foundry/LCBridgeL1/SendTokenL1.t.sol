@@ -164,7 +164,11 @@ contract SendTokenL1Test is LCBridgeL1Test {
         _approvePool(AMOUNT);
 
         vm.expectEmit(true, true, true, true);
-        emit LancaCanonicalBridgeBase.SentToDestinationBridge(DST_CHAIN_SELECTOR, lancaBridgeMock);
+        emit LancaCanonicalBridgeBase.SentToDestinationBridge(
+            DEFAULT_MESSAGE_ID,
+            DST_CHAIN_SELECTOR,
+            lancaBridgeMock
+        );
 
         vm.prank(user);
         lancaCanonicalBridgeL1.sendToken{value: messageFee}(

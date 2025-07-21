@@ -60,7 +60,7 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         );
 
         emit TokenSent(messageId, msg.sender, tokenReceiver, tokenAmount);
-        emit SentToDestinationBridge(dstChainSelector, dstBridge);
+        emit SentToDestinationBridge(messageId, dstChainSelector, dstBridge);
     }
 
     function _conceroReceive(

@@ -344,13 +344,4 @@ contract OutboundRateLimitsTest is LCBridgeTest {
         );
         vm.stopPrank();
     }
-
-    function _getMessageFee() internal view returns (uint256) {
-        return
-            LancaCanonicalBridge(address(lancaCanonicalBridge)).getMessageFee(
-                SRC_CHAIN_SELECTOR,
-                address(0),
-                ConceroTypes.EvmDstChainData({receiver: lancaBridgeL1Mock, gasLimit: GAS_LIMIT})
-            );
-    }
 }

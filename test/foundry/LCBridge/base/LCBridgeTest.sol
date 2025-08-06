@@ -48,4 +48,8 @@ abstract contract LCBridgeTest is DeployLCBridge, BridgeTest {
         vm.prank(user);
         MockUSDCe(usdcE).approve(address(lancaCanonicalBridge), amount);
     }
+
+	function _getMessageFee() internal view returns (uint256) {
+        return LancaCanonicalBridge(address(lancaCanonicalBridge)).getBridgeNativeFee(ZERO_AMOUNT);
+    }
 }

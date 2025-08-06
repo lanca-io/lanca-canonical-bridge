@@ -32,11 +32,7 @@ contract SendTokenTest is LCBridgeTest {
     }
 
     function test_sendToken_Success() public {
-        uint256 messageFee = lancaCanonicalBridge.getMessageFee(
-            SRC_CHAIN_SELECTOR,
-            address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeL1Mock, gasLimit: GAS_LIMIT})
-        );
+        uint256 messageFee = _getMessageFee();
 
         _approveBridge(AMOUNT);
 
@@ -63,11 +59,7 @@ contract SendTokenTest is LCBridgeTest {
     }
 
     function test_sendToken_EmitsTokenSent() public {
-        uint256 messageFee = lancaCanonicalBridge.getMessageFee(
-            SRC_CHAIN_SELECTOR,
-            address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeL1Mock, gasLimit: GAS_LIMIT})
-        );
+        uint256 messageFee = _getMessageFee();
 
         _approveBridge(AMOUNT);
 
@@ -92,14 +84,7 @@ contract SendTokenTest is LCBridgeTest {
     }
 
     function test_sendToken_WithContractCall() public {
-        uint256 messageFee = lancaCanonicalBridge.getMessageFee(
-            SRC_CHAIN_SELECTOR,
-            address(0),
-            ConceroTypes.EvmDstChainData({
-                receiver: lancaBridgeL1Mock,
-                gasLimit: GAS_LIMIT + GAS_LIMIT
-            })
-        );
+        uint256 messageFee = lancaCanonicalBridge.getBridgeNativeFee(GAS_LIMIT);
 
         _approveBridge(AMOUNT);
 
@@ -142,11 +127,7 @@ contract SendTokenTest is LCBridgeTest {
 
         vm.deal(user, 1e18);
 
-        uint256 messageFee = newBridge.getMessageFee(
-            SRC_CHAIN_SELECTOR,
-            address(0),
-            ConceroTypes.EvmDstChainData({receiver: lancaBridgeL1Mock, gasLimit: GAS_LIMIT})
-        );
+        uint256 messageFee = newBridge.getBridgeNativeFee(ZERO_AMOUNT);
 
         maliciousToken.setAttackMode(true, address(newBridge));
 

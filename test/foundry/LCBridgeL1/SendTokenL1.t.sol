@@ -70,12 +70,7 @@ contract SendTokenL1Test is LCBridgeL1Test {
         _addDefaultPool();
         _addDefaultDstBridge();
 
-        uint256 messageFee = lancaCanonicalBridgeL1.getMessageFeeForContract(
-            DST_CHAIN_SELECTOR,
-            address(0),
-            ZERO_AMOUNT,
-            ZERO_BYTES
-        );
+        uint256 messageFee = _getMessageFee();
 
         _approvePool(AMOUNT);
 
@@ -99,11 +94,10 @@ contract SendTokenL1Test is LCBridgeL1Test {
         _addDefaultPool();
         _addDefaultDstBridge();
 
-        uint256 messageFee = lancaCanonicalBridgeL1.getMessageFeeForContract(
+        uint256 messageFee = lancaCanonicalBridgeL1.getBridgeNativeFee(
             DST_CHAIN_SELECTOR,
-            address(0),
-            GAS_LIMIT,
-            abi.encode("test")
+            address(lancaBridgeMock),
+            GAS_LIMIT
         );
 
         _approvePool(AMOUNT);
@@ -128,12 +122,7 @@ contract SendTokenL1Test is LCBridgeL1Test {
         _addDefaultPool();
         _addDefaultDstBridge();
 
-        uint256 messageFee = lancaCanonicalBridgeL1.getMessageFeeForContract(
-            DST_CHAIN_SELECTOR,
-            address(0),
-            ZERO_AMOUNT,
-            ZERO_BYTES
-        );
+        uint256 messageFee = _getMessageFee();
 
         _approvePool(AMOUNT);
 
@@ -157,12 +146,7 @@ contract SendTokenL1Test is LCBridgeL1Test {
         _addDefaultPool();
         _addDefaultDstBridge();
 
-        uint256 messageFee = lancaCanonicalBridgeL1.getMessageFeeForContract(
-            DST_CHAIN_SELECTOR,
-            address(0),
-            ZERO_AMOUNT,
-            ZERO_BYTES
-        );
+        uint256 messageFee = _getMessageFee();
 
         _approvePool(AMOUNT);
 
@@ -191,11 +175,10 @@ contract SendTokenL1Test is LCBridgeL1Test {
         _addDefaultPool();
         _addDefaultDstBridge();
 
-        uint256 messageFee = lancaCanonicalBridgeL1.getMessageFeeForContract(
+        uint256 messageFee = lancaCanonicalBridgeL1.getBridgeNativeFee(
             DST_CHAIN_SELECTOR,
-            address(0),
-            ZERO_AMOUNT,
-            ZERO_BYTES
+            address(lancaBridgeMock),
+            GAS_LIMIT
         );
 
         _approvePool(AMOUNT);
@@ -244,12 +227,7 @@ contract SendTokenL1Test is LCBridgeL1Test {
             true
         );
 
-        uint256 messageFee = lancaCanonicalBridgeL1.getMessageFeeForContract(
-            attackChainSelector,
-            address(0),
-            ZERO_AMOUNT,
-            ZERO_BYTES
-        );
+        uint256 messageFee = _getMessageFee();
 
         vm.expectRevert(abi.encodeWithSelector(ReentrancyGuard.ReentrantCall.selector));
 

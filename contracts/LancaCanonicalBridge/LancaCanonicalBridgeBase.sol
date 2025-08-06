@@ -51,7 +51,7 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, Concer
     constructor(
         address usdcAddress,
         address rateLimitAdmin
-    ) ConceroOwnable() RateLimiter(rateLimitAdmin) {
+    ) RateLimiter(rateLimitAdmin) {
         i_usdc = IFiatTokenV1(usdcAddress);
     }
 

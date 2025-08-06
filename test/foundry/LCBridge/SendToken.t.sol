@@ -8,8 +8,6 @@
 pragma solidity 0.8.28;
 
 import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
-import {ConceroTypes} from "@concero/v2-contracts/contracts/ConceroClient/ConceroTypes.sol";
-import {IConceroClientErrors} from "@concero/v2-contracts/contracts/interfaces/IConceroClientErrors.sol";
 
 import {LCBridgeTest} from "./base/LCBridgeTest.sol";
 import {MaliciousToken} from "../mocks/MaliciousToken.sol";

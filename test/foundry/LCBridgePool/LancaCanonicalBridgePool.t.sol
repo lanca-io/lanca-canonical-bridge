@@ -57,9 +57,9 @@ contract LancaCanonicalBridgePoolTest is LCBridgePoolTest {
     function test_getPoolInfo() public {
         test_deposit_Success();
 
-        (uint24 dstChainSelector, uint256 lockedUSDC) = lancaCanonicalBridgePool.getPoolInfo();
+        (uint24 dstChainSelector, uint256 lockedUsdc) = lancaCanonicalBridgePool.getPoolInfo();
 
         assertEq(dstChainSelector, DST_CHAIN_SELECTOR);
-        assertEq(lockedUSDC, AMOUNT);
+        assertEq(lockedUsdc, AMOUNT);
     }
 }

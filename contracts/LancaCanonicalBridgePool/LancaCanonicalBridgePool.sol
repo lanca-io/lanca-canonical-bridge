@@ -39,8 +39,8 @@ contract LancaCanonicalBridgePool is ILancaCanonicalBridgePool {
         i_usdc.safeTransfer(to, amount);
     }
 
-    function getPoolInfo() external view returns (uint24 dstChainSelector, uint256 lockedUSDC) {
+    function getPoolInfo() external view returns (uint24 dstChainSelector, uint256 lockedUsdc) {
         dstChainSelector = i_dstChainSelector;
-        lockedUSDC = i_usdc.balanceOf(address(this));
+        lockedUsdc = i_usdc.balanceOf(address(this));
     }
 }

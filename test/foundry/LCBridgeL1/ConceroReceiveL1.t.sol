@@ -7,8 +7,6 @@
  */
 pragma solidity 0.8.28;
 
-import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
-
 import {LCBridgeL1Test} from "./base/LCBridgeL1Test.sol";
 import {MockUSDC} from "../mocks/MockUSDC.sol";
 import {LancaCanonicalBridgeBase} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";

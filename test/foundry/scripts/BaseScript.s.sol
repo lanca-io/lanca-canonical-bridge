@@ -7,7 +7,6 @@
 pragma solidity 0.8.28;
 
 import {Script} from "forge-std/src/Script.sol";
-import {console} from "forge-std/src/Console.sol";
 
 import {DeployMockUSDC} from "./deploy/DeployMockUSDC.s.sol";
 import {DeployMockUSDCe} from "./deploy/DeployMockUSDCe.s.sol";

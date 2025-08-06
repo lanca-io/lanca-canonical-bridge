@@ -15,7 +15,7 @@ import {IConceroRouter} from "@concero/v2-contracts/contracts/interfaces/IConcer
 
 import {RateLimiter} from "./RateLimiter.sol";
 import {IFiatTokenV1} from "../interfaces/IFiatTokenV1.sol";
-import {LancaCanonicalBridgeClient, ILancaCanonicalBridgeClient} from "../LancaCanonicalBridgeClient/LancaCanonicalBridgeClient.sol";
+import {ILancaCanonicalBridgeClient} from "../LancaCanonicalBridgeClient/LancaCanonicalBridgeClient.sol";
 
 abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, ConceroOwnable {
     uint256 internal constant BRIDGE_GAS_OVERHEAD = 100_000;

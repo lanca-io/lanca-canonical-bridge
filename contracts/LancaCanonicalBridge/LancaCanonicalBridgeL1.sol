@@ -92,6 +92,8 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
             ILancaCanonicalBridgeClient(tokenReceiver).lancaCanonicalBridgeReceive{
                 gas: dstGasLimit
             }(address(i_usdc), tokenSender, tokenAmount, dstCallData);
+        } else {
+            revert InvalidMessage();
         }
 
         emit BridgeDelivered(

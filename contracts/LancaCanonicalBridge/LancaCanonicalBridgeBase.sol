@@ -119,37 +119,22 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, Concer
         return true;
     }
 
-    function _getMessageFeeForContract(
-        uint24 dstChainSelector,
-        address dstBridge,
-        address feeToken,
-        uint256 dstGasLimit,
-        bytes calldata /** dstCallData */
-    ) internal view returns (uint256) {
-        return
-            getMessageFee(
-                dstChainSelector,
-                feeToken,
-                ConceroTypes.EvmDstChainData({
-                    receiver: dstBridge,
-                    gasLimit: BRIDGE_GAS_OVERHEAD + dstGasLimit
-                })
-            );
-    }
-
     /* ------- View Functions ------- */
 
-    function getMessageFee(
+    function getBridgeNativeFee(
         uint24 dstChainSelector,
-        address feeToken,
-        ConceroTypes.EvmDstChainData memory dstChainData
+        address dstPool,
+        uint256 dstGasLimit
     ) public view returns (uint256) {
         return
             IConceroRouter(i_conceroRouter).getMessageFee(
                 dstChainSelector,
-                false,
-                feeToken,
-                dstChainData
+                false, // shouldFinaliseSrc
+                address(0), // feeToken (native)
+                ConceroTypes.EvmDstChainData({
+                    receiver: dstPool,
+                    gasLimit: BRIDGE_GAS_OVERHEAD + dstGasLimit
+                })
             );
     }
 }

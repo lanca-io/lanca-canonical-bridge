@@ -107,18 +107,9 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
 
     /* ------- View Functions ------- */
 
-    function getMessageFeeForContract(
-        address feeToken,
-        uint256 dstGasLimit,
-        bytes calldata dstCallData
-    ) public view returns (uint256) {
-        return
-            _getMessageFeeForContract(
-                i_dstChainSelector,
-                i_lancaCanonicalBridgeL1,
-                feeToken,
-                dstGasLimit,
-                dstCallData
-            );
+    function getBridgeNativeFee(
+        uint256 dstGasLimit
+    ) external view returns (uint256) {
+        return getBridgeNativeFee(i_dstChainSelector, i_lancaCanonicalBridgeL1, dstGasLimit);
     }
 }

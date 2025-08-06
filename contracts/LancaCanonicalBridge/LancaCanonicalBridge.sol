@@ -8,9 +8,9 @@ pragma solidity 0.8.28;
 
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {CommonErrors} from "@concero/messaging-contracts-v2/contracts/common/CommonErrors.sol";
+import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
 
-import {LancaCanonicalBridgeBase, ConceroClient} from "./LancaCanonicalBridgeBase.sol";
+import {LancaCanonicalBridgeBase, ILancaCanonicalBridgeClient, ConceroClient} from "./LancaCanonicalBridgeBase.sol";
 import {ReentrancyGuard} from "../common/ReentrancyGuard.sol";
 
 contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
@@ -33,7 +33,6 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
     function sendToken(
         address tokenReceiver,
         uint256 tokenAmount,
-        bool isTokenReceiverContract,
         uint256 dstGasLimit,
         bytes calldata dstCallData
     ) external payable nonReentrant returns (bytes32 messageId) {
@@ -46,7 +45,6 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
             tokenReceiver,
             tokenAmount,
             i_dstChainSelector,
-            isTokenReceiverContract,
             dstGasLimit,
             dstCallData,
             i_lancaCanonicalBridgeL1
@@ -68,17 +66,20 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
             address tokenSender,
             address tokenReceiver,
             uint256 tokenAmount,
-            uint8 bridgeType,
+            uint256 dstGasLimit,
             bytes memory dstCallData
         ) = _decodeMessage(message);
 
         _consumeRate(srcChainSelector, tokenAmount, false);
 
-        if (bridgeType == uint8(BridgeType.CONTRACT_TRANSFER)) {
+        if (dstGasLimit == 0 && dstCallData.length == 0) {
             _mintToken(tokenReceiver, tokenAmount);
-            _callTokenReceiver(tokenSender, tokenReceiver, tokenAmount, dstCallData);
-        } else {
+        } else if (_isValidContractReceiver(tokenReceiver)) {
             _mintToken(tokenReceiver, tokenAmount);
+
+            ILancaCanonicalBridgeClient(tokenReceiver).lancaCanonicalBridgeReceive{
+                gas: dstGasLimit
+            }(address(i_usdc), tokenSender, tokenAmount, dstCallData);
         }
 
         emit BridgeDelivered(

@@ -6,9 +6,9 @@
  */
 pragma solidity 0.8.28;
 
-import {CommonErrors} from "@concero/messaging-contracts-v2/contracts/common/CommonErrors.sol";
+import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
 
-import {LancaCanonicalBridgeBase, ConceroClient} from "./LancaCanonicalBridgeBase.sol";
+import {LancaCanonicalBridgeBase, ILancaCanonicalBridgeClient, ConceroClient} from "./LancaCanonicalBridgeBase.sol";
 import {Storage as s} from "./libraries/Storage.sol";
 import {ILancaCanonicalBridgePool} from "../interfaces/ILancaCanonicalBridgePool.sol";
 import {ReentrancyGuard} from "../common/ReentrancyGuard.sol";
@@ -33,7 +33,6 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         address tokenReceiver,
         uint256 tokenAmount,
         uint24 dstChainSelector,
-        bool isTokenReceiverContract,
         uint256 dstGasLimit,
         bytes calldata dstCallData
     ) external payable nonReentrant returns (bytes32 messageId) {
@@ -53,7 +52,6 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
             tokenReceiver,
             tokenAmount,
             dstChainSelector,
-            isTokenReceiverContract,
             dstGasLimit,
             dstCallData,
             dstBridge
@@ -80,17 +78,20 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
             address tokenSender,
             address tokenReceiver,
             uint256 tokenAmount,
-            uint8 bridgeType,
+            uint256 dstGasLimit,
             bytes memory dstCallData
         ) = _decodeMessage(message);
 
         _consumeRate(srcChainSelector, tokenAmount, false);
 
-        if (bridgeType == uint8(BridgeType.CONTRACT_TRANSFER)) {
+        if (dstGasLimit == 0 && dstCallData.length == 0) {
             _withdrawFromPool(pool, tokenReceiver, tokenAmount);
-            _callTokenReceiver(tokenSender, tokenReceiver, tokenAmount, dstCallData);
-        } else {
+        } else if (_isValidContractReceiver(tokenReceiver)) {
             _withdrawFromPool(pool, tokenReceiver, tokenAmount);
+
+            ILancaCanonicalBridgeClient(tokenReceiver).lancaCanonicalBridgeReceive{
+                gas: dstGasLimit
+            }(address(i_usdc), tokenSender, tokenAmount, dstCallData);
         }
 
         emit BridgeDelivered(

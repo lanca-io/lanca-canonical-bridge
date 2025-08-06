@@ -7,12 +7,10 @@
 pragma solidity 0.8.28;
 
 interface ILancaCanonicalBridgeClient {
-    error CallFiled();
-
     function lancaCanonicalBridgeReceive(
-		address token,
+        address token,
         address from,
         uint256 value,
         bytes memory data
-    ) external returns (bytes4);
+    ) external;
 }

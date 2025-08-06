@@ -8,6 +8,7 @@ pragma solidity 0.8.28;
 
 import {LancaCanonicalBridgeL1} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol";
 import {LancaCanonicalBridgePool} from "contracts/LancaCanonicalBridgePool/LancaCanonicalBridgePool.sol";
+import {LancaCanonicalBridgeClientExample} from "contracts/LancaCanonicalBridgeClient/LancaCanonicalBridgeClientExample.sol";
 
 import {BridgeTest} from "../../utils/BridgeTest.sol";
 import {MockUSDC} from "../../mocks/MockUSDC.sol";
@@ -15,6 +16,7 @@ import {DeployLCBridgeL1} from "../../scripts/deploy/DeployLCBridgeL1.s.sol";
 
 abstract contract LCBridgeL1Test is DeployLCBridgeL1, BridgeTest {
     LancaCanonicalBridgePool internal lancaCanonicalBridgePool;
+    LancaCanonicalBridgeClientExample internal lcBridgeClient;
 
     function setUp() public virtual override(DeployLCBridgeL1, BridgeTest) {
         super.setUp();
@@ -25,6 +27,8 @@ abstract contract LCBridgeL1Test is DeployLCBridgeL1, BridgeTest {
             address(lancaCanonicalBridgeL1),
             DST_CHAIN_SELECTOR
         );
+
+        lcBridgeClient = new LancaCanonicalBridgeClientExample(address(lancaCanonicalBridgeL1));
 
         deal(address(usdc), user, AMOUNT);
         vm.deal(user, 1e18);

@@ -139,4 +139,33 @@ contract SendTokenTest is LCBridgeTest {
         vm.prank(user);
         newBridge.sendToken{value: messageFee}(user, AMOUNT, ZERO_AMOUNT, ZERO_BYTES);
     }
+
+    function test_sendToken_RevertsInvalidDstGasLimitOrCallData() public {
+        uint256 messageFee = _getMessageFee();
+
+        _approveBridge(AMOUNT);
+        bytes memory nonZeroBytes = "0x01";
+
+        vm.expectRevert(abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidDstGasLimitOrCallData.selector));
+
+        vm.prank(user);
+        lancaCanonicalBridge.sendToken{value: messageFee}(
+            user,
+            AMOUNT,
+            ZERO_AMOUNT,
+            nonZeroBytes
+        );
+
+        uint256 nonZeroGasLimit = GAS_LIMIT;
+
+        vm.expectRevert(abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidDstGasLimitOrCallData.selector));
+
+        vm.prank(user);
+        lancaCanonicalBridge.sendToken{value: messageFee}(
+            user,
+            AMOUNT,
+            nonZeroGasLimit,
+            ZERO_BYTES
+        );
+    }
 }

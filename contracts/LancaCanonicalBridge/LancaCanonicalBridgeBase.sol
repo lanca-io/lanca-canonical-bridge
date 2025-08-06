@@ -48,10 +48,7 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, Concer
     error InvalidDstGasLimitOrCallData();
     error InvalidMessage();
 
-    constructor(
-        address usdcAddress,
-        address rateLimitAdmin
-    ) RateLimiter(rateLimitAdmin) {
+    constructor(address usdcAddress, address rateLimitAdmin) RateLimiter(rateLimitAdmin) {
         i_usdc = IFiatTokenV1(usdcAddress);
     }
 

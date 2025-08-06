@@ -23,8 +23,10 @@ abstract contract LancaCanonicalBridgeClient is ILancaCanonicalBridgeClient, ERC
         i_lancaCanonicalBridge = lancaCanonicalBridge;
     }
 
-	function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
-        return interfaceId == type(ILancaCanonicalBridgeClient).interfaceId || super.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
+        return
+            interfaceId == type(ILancaCanonicalBridgeClient).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 
     function lancaCanonicalBridgeReceive(

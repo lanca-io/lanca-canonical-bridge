@@ -7,7 +7,10 @@
 pragma solidity 0.8.28;
 
 import {LancaCanonicalBridge} from "contracts/LancaCanonicalBridge/LancaCanonicalBridge.sol";
-import {TransparentUpgradeableProxy, ITransparentUpgradeableProxy} from "contracts/Proxy/TransparentUpgradeableProxy.sol";
+import {
+    TransparentUpgradeableProxy,
+    ITransparentUpgradeableProxy
+} from "contracts/Proxy/TransparentUpgradeableProxy.sol";
 import {LCBridgeBaseTest} from "test/foundry/LCBridge/base/LCBridgeBaseTest.sol";
 
 contract DeployLCBridge is LCBridgeBaseTest {

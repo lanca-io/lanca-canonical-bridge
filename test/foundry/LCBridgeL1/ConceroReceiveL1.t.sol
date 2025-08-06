@@ -107,7 +107,7 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
     function test_conceroReceive_WithCall_RevertsIfInvalidMessage() public {
         _addDefaultPool();
         _addDefaultDstBridge();
-    
+
         address invalidLCBridgeClient = makeAddr("InvalidLCBridgeClient");
 
         bytes memory message = _encodeBridgeParams(
@@ -118,7 +118,7 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
             "0x01"
         );
 
-		vm.expectRevert(abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidMessage.selector));
+        vm.expectRevert(abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidMessage.selector));
 
         vm.prank(conceroRouter);
         lancaCanonicalBridgeL1.conceroReceive(

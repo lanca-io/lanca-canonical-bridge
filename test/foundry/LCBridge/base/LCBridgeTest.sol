@@ -29,14 +29,14 @@ abstract contract LCBridgeTest is DeployLCBridge, BridgeTest {
 
         vm.startPrank(deployer);
         LancaCanonicalBridge(address(lancaCanonicalBridge)).setRateLimit(
-			SRC_CHAIN_SELECTOR,
+            SRC_CHAIN_SELECTOR,
             MAX_RATE_AMOUNT,
             REFILL_SPEED,
             true
         );
 
         LancaCanonicalBridge(address(lancaCanonicalBridge)).setRateLimit(
-			SRC_CHAIN_SELECTOR,
+            SRC_CHAIN_SELECTOR,
             MAX_RATE_AMOUNT,
             REFILL_SPEED,
             false
@@ -49,7 +49,7 @@ abstract contract LCBridgeTest is DeployLCBridge, BridgeTest {
         MockUSDCe(usdcE).approve(address(lancaCanonicalBridge), amount);
     }
 
-	function _getMessageFee() internal view returns (uint256) {
+    function _getMessageFee() internal view returns (uint256) {
         return LancaCanonicalBridge(address(lancaCanonicalBridge)).getBridgeNativeFee(ZERO_AMOUNT);
     }
 }

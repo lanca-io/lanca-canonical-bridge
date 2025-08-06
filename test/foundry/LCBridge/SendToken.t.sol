@@ -37,8 +37,8 @@ contract SendTokenTest is LCBridgeTest {
         uint256 userBalanceBefore = MockUSDCe(usdcE).balanceOf(user);
         uint256 totalSupplyBefore = MockUSDCe(usdcE).totalSupply();
 
-		bytes memory message = _encodeBridgeParams(user, user, AMOUNT, ZERO_AMOUNT, ZERO_BYTES);
-		bytes32 expectedMessageId = _getMessageId(SRC_CHAIN_SELECTOR, false, address(0), message);
+        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, ZERO_AMOUNT, ZERO_BYTES);
+        bytes32 expectedMessageId = _getMessageId(SRC_CHAIN_SELECTOR, false, address(0), message);
 
         vm.prank(user);
         bytes32 messageId = lancaCanonicalBridge.sendToken{value: messageFee}(
@@ -61,24 +61,14 @@ contract SendTokenTest is LCBridgeTest {
 
         _approveBridge(AMOUNT);
 
-		bytes memory message = _encodeBridgeParams(user, user, AMOUNT, ZERO_AMOUNT, ZERO_BYTES);
-		bytes32 messageId = _getMessageId(SRC_CHAIN_SELECTOR, false, address(0), message);
+        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, ZERO_AMOUNT, ZERO_BYTES);
+        bytes32 messageId = _getMessageId(SRC_CHAIN_SELECTOR, false, address(0), message);
 
         vm.expectEmit(true, true, true, true);
-        emit LancaCanonicalBridgeBase.TokenSent(
-            messageId,
-            user,
-            user,
-            AMOUNT
-        );
+        emit LancaCanonicalBridgeBase.TokenSent(messageId, user, user, AMOUNT);
 
         vm.prank(user);
-        lancaCanonicalBridge.sendToken{value: messageFee}(
-            user,
-            AMOUNT,
-            ZERO_AMOUNT,
-            ZERO_BYTES
-        );
+        lancaCanonicalBridge.sendToken{value: messageFee}(user, AMOUNT, ZERO_AMOUNT, ZERO_BYTES);
     }
 
     function test_sendToken_WithContractCall() public {
@@ -88,8 +78,14 @@ contract SendTokenTest is LCBridgeTest {
 
         bytes memory callData = abi.encode("test data");
 
-		bytes memory message = _encodeBridgeParams(user, address(lcBridgeClient), AMOUNT, GAS_LIMIT, callData);
-		bytes32 expectedMessageId = _getMessageId(SRC_CHAIN_SELECTOR, false, address(0), message);
+        bytes memory message = _encodeBridgeParams(
+            user,
+            address(lcBridgeClient),
+            AMOUNT,
+            GAS_LIMIT,
+            callData
+        );
+        bytes32 expectedMessageId = _getMessageId(SRC_CHAIN_SELECTOR, false, address(0), message);
 
         vm.prank(user);
         bytes32 messageId = lancaCanonicalBridge.sendToken{value: messageFee}(
@@ -144,19 +140,18 @@ contract SendTokenTest is LCBridgeTest {
         _approveBridge(AMOUNT);
         bytes memory nonZeroBytes = "0x01";
 
-        vm.expectRevert(abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidDstGasLimitOrCallData.selector));
+        vm.expectRevert(
+            abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidDstGasLimitOrCallData.selector)
+        );
 
         vm.prank(user);
-        lancaCanonicalBridge.sendToken{value: messageFee}(
-            user,
-            AMOUNT,
-            ZERO_AMOUNT,
-            nonZeroBytes
-        );
+        lancaCanonicalBridge.sendToken{value: messageFee}(user, AMOUNT, ZERO_AMOUNT, nonZeroBytes);
 
         uint256 nonZeroGasLimit = GAS_LIMIT;
 
-        vm.expectRevert(abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidDstGasLimitOrCallData.selector));
+        vm.expectRevert(
+            abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidDstGasLimitOrCallData.selector)
+        );
 
         vm.prank(user);
         lancaCanonicalBridge.sendToken{value: messageFee}(

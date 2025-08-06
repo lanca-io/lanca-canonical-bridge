@@ -37,7 +37,7 @@ contract OutboundRateLimitsTest is LCBridgeTest {
 
         vm.prank(deployer);
         LancaCanonicalBridge(address(lancaCanonicalBridge)).setRateLimit(
-			SRC_CHAIN_SELECTOR,
+            SRC_CHAIN_SELECTOR,
             MAX_RATE_AMOUNT,
             REFILL_SPEED,
             true

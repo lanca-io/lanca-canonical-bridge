@@ -89,7 +89,7 @@ contract ConceroReceiveTest is LCBridgeTest {
             "0x01"
         );
 
-		vm.expectRevert(abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidMessage.selector));
+        vm.expectRevert(abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidMessage.selector));
 
         vm.prank(conceroRouter);
         lancaCanonicalBridge.conceroReceive(

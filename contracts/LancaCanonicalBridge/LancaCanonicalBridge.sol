@@ -10,7 +10,11 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 
 import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
 
-import {LancaCanonicalBridgeBase, ILancaCanonicalBridgeClient, ConceroClient} from "./LancaCanonicalBridgeBase.sol";
+import {
+    LancaCanonicalBridgeBase,
+    ILancaCanonicalBridgeClient,
+    ConceroClient
+} from "./LancaCanonicalBridgeBase.sol";
 import {ReentrancyGuard} from "../common/ReentrancyGuard.sol";
 
 contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
@@ -81,8 +85,8 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
                 gas: dstGasLimit
             }(address(i_usdc), tokenSender, tokenAmount, dstCallData);
         } else {
-			revert InvalidMessage();
-		}
+            revert InvalidMessage();
+        }
 
         emit BridgeDelivered(
             messageId,
@@ -107,9 +111,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
 
     /* ------- View Functions ------- */
 
-    function getBridgeNativeFee(
-        uint256 dstGasLimit
-    ) external view returns (uint256) {
+    function getBridgeNativeFee(uint256 dstGasLimit) external view returns (uint256) {
         return getBridgeNativeFee(i_dstChainSelector, i_lancaCanonicalBridgeL1, dstGasLimit);
     }
 }

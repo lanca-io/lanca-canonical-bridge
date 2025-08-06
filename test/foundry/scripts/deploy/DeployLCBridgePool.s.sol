@@ -7,7 +7,10 @@
 pragma solidity 0.8.28;
 
 import {LancaCanonicalBridgePool} from "contracts/LancaCanonicalBridgePool/LancaCanonicalBridgePool.sol";
-import {TransparentUpgradeableProxy, ITransparentUpgradeableProxy} from "contracts/Proxy/TransparentUpgradeableProxy.sol";
+import {
+    TransparentUpgradeableProxy,
+    ITransparentUpgradeableProxy
+} from "contracts/Proxy/TransparentUpgradeableProxy.sol";
 import {LCBridgePoolBase} from "test/foundry/LCBridgePool/base/LCBridgePoolBase.sol";
 
 contract DeployLCBridgePool is LCBridgePoolBase {

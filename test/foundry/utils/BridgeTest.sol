@@ -9,7 +9,7 @@ pragma solidity 0.8.28;
 import {Test} from "forge-std/src/Test.sol";
 
 import {BaseScript} from "../scripts/BaseScript.s.sol";
-import {IConceroRouter} from "@concero/messaging-contracts-v2/contracts/interfaces/IConceroRouter.sol";
+import {IConceroRouter} from "@concero/v2-contracts/contracts/interfaces/IConceroRouter.sol";
 
 import {LancaCanonicalBridgeBase} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
 
@@ -22,21 +22,22 @@ abstract contract BridgeTest is BaseScript, Test {
         address tokenSender,
         address tokenReceiver,
         uint256 tokenAmount,
-        bool isTokenReceiverContract,
+        uint256 dstGasLimit,
         bytes memory dstCallData
     ) internal pure returns (bytes memory) {
-        if (isTokenReceiverContract) {
-            return
-                abi.encode(
-                    uint8(LancaCanonicalBridgeBase.BridgeType.CONTRACT_TRANSFER),
-                    abi.encode(tokenSender, tokenReceiver, tokenAmount, dstCallData)
-                );
-        } else {
-            return
-                abi.encode(
-                    uint8(LancaCanonicalBridgeBase.BridgeType.EOA_TRANSFER),
-                    abi.encode(tokenSender, tokenReceiver, tokenAmount)
-                );
-        }
+        return
+            abi.encode(tokenSender, tokenReceiver, tokenAmount, dstGasLimit, dstCallData);
+    }
+
+	function _getMessageId(
+        uint24 dstChainSelector,
+        bool shouldFinaliseSrc,
+        address feeToken,
+        bytes memory message
+    ) internal view returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(block.number, dstChainSelector, shouldFinaliseSrc, feeToken, message)
+            );
     }
 }

@@ -6,7 +6,7 @@
  */
 pragma solidity 0.8.28;
 
-import {CommonErrors} from "@concero/messaging-contracts-v2/contracts/common/CommonErrors.sol";
+import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
 
 import {Storage as s} from "./libraries/Storage.sol";
 

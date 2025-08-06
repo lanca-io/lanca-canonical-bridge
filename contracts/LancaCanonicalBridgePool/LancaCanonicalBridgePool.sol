@@ -9,7 +9,7 @@ pragma solidity 0.8.28;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {CommonErrors} from "@concero/messaging-contracts-v2/contracts/common/CommonErrors.sol";
+import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
 
 import {ILancaCanonicalBridgePool} from "../interfaces/ILancaCanonicalBridgePool.sol";
 

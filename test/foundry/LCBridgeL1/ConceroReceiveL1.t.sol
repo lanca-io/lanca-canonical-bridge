@@ -7,7 +7,7 @@
  */
 pragma solidity 0.8.28;
 
-import {CommonErrors} from "@concero/messaging-contracts-v2/contracts/common/CommonErrors.sol";
+import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
 
 import {LCBridgeL1Test} from "./base/LCBridgeL1Test.sol";
 import {MockUSDC} from "../mocks/MockUSDC.sol";
@@ -20,7 +20,7 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
     }
 
     function test_conceroReceive_RevertsInvalidSenderBridge() public {
-        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, false, "");
+        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, 0, "");
 
         vm.expectRevert(
             abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidBridgeSender.selector)
@@ -38,7 +38,7 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
     function test_conceroReceive_RevertsPoolNotFound() public {
         _addDefaultDstBridge();
 
-        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, false, "");
+        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, 0, "");
 
         vm.expectRevert(
             abi.encodeWithSelector(LancaCanonicalBridgeL1.PoolNotFound.selector, DST_CHAIN_SELECTOR)
@@ -62,7 +62,7 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
         uint256 userBalanceBefore = MockUSDC(usdc).balanceOf(user);
         uint256 poolBalanceBefore = MockUSDC(usdc).balanceOf(address(lancaCanonicalBridgePool));
 
-        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, false, "");
+        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, 0, "");
 
         vm.prank(conceroRouter);
         lancaCanonicalBridgeL1.conceroReceive(
@@ -85,7 +85,7 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
 
         MockUSDC(usdc).mint(address(lancaCanonicalBridgePool), AMOUNT);
 
-        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, false, "");
+        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, 0, "");
 
         vm.expectEmit(true, true, true, true);
         emit LancaCanonicalBridgeBase.BridgeDelivered(

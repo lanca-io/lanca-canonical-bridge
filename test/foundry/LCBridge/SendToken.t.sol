@@ -7,9 +7,9 @@
  */
 pragma solidity 0.8.28;
 
-import {CommonErrors} from "@concero/messaging-contracts-v2/contracts/common/CommonErrors.sol";
-import {ConceroTypes} from "@concero/messaging-contracts-v2/contracts/ConceroClient/ConceroTypes.sol";
-import {IConceroClientErrors} from "@concero/messaging-contracts-v2/contracts/interfaces/IConceroClientErrors.sol";
+import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
+import {ConceroTypes} from "@concero/v2-contracts/contracts/ConceroClient/ConceroTypes.sol";
+import {IConceroClientErrors} from "@concero/v2-contracts/contracts/interfaces/IConceroClientErrors.sol";
 
 import {LCBridgeTest} from "./base/LCBridgeTest.sol";
 import {MaliciousToken} from "../mocks/MaliciousToken.sol";
@@ -28,7 +28,7 @@ contract SendTokenTest is LCBridgeTest {
 
         vm.expectRevert(abi.encodeWithSelector(CommonErrors.InvalidAmount.selector));
 
-        lancaCanonicalBridge.sendToken(user, invalidAmount, false, ZERO_AMOUNT, ZERO_BYTES);
+        lancaCanonicalBridge.sendToken(user, invalidAmount, ZERO_AMOUNT, ZERO_BYTES);
     }
 
     function test_sendToken_Success() public {
@@ -43,11 +43,13 @@ contract SendTokenTest is LCBridgeTest {
         uint256 userBalanceBefore = MockUSDCe(usdcE).balanceOf(user);
         uint256 totalSupplyBefore = MockUSDCe(usdcE).totalSupply();
 
+		bytes memory message = _encodeBridgeParams(user, user, AMOUNT, ZERO_AMOUNT, ZERO_BYTES);
+		bytes32 expectedMessageId = _getMessageId(SRC_CHAIN_SELECTOR, false, address(0), message);
+
         vm.prank(user);
         bytes32 messageId = lancaCanonicalBridge.sendToken{value: messageFee}(
             user,
             AMOUNT,
-            false,
             ZERO_AMOUNT,
             ZERO_BYTES
         );
@@ -55,7 +57,7 @@ contract SendTokenTest is LCBridgeTest {
         uint256 userBalanceAfter = MockUSDCe(usdcE).balanceOf(user);
         uint256 totalSupplyAfter = MockUSDCe(usdcE).totalSupply();
 
-        assertEq(messageId, DEFAULT_MESSAGE_ID);
+        assertEq(messageId, expectedMessageId);
         assertEq(userBalanceAfter, userBalanceBefore - AMOUNT);
         assertEq(totalSupplyAfter, totalSupplyBefore - AMOUNT);
     }
@@ -69,9 +71,12 @@ contract SendTokenTest is LCBridgeTest {
 
         _approveBridge(AMOUNT);
 
+		bytes memory message = _encodeBridgeParams(user, user, AMOUNT, ZERO_AMOUNT, ZERO_BYTES);
+		bytes32 messageId = _getMessageId(SRC_CHAIN_SELECTOR, false, address(0), message);
+
         vm.expectEmit(true, true, true, true);
         emit LancaCanonicalBridgeBase.TokenSent(
-            DEFAULT_MESSAGE_ID,
+            messageId,
             user,
             user,
             AMOUNT
@@ -81,7 +86,6 @@ contract SendTokenTest is LCBridgeTest {
         lancaCanonicalBridge.sendToken{value: messageFee}(
             user,
             AMOUNT,
-            false,
             ZERO_AMOUNT,
             ZERO_BYTES
         );
@@ -101,16 +105,18 @@ contract SendTokenTest is LCBridgeTest {
 
         bytes memory callData = abi.encode("test data");
 
+		bytes memory message = _encodeBridgeParams(user, address(lcBridgeClient), AMOUNT, GAS_LIMIT, callData);
+		bytes32 expectedMessageId = _getMessageId(SRC_CHAIN_SELECTOR, false, address(0), message);
+
         vm.prank(user);
         bytes32 messageId = lancaCanonicalBridge.sendToken{value: messageFee}(
             address(lcBridgeClient),
             AMOUNT,
-            true,
             GAS_LIMIT,
             callData
         );
 
-        assertEq(messageId, DEFAULT_MESSAGE_ID);
+        assertEq(messageId, expectedMessageId);
     }
 
     function test_sendToken_RevertsOnReentrancyAttack() public {
@@ -150,6 +156,6 @@ contract SendTokenTest is LCBridgeTest {
         vm.expectRevert(abi.encodeWithSelector(ReentrancyGuard.ReentrantCall.selector));
 
         vm.prank(user);
-        newBridge.sendToken{value: messageFee}(user, AMOUNT, false, ZERO_AMOUNT, ZERO_BYTES);
+        newBridge.sendToken{value: messageFee}(user, AMOUNT, ZERO_AMOUNT, ZERO_BYTES);
     }
 }

@@ -7,7 +7,7 @@
 pragma solidity 0.8.28;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {ConceroTypes} from "@concero/messaging-contracts-v2/contracts/ConceroClient/ConceroTypes.sol";
+import {ConceroTypes} from "@concero/v2-contracts/contracts/ConceroClient/ConceroTypes.sol";
 
 import {LancaCanonicalBridgeL1} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol";
 import {ILancaCanonicalBridgePool} from "contracts/interfaces/ILancaCanonicalBridgePool.sol";
@@ -28,7 +28,6 @@ contract MaliciousPool is ILancaCanonicalBridgePool {
                 address(0),
                 amount,
                 8453, // DST_CHAIN_SELECTOR
-                false,
                 0,
                 ""
             );

@@ -7,8 +7,8 @@
  */
 pragma solidity 0.8.28;
 
-import {CommonErrors} from "@concero/messaging-contracts-v2/contracts/common/CommonErrors.sol";
-import {ConceroTypes} from "@concero/messaging-contracts-v2/contracts/ConceroClient/ConceroTypes.sol";
+import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
+import {ConceroTypes} from "@concero/v2-contracts/contracts/ConceroClient/ConceroTypes.sol";
 
 import {RateLimiter} from "contracts/LancaCanonicalBridge/RateLimiter.sol";
 
@@ -113,7 +113,7 @@ contract InboundRateLimitsTest is LCBridgeL1Test {
         // First transfers accumulate
         _performInboundTransfer(300 * 1e6); // 300 USDC
 
-        bytes memory messageWithFourHundred = _encodeBridgeParams(user, user, 400 * 1e6, false, ""); // 400 USDC
+        bytes memory messageWithFourHundred = _encodeBridgeParams(user, user, 400 * 1e6, 0, ""); // 400 USDC
 
         vm.prank(conceroRouter);
         lancaCanonicalBridgeL1.conceroReceive(
@@ -169,7 +169,7 @@ contract InboundRateLimitsTest is LCBridgeL1Test {
         assertEq(availableVolume, 600 * 1e6); // Should refill 60 sec * 10 USDC/sec = 600 USDC
 
         // Check that we can use the refilled amount
-        bytes memory message = _encodeBridgeParams(user, user, 600 * 1e6, false, ""); // Should pass successfully
+        bytes memory message = _encodeBridgeParams(user, user, 600 * 1e6, 0, ""); // Should pass successfully
 
         vm.prank(conceroRouter);
         lancaCanonicalBridgeL1.conceroReceive(
@@ -211,7 +211,7 @@ contract InboundRateLimitsTest is LCBridgeL1Test {
         lancaCanonicalBridgeL1.setRateLimit(DST_CHAIN_SELECTOR, 0, 0, false);
 
         _addDefaultDstBridge();
-        bytes memory message = _encodeBridgeParams(user, user, 1000 * 1e6, false, "");
+        bytes memory message = _encodeBridgeParams(user, user, 1000 * 1e6, 0, "");
 
         // Transfers should be blocked when maxAmount = 0 (soft pause)
         vm.expectRevert(
@@ -333,7 +333,7 @@ contract InboundRateLimitsTest is LCBridgeL1Test {
 
     function _performInboundTransfer(uint256 amount) internal {
         _addDefaultDstBridge();
-        bytes memory message = _encodeBridgeParams(user, user, amount, false, "");
+        bytes memory message = _encodeBridgeParams(user, user, amount, 0, "");
 
         vm.prank(conceroRouter);
         lancaCanonicalBridgeL1.conceroReceive(

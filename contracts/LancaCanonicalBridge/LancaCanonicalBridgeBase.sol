@@ -46,6 +46,7 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, Concer
 
     error InvalidBridgeSender();
     error InvalidDstGasLimitOrCallData();
+    error InvalidMessage();
 
     constructor(
         address usdcAddress,

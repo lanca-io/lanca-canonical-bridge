@@ -8,11 +8,11 @@ pragma solidity 0.8.28;
 
 import {Script} from "forge-std/src/Script.sol";
 
-import {MockConceroRouter} from "../../mocks/MockConceroRouter.sol";
+import {ConceroRouterMock} from "../../mocks/ConceroRouterMock.sol";
 
 contract DeployMockConceroRouter is Script {
-    function deployConceroRouter() public returns (MockConceroRouter) {
-        MockConceroRouter conceroRouter = new MockConceroRouter();
+    function deployConceroRouter() public returns (ConceroRouterMock) {
+        ConceroRouterMock conceroRouter = new ConceroRouterMock();
 
         return conceroRouter;
     }

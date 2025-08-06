@@ -7,8 +7,8 @@
  */
 pragma solidity 0.8.28;
 
-import {CommonErrors} from "@concero/messaging-contracts-v2/contracts/common/CommonErrors.sol";
-import {ConceroTypes} from "@concero/messaging-contracts-v2/contracts/ConceroClient/ConceroTypes.sol";
+import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
+import {ConceroTypes} from "@concero/v2-contracts/contracts/ConceroClient/ConceroTypes.sol";
 
 import {RateLimiter} from "contracts/LancaCanonicalBridge/RateLimiter.sol";
 
@@ -132,7 +132,6 @@ contract OutboundRateLimitsTest is LCBridgeL1Test {
             user,
             400 * 1e6,
             DST_CHAIN_SELECTOR,
-            false,
             ZERO_AMOUNT,
             ZERO_BYTES
         );
@@ -210,7 +209,6 @@ contract OutboundRateLimitsTest is LCBridgeL1Test {
             user,
             1000 * 1e6,
             DST_CHAIN_SELECTOR,
-            false,
             ZERO_AMOUNT,
             ZERO_BYTES
         );
@@ -328,7 +326,6 @@ contract OutboundRateLimitsTest is LCBridgeL1Test {
             user,
             amount,
             DST_CHAIN_SELECTOR,
-            false,
             ZERO_AMOUNT,
             ZERO_BYTES
         );

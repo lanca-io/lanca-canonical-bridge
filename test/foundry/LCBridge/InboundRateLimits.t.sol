@@ -7,7 +7,7 @@
  */
 pragma solidity 0.8.28;
 
-import {CommonErrors} from "@concero/messaging-contracts-v2/contracts/common/CommonErrors.sol";
+import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
 
 import {RateLimiter} from "contracts/LancaCanonicalBridge/RateLimiter.sol";
 import {LancaCanonicalBridgeBase} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
@@ -128,7 +128,7 @@ contract InboundRateLimitsTest is LCBridgeTest {
         assertEq(availableVolume, 300 * 1e6); // 300 USDC left
 
         // Next receive should fail
-        bytes memory message = _encodeBridgeParams(user, user, 400 * 1e6, false, "");
+        bytes memory message = _encodeBridgeParams(user, user, 400 * 1e6, 0, "");
 
         vm.expectRevert(
             abi.encodeWithSelector(RateLimiter.RateLimitExceeded.selector, 400 * 1e6, 300 * 1e6)
@@ -197,7 +197,7 @@ contract InboundRateLimitsTest is LCBridgeTest {
         LancaCanonicalBridge(address(lancaCanonicalBridge)).setRateLimit(SRC_CHAIN_SELECTOR, 0, REFILL_SPEED, false);
 
         // Transfers should be blocked when maxAmount = 0 (soft pause)
-        bytes memory message = _encodeBridgeParams(user, user, 1000 * 1e6, false, "");
+        bytes memory message = _encodeBridgeParams(user, user, 1000 * 1e6, 0, "");
 
         vm.expectRevert(
             abi.encodeWithSelector(RateLimiter.RateLimitExceeded.selector, 1000 * 1e6, 0)
@@ -329,7 +329,7 @@ contract InboundRateLimitsTest is LCBridgeTest {
     // --- Helper functions ---
 
     function _performReceive(uint256 amount) internal {
-        bytes memory message = _encodeBridgeParams(user, user, amount, false, "");
+        bytes memory message = _encodeBridgeParams(user, user, amount, 0, "");
 
         vm.prank(conceroRouter);
         LancaCanonicalBridge(address(lancaCanonicalBridge)).conceroReceive(

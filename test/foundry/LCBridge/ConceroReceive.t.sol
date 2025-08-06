@@ -7,7 +7,7 @@
  */
 pragma solidity 0.8.28;
 
-import {CommonErrors} from "@concero/messaging-contracts-v2/contracts/common/CommonErrors.sol";
+import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
 
 import {LCBridgeTest} from "./base/LCBridgeTest.sol";
 import {MockInvalidLCBridgeClient} from "../mocks/MockInvalidLCBridgeClient.sol";
@@ -24,7 +24,7 @@ contract ConceroReceiveTest is LCBridgeTest {
     // --- Tests for conceroReceive with no call ---
 
     function test_conceroReceive_Success() public {
-        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, false, "");
+        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, 0, "");
         uint256 userBalanceBefore = MockUSDCe(usdcE).balanceOf(user);
         uint256 totalSupplyBefore = MockUSDCe(usdcE).totalSupply();
 
@@ -44,7 +44,7 @@ contract ConceroReceiveTest is LCBridgeTest {
     }
 
     function test_conceroReceive_RevertsInvalidSenderBridge() public {
-        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, false, "");
+        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, 0, "");
 
         vm.expectRevert(
             abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidBridgeSender.selector)
@@ -59,24 +59,8 @@ contract ConceroReceiveTest is LCBridgeTest {
         );
     }
 
-    function test_conceroReceive_RevertsInvalidMessageType() public {
-        bytes memory invalidMessage = abi.encode(uint8(3), abi.encode(user, user, AMOUNT));
-
-        vm.expectRevert(
-            abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidBridgeType.selector)
-        );
-
-        vm.prank(conceroRouter);
-        lancaCanonicalBridge.conceroReceive(
-            DEFAULT_MESSAGE_ID,
-            SRC_CHAIN_SELECTOR,
-            abi.encode(lancaBridgeL1Mock),
-            invalidMessage
-        );
-    }
-
     function test_conceroReceive_EmitsBridgeDelivered() public {
-        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, false, "");
+        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, 0, "");
 
         vm.expectEmit(true, true, true, true);
         emit LancaCanonicalBridgeBase.BridgeDelivered(
@@ -100,17 +84,17 @@ contract ConceroReceiveTest is LCBridgeTest {
     // --- Tests for conceroReceive with call ---
 
     function test_conceroReceive_WithCall_RevertsCallFiled() public {
-        MockInvalidLCBridgeClient invalidLCBridgeClient = new MockInvalidLCBridgeClient();
+        address invalidLCBridgeClient = makeAddr("InvalidLCBridgeClient");
 
         bytes memory message = _encodeBridgeParams(
             user,
-            address(invalidLCBridgeClient),
+            invalidLCBridgeClient,
             AMOUNT,
-            true,
-            ""
+            GAS_LIMIT,
+            "0x01"
         );
 
-        vm.expectRevert(abi.encodeWithSelector(ILancaCanonicalBridgeClient.CallFiled.selector));
+		vm.expectRevert(abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidMessage.selector));
 
         vm.prank(conceroRouter);
         lancaCanonicalBridge.conceroReceive(
@@ -128,7 +112,7 @@ contract ConceroReceiveTest is LCBridgeTest {
             user,
             address(lcBridgeClient),
             AMOUNT,
-            true,
+            GAS_LIMIT,
             abi.encode(testString)
         );
 
@@ -144,22 +128,5 @@ contract ConceroReceiveTest is LCBridgeTest {
         assertEq(lcBridgeClient.tokenSender(), user);
         assertEq(lcBridgeClient.tokenAmount(), AMOUNT);
         assertEq(lcBridgeClient.testString(), testString);
-    }
-
-    function test_conceroReceive_WithCall_EmptyCallData() public {
-        bytes memory message = _encodeBridgeParams(user, address(lcBridgeClient), AMOUNT, true, "");
-
-        vm.prank(conceroRouter);
-        lancaCanonicalBridge.conceroReceive(
-            DEFAULT_MESSAGE_ID,
-            SRC_CHAIN_SELECTOR,
-            abi.encode(lancaBridgeL1Mock),
-            message
-        );
-
-        assertEq(lcBridgeClient.token(), address(usdcE));
-        assertEq(lcBridgeClient.tokenSender(), user);
-        assertEq(lcBridgeClient.tokenAmount(), AMOUNT);
-        assertEq(lcBridgeClient.testString(), "");
     }
 }

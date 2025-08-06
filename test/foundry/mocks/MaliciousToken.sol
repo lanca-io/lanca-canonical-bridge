@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.28;
 
-import {ConceroTypes} from "@concero/messaging-contracts-v2/contracts/ConceroClient/ConceroTypes.sol";
+import {ConceroTypes} from "@concero/v2-contracts/contracts/ConceroClient/ConceroTypes.sol";
 import {MockUSDCe} from "./MockUSDCe.sol";
 import {LancaCanonicalBridge} from "contracts/LancaCanonicalBridge/LancaCanonicalBridge.sol";
 
@@ -20,7 +20,7 @@ contract MaliciousToken is MockUSDCe {
         if (shouldAttack) {
             shouldAttack = false;
 
-            LancaCanonicalBridge(attackTarget).sendToken(address(this), amount, false, 0, "");
+            LancaCanonicalBridge(attackTarget).sendToken(address(this), amount, 0, "");
         }
 
         return super.transferFrom(from, to, amount);

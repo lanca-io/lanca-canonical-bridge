@@ -7,8 +7,8 @@
  */
 pragma solidity 0.8.28;
 
-import {CommonErrors} from "@concero/messaging-contracts-v2/contracts/common/CommonErrors.sol";
-import {ConceroTypes} from "@concero/messaging-contracts-v2/contracts/ConceroClient/ConceroTypes.sol";
+import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
+import {ConceroTypes} from "@concero/v2-contracts/contracts/ConceroClient/ConceroTypes.sol";
 
 import {RateLimiter} from "contracts/LancaCanonicalBridge/RateLimiter.sol";
 import {LancaCanonicalBridge} from "contracts/LancaCanonicalBridge/LancaCanonicalBridge.sol";
@@ -136,7 +136,6 @@ contract OutboundRateLimitsTest is LCBridgeTest {
         LancaCanonicalBridge(address(lancaCanonicalBridge)).sendToken{value: messageFee}(
             user,
             400 * 1e6,
-            false,
             0,
             ""
         );
@@ -212,7 +211,6 @@ contract OutboundRateLimitsTest is LCBridgeTest {
         LancaCanonicalBridge(address(lancaCanonicalBridge)).sendToken{value: messageFee}(
             user,
             1000 * 1e6,
-            false,
             0,
             ""
         );
@@ -341,7 +339,6 @@ contract OutboundRateLimitsTest is LCBridgeTest {
         LancaCanonicalBridge(address(lancaCanonicalBridge)).sendToken{value: _getMessageFee()}(
             user,
             amount,
-            false,
             0,
             ""
         );

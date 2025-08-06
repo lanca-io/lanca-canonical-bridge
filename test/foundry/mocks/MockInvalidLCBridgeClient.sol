@@ -26,11 +26,8 @@ contract MockInvalidLCBridgeClient is ERC165 {
         address /** from */,
         uint256 /** value */,
         bytes memory /** data */
-    ) external returns (bytes4) {
+    ) external {
         // Write dummy state to prevent pure function warning
         _dummy = false;
-
-        // return incorrect interfaceId
-        return type(IERC20).interfaceId;
     }
 }

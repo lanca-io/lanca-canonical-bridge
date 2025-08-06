@@ -1,7 +1,6 @@
+import { getNetworkEnvKey } from "@concero/contract-utils";
 import { Deployment } from "hardhat-deploy/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-
-import { getNetworkEnvKey } from "@concero/contract-utils";
 
 import { conceroNetworks } from "../constants";
 import { getEnvVar, log, updateEnvVariable } from "../utils/";
@@ -29,7 +28,7 @@ const deployLancaCanonicalBridgePool: DeploymentFunction = async function (
 
 	const chain = conceroNetworks[name];
 	const { type: networkType } = chain;
-    const dstChain = conceroNetworks[dstChainName];
+	const dstChain = conceroNetworks[dstChainName];
 
 	const lancaCanonicalBridgeAddress = getEnvVar(
 		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(name)}`,
@@ -42,7 +41,7 @@ const deployLancaCanonicalBridgePool: DeploymentFunction = async function (
 	}
 
 	const usdcAddress = getEnvVar(`FIAT_TOKEN_PROXY_${getNetworkEnvKey(name)}`);
-    if (!usdcAddress) {
+	if (!usdcAddress) {
 		throw new Error(
 			`USDC address not found. Set FIAT_TOKEN_PROXY_${getNetworkEnvKey(name)} in environment variables.`,
 		);

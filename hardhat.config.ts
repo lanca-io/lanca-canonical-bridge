@@ -1,11 +1,4 @@
-import "solidity-coverage";
-
 import "./utils/configureDotEnv";
-
-import "hardhat-contract-sizer";
-import "hardhat-deploy";
-import "hardhat-deploy-ethers";
-import "hardhat-gas-reporter";
 import { HardhatUserConfig } from "hardhat/config";
 
 import "@nomicfoundation/hardhat-chai-matchers";
@@ -15,6 +8,11 @@ import "@nomicfoundation/hardhat-verify";
 import "@nomicfoundation/hardhat-viem";
 import "@tenderly/hardhat-tenderly";
 import "@typechain/hardhat";
+import "hardhat-contract-sizer";
+import "hardhat-deploy";
+import "hardhat-deploy-ethers";
+import "hardhat-gas-reporter";
+import "solidity-coverage";
 
 import { conceroNetworks } from "./constants";
 import "./tasks";

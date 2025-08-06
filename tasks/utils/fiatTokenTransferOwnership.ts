@@ -1,14 +1,16 @@
 import fs from "fs";
 import path from "path";
 
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-
 import { getNetworkEnvKey } from "@concero/contract-utils";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { conceroNetworks, getViemReceiptConfig } from "../../constants";
 import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils";
 
-export async function fiatTokenTransferOwnership(hre: HardhatRuntimeEnvironment, owner: string): Promise<void> {
+export async function fiatTokenTransferOwnership(
+	hre: HardhatRuntimeEnvironment,
+	owner: string,
+): Promise<void> {
 	const { name: chainName } = hre.network;
 	const { viemChain, type } = conceroNetworks[chainName];
 
@@ -29,7 +31,11 @@ export async function fiatTokenTransferOwnership(hre: HardhatRuntimeEnvironment,
 	);
 
 	try {
-		log("Executing transfer ownership of FiatToken...", "fiatTokenTransferOwnership", chainName);
+		log(
+			"Executing transfer ownership of FiatToken...",
+			"fiatTokenTransferOwnership",
+			chainName,
+		);
 		const configTxHash = await walletClient.writeContract({
 			address: fiatTokenProxyAddress as `0x${string}`,
 			abi: fiatTokenArtifact.abi,
@@ -50,6 +56,10 @@ export async function fiatTokenTransferOwnership(hre: HardhatRuntimeEnvironment,
 			chainName,
 		);
 	} catch (error) {
-		err(`Failed transfer ownership of FiatToken: ${error}`, "fiatTokenTransferOwnership", chainName);
+		err(
+			`Failed transfer ownership of FiatToken: ${error}`,
+			"fiatTokenTransferOwnership",
+			chainName,
+		);
 	}
 }

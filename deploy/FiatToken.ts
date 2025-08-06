@@ -1,17 +1,14 @@
 import fs from "fs";
 import path from "path";
 
+import { getNetworkEnvKey } from "@concero/contract-utils";
 import { Deployment } from "hardhat-deploy/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-
-import { getNetworkEnvKey } from "@concero/contract-utils";
 
 import { conceroNetworks } from "../constants";
 import { log, updateEnvVariable } from "../utils";
 
-const deployFiatToken = async function (
-	hre: HardhatRuntimeEnvironment,
-): Promise<Deployment> {
+const deployFiatToken = async function (hre: HardhatRuntimeEnvironment): Promise<Deployment> {
 	const { deployer } = await hre.getNamedAccounts();
 	const { deploy } = hre.deployments;
 	const { name } = hre.network;

@@ -1,10 +1,9 @@
 import fs from "fs";
 import path from "path";
 
+import { getNetworkEnvKey } from "@concero/contract-utils";
 import { Deployment } from "hardhat-deploy/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-
-import { getNetworkEnvKey } from "@concero/contract-utils";
 
 import { conceroNetworks } from "../constants";
 import { getEnvVar, log, updateEnvVariable } from "../utils";
@@ -29,7 +28,7 @@ const deployFiatTokenProxyAdmin = async function (
 		fs.readFileSync(adminUpgradeableProxyArtifactPath, "utf8"),
 	);
 
-    const implementation = getEnvVar(`FIAT_TOKEN_IMPLEMENTATION_${getNetworkEnvKey(name)}`);
+	const implementation = getEnvVar(`FIAT_TOKEN_IMPLEMENTATION_${getNetworkEnvKey(name)}`);
 
 	const deployment = await deploy("FiatTokenProxyAdmin", {
 		from: proxyDeployer,

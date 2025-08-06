@@ -1,13 +1,19 @@
 import fs from "fs";
 import path from "path";
 
+import { getNetworkEnvKey } from "@concero/contract-utils";
 import { Deployment } from "hardhat-deploy/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-import { getNetworkEnvKey } from "@concero/contract-utils";
-
 import { conceroNetworks, getViemReceiptConfig } from "../constants";
-import { err, getEnvVar, getFallbackClients, getViemAccount, log, updateEnvVariable } from "../utils";
+import {
+	err,
+	getEnvVar,
+	getFallbackClients,
+	getViemAccount,
+	log,
+	updateEnvVariable,
+} from "../utils";
 
 const deployFiatTokenProxy = async function (hre: HardhatRuntimeEnvironment): Promise<Deployment> {
 	const { proxyDeployer } = await hre.getNamedAccounts();
@@ -51,29 +57,26 @@ const deployFiatTokenProxy = async function (hre: HardhatRuntimeEnvironment): Pr
 	);
 
 	const viemAccount = getViemAccount(networkType, "deployer");
-	const { walletClient, publicClient } = getFallbackClients(
-		conceroNetworks[name],
-		viemAccount,
-	);
+	const { walletClient, publicClient } = getFallbackClients(conceroNetworks[name], viemAccount);
 
-    try {
-        const changeAdminTxHash = await walletClient.writeContract({
-            address: deployment.address as `0x${string}`,
-            abi: fiatTokenProxyArtifact.abi,
-            functionName: "changeAdmin",
-            account: viemAccount,
-            args: [fiatTokenProxyAdminAddress as `0x${string}`],
-        });
+	try {
+		const changeAdminTxHash = await walletClient.writeContract({
+			address: deployment.address as `0x${string}`,
+			abi: fiatTokenProxyArtifact.abi,
+			functionName: "changeAdmin",
+			account: viemAccount,
+			args: [fiatTokenProxyAdminAddress as `0x${string}`],
+		});
 
-        await publicClient.waitForTransactionReceipt({
-            ...getViemReceiptConfig(conceroNetworks[name]),
-            hash: changeAdminTxHash,
-        });
+		await publicClient.waitForTransactionReceipt({
+			...getViemReceiptConfig(conceroNetworks[name]),
+			hash: changeAdminTxHash,
+		});
 
-        log(`Change admin completed: ${changeAdminTxHash}`, "deployFiatTokenProxy", name);
-    } catch (error) {
-        err(`Failed to change admin: ${error}`, "deployFiatTokenProxy", name);
-    }
+		log(`Change admin completed: ${changeAdminTxHash}`, "deployFiatTokenProxy", name);
+	} catch (error) {
+		err(`Failed to change admin: ${error}`, "deployFiatTokenProxy", name);
+	}
 
 	return deployment;
 };

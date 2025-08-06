@@ -1,7 +1,6 @@
+import { getNetworkEnvKey } from "@concero/contract-utils";
 import { Deployment } from "hardhat-deploy/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-
-import { getNetworkEnvKey } from "@concero/contract-utils";
 
 import { conceroNetworks } from "../constants";
 import { getEnvVar, getGasParameters, log, updateEnvVariable } from "../utils/";
@@ -47,7 +46,9 @@ const deployLancaCanonicalBridge: DeploymentFunction = async function (
 		);
 	}
 
-	const dstBridgeAddress = getEnvVar(`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChainName)}`);
+	const dstBridgeAddress = getEnvVar(
+		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChainName)}`,
+	);
 	if (!dstBridgeAddress) {
 		throw new Error(
 			`DST Bridge address not found. Set LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChainName)} in environment variables.`,

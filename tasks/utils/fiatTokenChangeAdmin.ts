@@ -1,9 +1,8 @@
 import fs from "fs";
 import path from "path";
 
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-
 import { getNetworkEnvKey } from "@concero/contract-utils";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { conceroNetworks, getViemReceiptConfig } from "../../constants";
 import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils";
@@ -24,7 +23,9 @@ export async function fiatTokenChangeAdmin(
 		fs.readFileSync(adminUpgradeableProxyArtifactPath, "utf8"),
 	);
 
-	const fiatTokenProxyAdminAddress = getEnvVar(`FIAT_TOKEN_PROXY_ADMIN_${getNetworkEnvKey(chainName)}`);
+	const fiatTokenProxyAdminAddress = getEnvVar(
+		`FIAT_TOKEN_PROXY_ADMIN_${getNetworkEnvKey(chainName)}`,
+	);
 	if (!fiatTokenProxyAdminAddress) return;
 
 	// viemAccount should be master minter address
@@ -35,11 +36,7 @@ export async function fiatTokenChangeAdmin(
 	);
 
 	try {
-		log(
-			"Executing change admin of FiatToken...",
-			"fiatTokenChangeAdmin",
-			chainName,
-		);
+		log("Executing change admin of FiatToken...", "fiatTokenChangeAdmin", chainName);
 		const configTxHash = await walletClient.writeContract({
 			address: fiatTokenProxyAdminAddress as `0x${string}`,
 			abi: adminUpgradableProxyArtifact.abi,
@@ -60,10 +57,6 @@ export async function fiatTokenChangeAdmin(
 			chainName,
 		);
 	} catch (error) {
-		err(
-			`Failed change admin of FiatToken: ${error}`,
-			"fiatTokenChangeAdmin",
-			chainName,
-		);
+		err(`Failed change admin of FiatToken: ${error}`, "fiatTokenChangeAdmin", chainName);
 	}
 }

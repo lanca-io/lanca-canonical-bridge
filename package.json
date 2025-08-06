@@ -19,12 +19,9 @@
         "clean:hardhat": "rm -rf ./artifacts ./cache ./coverage ./typechain-types ./deployments",
         "clean:forge": "forge clean",
         "clean": "npm run clean:hardhat && npm run clean:forge",
-        "build:messageReport": "bun build ./clf/src/messageReport/test.ts --outfile ./clf/dist/messageReport.min.js --target node",
-        "build:operatorRegistration": "bun build ./clf/src/operatorRegistration/index.ts --outfile ./ clf/dist/operatorRegistration.min.js --target node",
         "size-contracts": "hardhat size-contracts",
         "check-updates": "npx npm-check-updates",
-        "prepare": "husky",
-        "operator-setup": "bun test/operator/testOperator.ts"
+        "prepare": "husky"
     },
     "devDependencies": {
         "@chainlink/solhint-plugin-chainlink-solidity": "1.0.1",
@@ -55,9 +52,6 @@
         "viem": "2.33.0"
     },
     "dependencies": {
-        "@chainlink/contracts": "1.4.0",
-        "@chainlink/env-enc": "1.0.5",
-        "@chainlink/functions-toolkit": "0.3.2",
         "@concero/contract-utils": "github:concero/contract-utils",
         "@concero/rpcs": "github:concero/rpcs",
         "@concero/v2-contracts": "github:concero/messaging-contracts-v2",

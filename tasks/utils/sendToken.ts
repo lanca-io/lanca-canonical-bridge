@@ -92,19 +92,14 @@ export async function sendToken(
 	try {
 		log("Getting message fee...", "sendToken", srcChain);
 
-		const dstChainData = {
-			receiver: dstBridgeAddress as `0x${string}`,
-			gasLimit: BigInt(gasLimit),
-		};
-
 		const messageFee = await publicClient.readContract({
 			address: bridgeAddress as `0x${string}`,
 			abi: bridgeAbi,
-			functionName: "getMessageFee",
+			functionName: "getBridgeNativeFee",
 			args: [
 				dstChainSelector,
-				ADDRESS_ZERO, // feeToken (ETH)
-				dstChainData,
+				dstBridgeAddress as `0x${string}`,
+				BigInt(0), // dstGasLimit (not needed for simple transfer)
 			],
 		});
 
@@ -147,7 +142,6 @@ export async function sendToken(
 				viemAccount.address as `0x${string}`, // tokenReceiver
 				amountInWei, // tokenAmount
 				dstChainSelector, // dstChainSelector
-				false, // isTokenReceiverContract (simple transfer)
 				BigInt(0), // dstGasLimit (not needed for simple transfer)
 				"0x", // dstCallData (empty for simple transfer)
 			];
@@ -156,7 +150,6 @@ export async function sendToken(
 			sendTokenArgs = [
 				viemAccount.address as `0x${string}`, // tokenReceiver
 				amountInWei, // tokenAmount
-				false, // isTokenReceiverContract (simple transfer)
 				BigInt(0), // dstGasLimit (not needed for simple transfer)
 				"0x", // dstCallData (empty for simple transfer)
 			];

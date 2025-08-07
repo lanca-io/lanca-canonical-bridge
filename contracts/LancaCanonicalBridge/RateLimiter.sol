@@ -133,13 +133,13 @@ abstract contract RateLimiter {
         uint128 maxAmount,
         uint32 lastUpdate
     ) internal view returns (uint128 newAvailable, uint32 newLastUpdate) {
-        uint256 timeElapsed = block.timestamp - lastUpdate;
+        uint32 timeElapsed = uint32(block.timestamp) - lastUpdate;
         if (timeElapsed == 0) {
             return (availableVolume, lastUpdate);
         }
 
         // Calculate amount to add based on elapsed time and refill rate
-        uint256 toAdd = timeElapsed * refillSpeed;
+        uint256 toAdd = uint256(timeElapsed) * uint256(refillSpeed);
         uint256 totalAvailable = availableVolume + toAdd;
 
         // Cap at maximum amount to prevent overflow and maintain limits

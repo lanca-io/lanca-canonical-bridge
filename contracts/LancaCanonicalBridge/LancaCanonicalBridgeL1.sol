@@ -6,6 +6,8 @@
  */
 pragma solidity 0.8.28;
 
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+
 import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
 
 import {
@@ -15,7 +17,6 @@ import {
 } from "./LancaCanonicalBridgeBase.sol";
 import {Storage as s} from "./libraries/Storage.sol";
 import {ILancaCanonicalBridgePool} from "../interfaces/ILancaCanonicalBridgePool.sol";
-import {ReentrancyGuard} from "../common/ReentrancyGuard.sol";
 
 contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
     using s for s.L1Bridge;

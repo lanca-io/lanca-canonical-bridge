@@ -14,11 +14,6 @@ library Namespaces {
             abi.encode(uint256(keccak256(abi.encodePacked("lancabridge.l1bridge.storage"))) - 1)
         ) & ~bytes32(uint256(0xff));
 
-    bytes32 internal constant NON_REENTRANT =
-        keccak256(
-            abi.encode(uint256(keccak256(abi.encodePacked("lancabridge.nonreentrant.storage"))) - 1)
-        ) & ~bytes32(uint256(0xff));
-
     bytes32 internal constant RATE_LIMITS =
         keccak256(
             abi.encode(uint256(keccak256(abi.encodePacked("lancabridge.ratelimits.storage"))) - 1)
@@ -40,20 +35,9 @@ library Storage {
         mapping(uint24 dstChainSelector => RateLimiter.RateLimit) inboundRates;
     }
 
-    struct NonReentrant {
-        uint256 status;
-    }
-
     /* SLOT-BASED STORAGE ACCESS */
     function l1Bridge() internal pure returns (L1Bridge storage s) {
         bytes32 slot = Namespaces.L1_BRIDGE;
-        assembly {
-            s.slot := slot
-        }
-    }
-
-    function nonReentrant() internal pure returns (NonReentrant storage s) {
-        bytes32 slot = Namespaces.NON_REENTRANT;
         assembly {
             s.slot := slot
         }

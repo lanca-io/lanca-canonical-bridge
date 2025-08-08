@@ -7,12 +7,13 @@
  */
 pragma solidity 0.8.28;
 
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+
 import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
 
 import {LCBridgeTest} from "./base/LCBridgeTest.sol";
 import {MaliciousToken} from "../mocks/MaliciousToken.sol";
 import {MockUSDCe} from "../mocks/MockUSDCe.sol";
-import {ReentrancyGuard} from "contracts/common/ReentrancyGuard.sol";
 import {LancaCanonicalBridgeBase} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
 import {LancaCanonicalBridge} from "contracts/LancaCanonicalBridge/LancaCanonicalBridge.sol";
 
@@ -128,7 +129,7 @@ contract SendTokenTest is LCBridgeTest {
         vm.prank(user);
         maliciousToken.approve(address(newBridge), AMOUNT);
 
-        vm.expectRevert(abi.encodeWithSelector(ReentrancyGuard.ReentrantCall.selector));
+        vm.expectRevert(abi.encodeWithSelector(ReentrancyGuard.ReentrancyGuardReentrantCall.selector));
 
         vm.prank(user);
         newBridge.sendToken{value: messageFee}(user, AMOUNT, ZERO_AMOUNT, ZERO_BYTES);

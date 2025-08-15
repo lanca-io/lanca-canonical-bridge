@@ -21,7 +21,7 @@ export async function configureMinter(hre: HardhatRuntimeEnvironment): Promise<v
 	if (!fiatTokenProxyAddress) return;
 
 	// viemAccount should be master minter address
-	const viemAccount = getViemAccount(type, "deployer");
+	const viemAccount = getViemAccount(type, "proxyDeployer");
 	const { walletClient, publicClient } = getFallbackClients(
 		conceroNetworks[chainName],
 		viemAccount,

@@ -56,7 +56,7 @@ const deployFiatTokenProxy = async function (hre: HardhatRuntimeEnvironment): Pr
 		`FIAT_TOKEN_PROXY_ADMIN_${getNetworkEnvKey(name)}`,
 	);
 
-	const viemAccount = getViemAccount(networkType, "deployer");
+	const viemAccount = getViemAccount(networkType, "proxyDeployer");
 	const { walletClient, publicClient } = getFallbackClients(conceroNetworks[name], viemAccount);
 
 	try {

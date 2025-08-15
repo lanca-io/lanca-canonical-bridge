@@ -46,7 +46,7 @@ const deployLancaCanonicalBridgeL1: DeploymentFunction = async function (
 	const rateLimitAdmin = getEnvVar(`TESTNET_RATE_LIMIT_ADMIN_ADDRESS`);
 	if (!rateLimitAdmin) {
 		throw new Error(
-			`Flow admin address not found. Set RATE_LIMIT_ADMIN_ADDRESS in environment variables.`,
+			`Rate limit admin address not found. Set RATE_LIMIT_ADMIN_ADDRESS in environment variables.`,
 		);
 	}
 

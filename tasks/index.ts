@@ -1,6 +1,7 @@
 import { configureMinterTask } from "./deployFiatToken/configureMinterTask";
 
 import { addDstBridgeTask } from "./addDstBridge/addDstBridgeTask";
+import { addDstPoolTask } from "./addDstPool/addDstPoolTask";
 import { changeProxyAdminOwnerTask } from "./changeProxyAdminOwner/changeProxyAdminOwnerTask";
 import { deployBridgeL1Task } from "./deployBridge/deployBridgeL1Task";
 import { deployBridgeTask } from "./deployBridge/deployBridgeTask";
@@ -18,6 +19,7 @@ import updateAllPools from "./updateAllPools.task";
 
 export default {
 	addDstBridgeTask,
+	addDstPoolTask,
 	changeProxyAdminOwnerTask,
 	deployBridgeTask,
 	deployBridgeL1Task,

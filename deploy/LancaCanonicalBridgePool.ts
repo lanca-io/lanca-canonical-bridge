@@ -4,6 +4,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { conceroNetworks } from "../constants";
 import { getEnvVar, log, updateEnvVariable } from "../utils/";
+import { concero } from "../typechain-types";
 
 type DeployArgs = {
 	usdcAddress: string;
@@ -27,8 +28,8 @@ const deployLancaCanonicalBridgePool: DeploymentFunction = async function (
 	const { name } = hre.network;
 
 	const chain = conceroNetworks[name];
-	const { type: networkType } = chain;
-	const dstChain = conceroNetworks[dstChainName];
+	const { type: networkType} = chain;
+	const dstChain = networkType === "testnet" ? conceroNetworks.ethereumSepolia : conceroNetworks.ethereum;
 
 	const lancaCanonicalBridgeAddress = getEnvVar(
 		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(name)}`,
@@ -77,7 +78,7 @@ const deployLancaCanonicalBridgePool: DeploymentFunction = async function (
 	log(`Deployed at: ${deployment.address}`, "deployLancaCanonicalBridgePool", name);
 
 	updateEnvVariable(
-		`LC_BRIDGE_POOL_${getNetworkEnvKey(name)}_${getNetworkEnvKey(dstChainName)}`,
+		`LC_BRIDGE_POOL_${getNetworkEnvKey(name)}_${getNetworkEnvKey(dstChain.name)}`,
 		deployment.address,
 		`deployments.${networkType}`,
 	);

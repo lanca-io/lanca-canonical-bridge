@@ -13,7 +13,7 @@ async function deployBridgeTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	compileContracts({ quiet: true });
 
 	if (taskArgs.implementation) {
-		await deployLancaCanonicalBridge(hre, taskArgs.chain);
+		await deployLancaCanonicalBridge(hre);
 	}
 
 	if (taskArgs.proxy) {
@@ -33,7 +33,6 @@ async function deployBridgeTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 // yarn hardhat deploy-bridge [--implementation] [--proxy] [--pause] [--owner <address>] --chain <chain_name> --network <network_name>
 task("deploy-bridge", "Deploy LancaCanonicalBridge")
 	.addFlag("implementation", "Deploy implementation")
-	.addOptionalParam("chain", "Destination chain name (L1), only for implementation")
 	.addFlag("proxy", "Deploy proxy and proxy admin")
 	.addOptionalParam("owner", "Override proxy admin owner address")
 	.addFlag("pause", "Pause bridge")

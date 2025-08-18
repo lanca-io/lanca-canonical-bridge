@@ -15,13 +15,11 @@ type DeployArgs = {
 
 type DeploymentFunction = (
 	hre: HardhatRuntimeEnvironment,
-	dstChainName: string,
 	overrideArgs?: Partial<DeployArgs>,
 ) => Promise<Deployment>;
 
 const deployLancaCanonicalBridge: DeploymentFunction = async function (
 	hre: HardhatRuntimeEnvironment,
-	dstChainName: string,
 	overrideArgs?: Partial<DeployArgs>,
 ): Promise<Deployment> {
 	const { deployer } = await hre.getNamedAccounts();
@@ -29,8 +27,9 @@ const deployLancaCanonicalBridge: DeploymentFunction = async function (
 	const { name } = hre.network;
 
 	const chain = conceroNetworks[name];
-	const dstChain = conceroNetworks[dstChainName];
 	const { type: networkType } = chain;
+
+	const dstChain = networkType === "testnet" ? conceroNetworks.ethereumSepolia : conceroNetworks.ethereum;
 
 	const conceroRouterAddress = getEnvVar(`CONCERO_ROUTER_PROXY_${getNetworkEnvKey(name)}`);
 	if (!conceroRouterAddress) {
@@ -47,11 +46,11 @@ const deployLancaCanonicalBridge: DeploymentFunction = async function (
 	}
 
 	const dstBridgeAddress = getEnvVar(
-		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChainName)}`,
+		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChain.name)}`,
 	);
 	if (!dstBridgeAddress) {
 		throw new Error(
-			`DST Bridge address not found. Set LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChainName)} in environment variables.`,
+			`DST Bridge address not found. Set LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChain.name)} in environment variables.`,
 		);
 	}
 

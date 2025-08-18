@@ -75,7 +75,7 @@ const deployLancaCanonicalBridge: DeploymentFunction = async function (
 	};
 
 	log(`Deploying LancaCanonicalBridge with args:`, "deployLancaCanonicalBridge", name);
-	log(`  dstChainSelector: ${args.dstChainSelector}`, "deployLancaCanonicalBridge", name);
+	log(`  l1ChainSelector: ${args.dstChainSelector}`, "deployLancaCanonicalBridge", name);
 	log(`  conceroRouter: ${args.conceroRouter}`, "deployLancaCanonicalBridge", name);
 	log(`  usdcAddress: ${args.usdcAddress}`, "deployLancaCanonicalBridge", name);
 	log(`  dstBridgeAddress: ${args.dstBridgeAddress}`, "deployLancaCanonicalBridge", name);

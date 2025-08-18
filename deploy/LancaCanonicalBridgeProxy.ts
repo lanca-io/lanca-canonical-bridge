@@ -24,7 +24,7 @@ const deployLancaCanonicalBridgeProxy: DeploymentFunction = async function (
 	const [proxyAdmin, proxyAdminAlias] = getEnvAddress(`${proxyType}Admin`, name);
 
 	log("Deploying...", `deployLancaCanonicalBridgeProxy:${proxyType}`, name);
-	const lancaProxyDeployment = (await deploy("TransparentUpgradeableProxy", {
+	const lancaProxyDeployment = (await deploy("LCBTransparentUpgradeableProxy", {
 		from: proxyDeployer,
 		args: [initialImplementation, proxyAdmin, "0x"],
 		log: true,

@@ -28,7 +28,7 @@ const deployProxyAdmin: DeploymentFunction = async function (
 	log(`Deploying ProxyAdmin...`, "deployProxyAdmin", name);
 	log(`  initialOwner: ${initialOwner}`, "deployProxyAdmin", name);
 
-	const deployment = await deploy("ProxyAdmin", {
+	const deployment = await deploy("LCBProxyAdmin", {
 		from: proxyDeployer,
 		args: [initialOwner],
 		log: true,

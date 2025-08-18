@@ -30,7 +30,7 @@ async function deployBridgeTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	}
 }
 
-// yarn hardhat deploy-bridge [--implementation] [--proxy] [--pause] [--owner <address>] --chain <chain_name> --network <network_name>
+// yarn hardhat deploy-bridge [--implementation] [--proxy] [--pause] [--owner <address>] --network <network_name>
 task("deploy-bridge", "Deploy LancaCanonicalBridge")
 	.addFlag("implementation", "Deploy implementation")
 	.addFlag("proxy", "Deploy proxy and proxy admin")

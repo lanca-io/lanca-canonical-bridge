@@ -39,7 +39,7 @@ const deployLancaCanonicalBridgePoolProxy: DeploymentFunction = async function (
 	}
 
 	log("Deploying...", "deployLancaCanonicalBridgePoolProxy", chainName);
-	const lancaPoolProxyDeployment = (await deploy("TransparentUpgradeableProxy", {
+	const lancaPoolProxyDeployment = (await deploy("LCBTransparentUpgradeableProxy", {
 		from: proxyDeployer,
 		args: [newImplementation, proxyAdmin, "0x"],
 		log: true,

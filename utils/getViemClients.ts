@@ -105,11 +105,12 @@ function getFallbackClients(
 	return { walletClient, publicClient, account };
 }
 
-function getViemAccount(
-	chainType: ConceroNetworkType,
-	accountType: "proxyDeployer" | "deployer" | "rateLimitAdmin",
-) {
-	return privateKeyToAccount(`0x${getWallet(chainType, accountType, "privateKey")}`);
+function getViemAccount(chainType: ConceroNetworkType, accountType: "proxyDeployer" | "deployer") {
+	const privateKey = `0x${getWallet(chainType, accountType, "privateKey")}`;
+
+	return privateKeyToAccount(privateKey as `0x${string}`, {
+		nonceManager: nonceManager,
+	});
 }
 
 export { getClients, getFallbackClients, getTestClient, getViemAccount };

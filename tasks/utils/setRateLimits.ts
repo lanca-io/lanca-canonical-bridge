@@ -135,14 +135,6 @@ export async function setRateLimits(
 			"setRateLimits",
 			srcChain.name,
 		);
-
-		if (!outMax && !inMax) {
-			log(
-				"No rate limits to set. Please provide at least one set of parameters.",
-				"setRateLimits",
-				srcChain.name,
-			);
-		}
 	} catch (error) {
 		err(`Failed to set rate limits: ${error}`, "setRateLimits", srcChain.name);
 		throw error;

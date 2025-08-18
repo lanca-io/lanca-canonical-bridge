@@ -29,7 +29,6 @@ export async function configureMinter(srcChainName: string, amount?: string): Pr
 	}
 
 	const minterAllowedAmount = amount ? amount : defaultMinterAllowedAmount;
-	console.log("minterAllowedAmount", minterAllowedAmount);
 
 	try {
 		log("Executing configuration of FiatToken...", "configureFiatToken", srcChain.name);

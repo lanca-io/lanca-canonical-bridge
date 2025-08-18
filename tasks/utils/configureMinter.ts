@@ -1,49 +1,59 @@
-import fs from "fs";
-import path from "path";
-
 import { getNetworkEnvKey } from "@concero/contract-utils";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { conceroNetworks, getViemReceiptConfig } from "../../constants";
+import { defaultMinterAllowedAmount } from "../../constants/deploymentVariables";
 import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils";
 
-export async function configureMinter(hre: HardhatRuntimeEnvironment): Promise<void> {
-	const { name: chainName } = hre.network;
-	const { viemChain, type } = conceroNetworks[chainName];
+export async function configureMinter(srcChainName: string, amount?: string): Promise<void> {
+	const srcChain = conceroNetworks[srcChainName as keyof typeof conceroNetworks];
+	const { viemChain, type } = srcChain;
 
-	const fiatTokenArtifactPath = path.resolve(
-		__dirname,
-		"../../usdc-artifacts/FiatTokenV2_2.sol/FiatTokenV2_2.json",
+	const fiatTokenProxyAddress = getEnvVar(`FIAT_TOKEN_PROXY_${getNetworkEnvKey(srcChain.name)}`);
+	if (!fiatTokenProxyAddress) {
+		err(`FiatToken address not found`, "configureMinter", srcChainName);
+	}
+
+	const { abi: fiatTokenAbi } = await import(
+		"../../artifacts/contracts/usdc/v2/FiatTokenV2_2.sol/FiatTokenV2_2.json"
 	);
-	const fiatTokenArtifact = JSON.parse(fs.readFileSync(fiatTokenArtifactPath, "utf8"));
-
-	const fiatTokenProxyAddress = getEnvVar(`FIAT_TOKEN_PROXY_${getNetworkEnvKey(chainName)}`);
-	if (!fiatTokenProxyAddress) return;
 
 	// viemAccount should be master minter address
 	const viemAccount = getViemAccount(type, "proxyDeployer");
-	const { walletClient, publicClient } = getFallbackClients(
-		conceroNetworks[chainName],
-		viemAccount,
-	);
+	const { walletClient, publicClient } = getFallbackClients(srcChain, viemAccount);
 
 	const lancaCanonicalBridgeAddress = getEnvVar(
-		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(chainName)}`,
+		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(srcChain.name)}`,
 	);
-	if (!lancaCanonicalBridgeAddress) return;
+	if (!lancaCanonicalBridgeAddress) {
+		err(`LancaCanonicalBridge address not found`, "configureMinter", srcChainName);
+	}
 
-	const minterAllowedAmount = 1000000e6;
+	const minterAllowedAmount = amount ? amount : defaultMinterAllowedAmount;
+	console.log("minterAllowedAmount", minterAllowedAmount);
 
 	try {
-		log("Executing configuration of FiatToken...", "configureFiatToken", chainName);
+		log("Executing configuration of FiatToken...", "configureFiatToken", srcChain.name);
 		log(
 			`Setting lancaCanonicalBridgeAddress ${lancaCanonicalBridgeAddress} as minter with minterAllowedAmount: ${minterAllowedAmount}`,
 			"configureFiatToken",
-			chainName,
+			srcChain.name,
 		);
+
+		const isMinter = await publicClient.readContract({
+			address: fiatTokenProxyAddress,
+			abi: fiatTokenAbi,
+			functionName: "isMinter",
+			args: [lancaCanonicalBridgeAddress],
+		});
+
+		if (isMinter) {
+			log("LancaCanonicalBridge is already a minter", "configureFiatToken", srcChain.name);
+			return;
+		}
+
 		const configTxHash = await walletClient.writeContract({
 			address: fiatTokenProxyAddress as `0x${string}`,
-			abi: fiatTokenArtifact.abi,
+			abi: fiatTokenAbi,
 			functionName: "configureMinter",
 			account: viemAccount,
 			args: [lancaCanonicalBridgeAddress, minterAllowedAmount],
@@ -51,16 +61,16 @@ export async function configureMinter(hre: HardhatRuntimeEnvironment): Promise<v
 		});
 
 		const configReceipt = await publicClient.waitForTransactionReceipt({
-			...getViemReceiptConfig(conceroNetworks[chainName]),
+			...getViemReceiptConfig(srcChain),
 			hash: configTxHash,
 		});
 
 		log(
 			`Configuration completed: ${configReceipt.transactionHash}`,
 			"configureFiatToken",
-			chainName,
+			srcChain.name,
 		);
 	} catch (error) {
-		err(`Failed to configure FiatToken: ${error}`, "configureFiatToken", chainName);
+		err(`Failed to configure FiatToken: ${error}`, "configureFiatToken", srcChain.name);
 	}
 }

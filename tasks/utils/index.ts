@@ -4,7 +4,6 @@ export { upgradeLancaPoolProxyImplementation } from "./upgradeLancaPool";
 export { initializeDefaultFiatToken } from "./initializeDefaultFiatToken";
 export { initializeFiatToken } from "./initializeFiatToken";
 export { configureMinter } from "./configureMinter";
-export { configureMinterTest } from "./configureMinterTest";
 export { addPool } from "./addPool";
 export { addDstBridge } from "./addDstBridge";
 export { removeDstBridge } from "./removeDstBridge";

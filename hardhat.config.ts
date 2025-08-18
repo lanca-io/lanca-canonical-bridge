@@ -59,17 +59,6 @@ const config: HardhatUserConfig = {
 				},
 			},
 		],
-		overrides: {
-			"contracts/usdc/**/*.sol": {
-				version: "0.6.12",
-				settings: {
-					optimizer: {
-						enabled: true,
-						runs: parseInt(process.env.OPTIMIZER_RUNS || "10000000"),
-					},
-				},
-			},
-		},
 	},
 	defaultNetwork: "localhost",
 	namedAccounts: {

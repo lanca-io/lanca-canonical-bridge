@@ -81,7 +81,7 @@ export async function sendToken(
 	}
 
 	const { abi: usdcAbi } = await import(
-		"../../usdc-artifacts/FiatTokenV2_2.sol/FiatTokenV2_2.json"
+		"../../artifacts/contracts/usdc/v2/FiatTokenV2_2.sol/FiatTokenV2_2.json"
 	);
 
 	const viemAccount = getViemAccount(type, "deployer");

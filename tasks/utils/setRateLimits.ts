@@ -1,43 +1,47 @@
-import { getNetworkEnvKey } from "@concero/contract-utils";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { formatUnits, parseUnits } from "viem";
+import { ConceroNetwork, getNetworkEnvKey } from "@concero/contract-utils";
+import { parseUnits } from "viem";
 
 import { conceroNetworks, getViemReceiptConfig } from "../../constants";
+import { defaultRateLimits } from "../../constants/deploymentVariables";
 import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils";
 
 export async function setRateLimits(
-	hre: HardhatRuntimeEnvironment,
+	srcChainName: string,
 	dstChainName?: string,
 	outMax?: string,
 	outRefill?: string,
 	inMax?: string,
 	inRefill?: string,
 ): Promise<void> {
-	const { name: chainName } = hre.network;
-	const { viemChain, type } = conceroNetworks[chainName];
+	const srcChain = conceroNetworks[srcChainName as keyof typeof conceroNetworks];
+	const { viemChain, type: networkType } = srcChain;
 
-	// Determine if this is L1 or L2 bridge based on presence of dstChainName
 	const isL1Bridge = !!dstChainName;
 
-	// Get destination chain selector if this is L1 bridge
-	let dstChainSelector: bigint | undefined;
+	let dstChain: ConceroNetwork;
 	if (isL1Bridge) {
-		const dstChain = conceroNetworks[dstChainName!];
+		// Set rate limits on L1 bridge
+		dstChain = conceroNetworks[dstChainName as keyof typeof conceroNetworks];
 		if (!dstChain) {
-			err(`Destination network ${dstChainName} not found`, "setRateLimits", chainName);
+			err(`Destination network ${dstChainName} not found`, "setRateLimits", srcChain.name);
 			return;
 		}
-		dstChainSelector = dstChain.chainSelector;
+	} else {
+		// Default dst chain is Ethereum
+		dstChain =
+			networkType === "testnet" ? conceroNetworks.ethereumSepolia : conceroNetworks.ethereum;
+		if (!dstChain) {
+			err(`Destination network ${dstChainName} not found`, "setRateLimits", srcChain.name);
+			return;
+		}
 	}
 
-	// Get the bridge contract address (both L1 and L2 use the same env var)
 	const contractAddress = getEnvVar(
-		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(chainName)}`,
+		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(srcChain.name)}`,
 	);
 
 	if (!contractAddress) return;
 
-	// Get the appropriate ABI
 	const { abi: bridgeAbi } = isL1Bridge
 		? await import(
 				"../../artifacts/contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol/LancaCanonicalBridgeL1.json"
@@ -46,102 +50,101 @@ export async function setRateLimits(
 				"../../artifacts/contracts/LancaCanonicalBridge/LancaCanonicalBridge.sol/LancaCanonicalBridge.json"
 			);
 
-	const viemAccount = getViemAccount(type, "rateLimitAdmin");
-	const { walletClient, publicClient } = getFallbackClients(
-		conceroNetworks[chainName],
-		viemAccount,
-	);
+	const viemAccount = getViemAccount(networkType, "rateLimitAdmin");
+	const { walletClient, publicClient } = getFallbackClients(srcChain, viemAccount);
+
+	const rateLimits = {
+		outMax: outMax || defaultRateLimits.outMax,
+		outRefill: outRefill || defaultRateLimits.outRefill,
+		inMax: inMax || defaultRateLimits.inMax,
+		inRefill: inRefill || defaultRateLimits.inRefill,
+	};
 
 	try {
 		log(
-			`Setting rate limits for ${isL1Bridge ? "L1" : "L2"} bridge on ${chainName}${isL1Bridge ? ` -> ${dstChainName}` : ""}`,
+			`Setting rate limits for ${isL1Bridge ? "L1" : "L2"} bridge on ${srcChain.name} -> ${dstChain?.name}`,
 			"setRateLimits",
-			chainName,
+			srcChain.name,
 		);
 
 		// Set outbound rate limit if parameters provided
-		if (outMax !== undefined && outRefill !== undefined) {
-			// Convert from USDC to wei (6 decimals)
-			const outMaxWei = parseUnits(outMax, 6);
-			const outRefillWei = parseUnits(outRefill, 6);
+		// Convert from USDC to wei (6 decimals)
+		const outMaxWei = parseUnits(rateLimits.outMax, 6);
+		const outRefillWei = parseUnits(rateLimits.outRefill, 6);
 
-			const outboundArgs = isL1Bridge
-				? [dstChainSelector!, outMaxWei, outRefillWei, true]
-				: [outMaxWei, outRefillWei, true];
+		const outboundArgs = isL1Bridge
+			? [dstChain.chainSelector, outMaxWei, outRefillWei, true]
+			: [dstChain.chainSelector, outMaxWei, outRefillWei, true];
 
-			log(
-				`Setting outbound rate limit: maxAmount=${outMax} USDC, refillSpeed=${outRefill} USDC/sec${isL1Bridge ? `, dstChain=${dstChainName} (${dstChainSelector})` : ""}`,
-				"setRateLimits",
-				chainName,
-			);
+		log(
+			`Setting outbound rate limit: maxAmount=${rateLimits.outMax} USDC, refillSpeed=${rateLimits.outRefill} USDC/sec${isL1Bridge ? `, dstChain=${dstChain.name} (${dstChain.chainSelector})` : ""}`,
+			"setRateLimits",
+			srcChain.name,
+		);
 
-			const outboundTxHash = await walletClient.writeContract({
-				address: contractAddress as `0x${string}`,
-				abi: bridgeAbi,
-				functionName: "setRateLimit",
-				account: viemAccount,
-				args: outboundArgs,
-				chain: viemChain,
-			});
+		const outboundTxHash = await walletClient.writeContract({
+			address: contractAddress as `0x${string}`,
+			abi: bridgeAbi,
+			functionName: "setRateLimit",
+			account: viemAccount,
+			args: outboundArgs,
+			chain: viemChain,
+		});
 
-			const outboundReceipt = await publicClient.waitForTransactionReceipt({
-				...getViemReceiptConfig(conceroNetworks[chainName]),
-				hash: outboundTxHash,
-			});
+		const outboundReceipt = await publicClient.waitForTransactionReceipt({
+			...getViemReceiptConfig(srcChain),
+			hash: outboundTxHash,
+		});
 
-			log(
-				`Outbound rate limit set successfully! Transaction: ${outboundTxHash}`,
-				"setRateLimits",
-				chainName,
-			);
-		}
+		log(
+			`Outbound rate limit set successfully! Transaction: ${outboundTxHash}`,
+			"setRateLimits",
+			srcChain.name,
+		);
 
-		// Set inbound rate limit if parameters provided
-		if (inMax !== undefined && inRefill !== undefined) {
-			// Convert from USDC to wei (6 decimals)
-			const inMaxWei = parseUnits(inMax, 6);
-			const inRefillWei = parseUnits(inRefill, 6);
+		// Convert from USDC to wei (6 decimals)
+		const inMaxWei = parseUnits(rateLimits.inMax, 6);
+		const inRefillWei = parseUnits(rateLimits.inRefill, 6);
 
-			const inboundArgs = isL1Bridge
-				? [dstChainSelector!, inMaxWei, inRefillWei, false]
-				: [inMaxWei, inRefillWei, false];
+		const inboundArgs = isL1Bridge
+			? [dstChain.chainSelector, inMaxWei, inRefillWei, false]
+			: [dstChain.chainSelector, inMaxWei, inRefillWei, false];
 
-			log(
-				`Setting inbound rate limit: maxAmount=${inMax} USDC, refillSpeed=${inRefill} USDC/sec${isL1Bridge ? `, dstChain=${dstChainName} (${dstChainSelector})` : ""}`,
-				"setRateLimits",
-				chainName,
-			);
+		log(
+			`Setting inbound rate limit: maxAmount=${rateLimits.inMax} USDC, refillSpeed=${rateLimits.inRefill} USDC/sec${isL1Bridge ? `, dstChain=${dstChain.name} (${dstChain.chainSelector})` : ""}`,
+			"setRateLimits",
+			srcChain.name,
+		);
 
-			const inboundTxHash = await walletClient.writeContract({
-				address: contractAddress as `0x${string}`,
-				abi: bridgeAbi,
-				functionName: "setRateLimit",
-				account: viemAccount,
-				args: inboundArgs,
-				chain: viemChain,
-			});
+		const inboundTxHash = await walletClient.writeContract({
+			address: contractAddress as `0x${string}`,
+			abi: bridgeAbi,
+			functionName: "setRateLimit",
+			account: viemAccount,
+			args: inboundArgs,
+			chain: viemChain,
+		});
 
-			const inboundReceipt = await publicClient.waitForTransactionReceipt({
-				...getViemReceiptConfig(conceroNetworks[chainName]),
-				hash: inboundTxHash,
-			});
+		const inboundReceipt = await publicClient.waitForTransactionReceipt({
+			...getViemReceiptConfig(srcChain),
+			hash: inboundTxHash,
+		});
 
-			log(
-				`Inbound rate limit set successfully! Transaction: ${inboundTxHash}`,
-				"setRateLimits",
-				chainName,
-			);
-		}
+		log(
+			`Inbound rate limit set successfully! Transaction: ${inboundTxHash}`,
+			"setRateLimits",
+			srcChain.name,
+		);
 
 		if (!outMax && !inMax) {
 			log(
 				"No rate limits to set. Please provide at least one set of parameters.",
 				"setRateLimits",
-				chainName,
+				srcChain.name,
 			);
 		}
 	} catch (error) {
-		err(`Failed to set rate limits: ${error}`, "setRateLimits", chainName);
+		err(`Failed to set rate limits: ${error}`, "setRateLimits", srcChain.name);
 		throw error;
 	}
 }

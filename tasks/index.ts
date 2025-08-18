@@ -12,7 +12,6 @@ import fiatTokenChangeAdmin from "./deployFiatToken/changeAdmin.task";
 import { deployFiatTokenTask } from "./deployFiatToken/deployFiatTokenTask";
 import fiatTokenTransferOwnership from "./deployFiatToken/transferOwnership.task";
 import { deployPoolTask } from "./deployPool/deployPoolTask";
-import { mintTestUsdcTask } from "./mintTestUsdc/mintTestUsdcTask";
 import deployConceroPauseToAllChains from "./pause/deployConceroPauseToAllChains";
 import deployPauseTask from "./pause/deployPause.task";
 import { sendTokenTask } from "./sendToken/sendTokenTask";
@@ -30,7 +29,6 @@ export default {
 	deployPoolTask,
 	deployFiatTokenTask,
 	configureMinterTask,
-	mintTestUsdcTask,
 	sendTokenTask,
 	setRateLimitsTask,
 	deployPauseTask,

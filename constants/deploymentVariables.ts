@@ -19,10 +19,10 @@ const writeContractConfig: WriteContractParameters = {
 };
 
 const defaultRateLimits = {
-	outMax: "1000000",
-	outRefill: "10",
-	inMax: "1000000",
-	inRefill: "10",
+	outMax: "10000000",
+	outRefill: "1000000",
+	inMax: "10000000",
+	inRefill: "1000000",
 };
 
 const defaultMinterAllowedAmount = 1000000e6;

@@ -6,7 +6,7 @@ import { setRateLimits } from "../utils";
 
 async function setRateLimitsTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	await setRateLimits(
-		hre,
+		hre.network.name,
 		taskArgs.dstchain,
 		taskArgs.outmax,
 		taskArgs.outrefill,

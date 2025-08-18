@@ -47,7 +47,6 @@ export async function configureMinter(srcChainName: string, amount?: string): Pr
 
 		if (isMinter) {
 			log("LancaCanonicalBridge is already a minter", "configureFiatToken", srcChain.name);
-			return;
 		}
 
 		const configTxHash = await walletClient.writeContract({

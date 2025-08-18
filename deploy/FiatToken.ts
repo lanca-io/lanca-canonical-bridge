@@ -1,6 +1,3 @@
-import fs from "fs";
-import path from "path";
-
 import { getNetworkEnvKey } from "@concero/contract-utils";
 import { Deployment } from "hardhat-deploy/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
@@ -18,13 +15,6 @@ const deployFiatToken = async function (hre: HardhatRuntimeEnvironment): Promise
 
 	log(`Deploying FiatToken implementation:`, "deployFiatToken", name);
 
-	// const signatureCheckerArtifactPath = path.resolve(
-	// 	__dirname,
-	// 	"../usdc-artifacts/SignatureChecker.sol/SignatureChecker.json",
-	// );
-	// const signatureCheckerArtifact = JSON.parse(
-	// 	fs.readFileSync(signatureCheckerArtifactPath, "utf8"),
-	// );
 
 	const signatureCheckerDeployment = await deploy("SignatureChecker", {
 		from: deployer,
@@ -32,12 +22,6 @@ const deployFiatToken = async function (hre: HardhatRuntimeEnvironment): Promise
 		log: true,
 		autoMine: true,
 	});
-
-	// const artifactPath = path.resolve(
-	// 	__dirname,
-	// 	"../usdc-artifacts/FiatTokenV2_2.sol/FiatTokenV2_2.json",
-	// );
-	// const artifact = JSON.parse(fs.readFileSync(artifactPath, "utf8"));
 
 	const deployment = await deploy("FiatTokenV2_2", {
 		from: deployer,
@@ -56,6 +40,21 @@ const deployFiatToken = async function (hre: HardhatRuntimeEnvironment): Promise
 		deployment.address,
 		`deployments.${networkType}`,
 	);
+
+	if (hre.network.live) {
+		try {
+			log("Verifying FiatTokenV2_2 contract...", "deployFiatToken", name);
+			await hre.run("verify:verify", {
+				address: deployment.address,
+				constructorArguments: [],
+				libraries: {
+					SignatureChecker: signatureCheckerDeployment.address,
+				},
+			});
+		} catch (error) {
+			log(`Verification failed: ${error}`, "deployFiatToken", name);
+		}
+	}
 
 	return deployment;
 };

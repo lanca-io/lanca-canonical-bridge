@@ -83,7 +83,7 @@ const config: HardhatUserConfig = {
 	networks: conceroNetworks,
 	etherscan: {
 		apiKey: {
-			// arbitrum: process.env.ARBISCAN_API_KEY,
+			arbitrumSepolia: process.env.ARBISCAN_API_KEY || "",
 			// arbitrumSepolia: process.env.ARBISCAN_API_KEY,
 			// ethereum: process.env.ETHERSCAN_API_KEY,
 			// ethereumSepolia: process.env.ETHERSCAN_API_KEY,
@@ -95,6 +95,16 @@ const config: HardhatUserConfig = {
 			// avalanche: "snowtrace",
 			// avalancheFuji: "snowtrace",
 		},
+		customChains: [
+			{
+				network: "arbitrumSepolia",
+				chainId: 421614,
+				urls: {
+					apiURL: "https://api.etherscan.io/v2/api?chainid=421614",
+					browserURL: "https://api.etherscan.io/v2/api?chainid=421614",
+				},
+			},
+		],
 	},
 	sourcify: {
 		enabled: true,

@@ -1,6 +1,3 @@
-import fs from "fs";
-import path from "path";
-
 import { getNetworkEnvKey } from "@concero/contract-utils";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
@@ -11,11 +8,9 @@ export async function initializeDefaultFiatToken(hre: HardhatRuntimeEnvironment)
 	const { name: chainName } = hre.network;
 	const { viemChain, type } = conceroNetworks[chainName];
 
-	const fiatTokenArtifactPath = path.resolve(
-		__dirname,
-		"../../usdc-artifacts/FiatTokenV2_2.sol/FiatTokenV2_2.json",
+	const { abi: fiatTokenAbi } = await import(
+		"../../artifacts/contracts/usdc/v2/FiatTokenV2_2.sol/FiatTokenV2_2.json"
 	);
-	const fiatTokenArtifact = JSON.parse(fs.readFileSync(fiatTokenArtifactPath, "utf8"));
 
 	const viemAccount = getViemAccount(type, "deployer");
 	const { walletClient, publicClient } = getFallbackClients(
@@ -45,7 +40,7 @@ export async function initializeDefaultFiatToken(hre: HardhatRuntimeEnvironment)
 	try {
 		const initTxHash = await walletClient.writeContract({
 			address: fiatTokenImplementation,
-			abi: fiatTokenArtifact.abi,
+			abi: fiatTokenAbi,
 			functionName: "initialize",
 			account: viemAccount,
 			args: [
@@ -68,7 +63,7 @@ export async function initializeDefaultFiatToken(hre: HardhatRuntimeEnvironment)
 
 		const initV2TxHash = await walletClient.writeContract({
 			address: fiatTokenImplementation,
-			abi: fiatTokenArtifact.abi,
+			abi: fiatTokenAbi,
 			functionName: "initializeV2",
 			account: viemAccount,
 			args: [defaultArgs.tokenName],
@@ -82,7 +77,7 @@ export async function initializeDefaultFiatToken(hre: HardhatRuntimeEnvironment)
 
 		const initV2_1TxHash = await walletClient.writeContract({
 			address: fiatTokenImplementation,
-			abi: fiatTokenArtifact.abi,
+			abi: fiatTokenAbi,
 			functionName: "initializeV2_1",
 			account: viemAccount,
 			args: [defaultArgs.lostAndFoundAddress],
@@ -96,7 +91,7 @@ export async function initializeDefaultFiatToken(hre: HardhatRuntimeEnvironment)
 
 		const initV2_2TxHash = await walletClient.writeContract({
 			address: fiatTokenImplementation,
-			abi: fiatTokenArtifact.abi,
+			abi: fiatTokenAbi,
 			functionName: "initializeV2_2",
 			account: viemAccount,
 			args: [[], defaultArgs.tokenSymbol],

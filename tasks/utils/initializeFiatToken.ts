@@ -1,6 +1,3 @@
-import fs from "fs";
-import path from "path";
-
 import { getNetworkEnvKey } from "@concero/contract-utils";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
@@ -11,11 +8,9 @@ export async function initializeFiatToken(hre: HardhatRuntimeEnvironment): Promi
 	const { name: chainName } = hre.network;
 	const { viemChain, type } = conceroNetworks[chainName];
 
-	const fiatTokenArtifactPath = path.resolve(
-		__dirname,
-		"../../usdc-artifacts/FiatTokenV2_2.sol/FiatTokenV2_2.json",
+	const { abi: fiatTokenAbi } = await import(
+		"../../artifacts/contracts/usdc/v2/FiatTokenV2_2.sol/FiatTokenV2_2.json"
 	);
-	const fiatTokenArtifact = JSON.parse(fs.readFileSync(fiatTokenArtifactPath, "utf8"));
 
 	const viemAccount = getViemAccount(type, "deployer");
 	const { walletClient, publicClient } = getFallbackClients(
@@ -55,7 +50,7 @@ export async function initializeFiatToken(hre: HardhatRuntimeEnvironment): Promi
 		log("Executing initialization V1...", "initializeFiatToken", chainName);
 		const initTxHash = await walletClient.writeContract({
 			address: fiatTokenProxy as `0x${string}`,
-			abi: fiatTokenArtifact.abi,
+			abi: fiatTokenAbi,
 			functionName: "initialize",
 			account: viemAccount,
 			args: [
@@ -80,7 +75,7 @@ export async function initializeFiatToken(hre: HardhatRuntimeEnvironment): Promi
 		log("Executing initialization V2...", "initializeFiatToken", chainName);
 		const initV2TxHash = await walletClient.writeContract({
 			address: fiatTokenProxy as `0x${string}`,
-			abi: fiatTokenArtifact.abi,
+			abi: fiatTokenAbi,
 			functionName: "initializeV2",
 			account: viemAccount,
 			args: [defaultArgs.tokenName],
@@ -96,7 +91,7 @@ export async function initializeFiatToken(hre: HardhatRuntimeEnvironment): Promi
 		log("Executing initialization V2.1...", "initializeFiatToken", chainName);
 		const initV2_1TxHash = await walletClient.writeContract({
 			address: fiatTokenProxy as `0x${string}`,
-			abi: fiatTokenArtifact.abi,
+			abi: fiatTokenAbi,
 			functionName: "initializeV2_1",
 			account: viemAccount,
 			args: [lostAndFoundAddress],
@@ -112,7 +107,7 @@ export async function initializeFiatToken(hre: HardhatRuntimeEnvironment): Promi
 		log("Executing initialization V2.2...", "initializeFiatToken", chainName);
 		const initV2_2TxHash = await walletClient.writeContract({
 			address: fiatTokenProxy as `0x${string}`,
-			abi: fiatTokenArtifact.abi,
+			abi: fiatTokenAbi,
 			functionName: "initializeV2_2",
 			account: viemAccount,
 			args: [[], defaultArgs.tokenSymbol],

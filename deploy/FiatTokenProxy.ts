@@ -1,6 +1,3 @@
-import fs from "fs";
-import path from "path";
-
 import { getNetworkEnvKey } from "@concero/contract-utils";
 import { Deployment } from "hardhat-deploy/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
@@ -25,19 +22,8 @@ const deployFiatTokenProxy = async function (hre: HardhatRuntimeEnvironment): Pr
 
 	log("Deploying FiatTokenProxy...", "deployFiatTokenProxy", name);
 
-	const fiatTokenProxyArtifactPath = path.resolve(
-		__dirname,
-		"../usdc-artifacts/FiatTokenProxy.sol/FiatTokenProxy.json",
-	);
-
-	const fiatTokenProxyArtifact = JSON.parse(fs.readFileSync(fiatTokenProxyArtifactPath, "utf8"));
-
 	const deployment = await deploy("FiatTokenProxy", {
 		from: proxyDeployer,
-		// contract: {
-		// 	abi: fiatTokenProxyArtifact.abi,
-		// 	bytecode: fiatTokenProxyArtifact.bytecode,
-		// },
 		args: [implementation],
 		log: true,
 		autoMine: true,
@@ -56,13 +42,17 @@ const deployFiatTokenProxy = async function (hre: HardhatRuntimeEnvironment): Pr
 		`FIAT_TOKEN_PROXY_ADMIN_${getNetworkEnvKey(name)}`,
 	);
 
+	const { abi: fiatTokenProxyAbi } = await import(
+		"../artifacts/contracts/usdc/v1/FiatTokenProxy.sol/FiatTokenProxy.json"
+	);
+
 	const viemAccount = getViemAccount(networkType, "proxyDeployer");
 	const { walletClient, publicClient } = getFallbackClients(conceroNetworks[name], viemAccount);
 
 	try {
 		const changeAdminTxHash = await walletClient.writeContract({
 			address: deployment.address as `0x${string}`,
-			abi: fiatTokenProxyArtifact.abi,
+			abi: fiatTokenProxyAbi,
 			functionName: "changeAdmin",
 			account: viemAccount,
 			args: [fiatTokenProxyAdminAddress as `0x${string}`],

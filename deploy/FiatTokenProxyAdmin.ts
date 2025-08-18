@@ -1,6 +1,3 @@
-import fs from "fs";
-import path from "path";
-
 import { getNetworkEnvKey } from "@concero/contract-utils";
 import { Deployment } from "hardhat-deploy/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
@@ -19,23 +16,10 @@ const deployFiatTokenProxyAdmin = async function (
 
 	log("Deploying FiatTokenProxyAdmin...", "deployFiatTokenProxyAdmin", name);
 
-	// const adminUpgradeableProxyArtifactPath = path.resolve(
-	// 	__dirname,
-	// 	"../usdc-artifacts/AdminUpgradeabilityProxy.sol/AdminUpgradeabilityProxy.json",
-	// );
-
-	// const adminUpgradableProxyArtifact = JSON.parse(
-	// 	fs.readFileSync(adminUpgradeableProxyArtifactPath, "utf8"),
-	// );
-
 	const implementation = getEnvVar(`FIAT_TOKEN_IMPLEMENTATION_${getNetworkEnvKey(name)}`);
 
-	const deployment = await deploy("FiatTokenProxyAdmin", {
+	const deployment = await deploy("AdminUpgradeabilityProxy", {
 		from: proxyDeployer,
-		// contract: {
-		// 	abi: adminUpgradableProxyArtifact.abi,
-		// 	bytecode: adminUpgradableProxyArtifact.bytecode,
-		// },
 		args: [implementation],
 		log: true,
 		autoMine: true,

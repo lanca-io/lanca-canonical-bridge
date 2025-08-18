@@ -18,40 +18,31 @@ const deployFiatToken = async function (hre: HardhatRuntimeEnvironment): Promise
 
 	log(`Deploying FiatToken implementation:`, "deployFiatToken", name);
 
-	const signatureCheckerArtifactPath = path.resolve(
-		__dirname,
-		"../usdc-artifacts/SignatureChecker.sol/SignatureChecker.json",
-	);
-	const signatureCheckerArtifact = JSON.parse(
-		fs.readFileSync(signatureCheckerArtifactPath, "utf8"),
-	);
+	// const signatureCheckerArtifactPath = path.resolve(
+	// 	__dirname,
+	// 	"../usdc-artifacts/SignatureChecker.sol/SignatureChecker.json",
+	// );
+	// const signatureCheckerArtifact = JSON.parse(
+	// 	fs.readFileSync(signatureCheckerArtifactPath, "utf8"),
+	// );
 
 	const signatureCheckerDeployment = await deploy("SignatureChecker", {
 		from: deployer,
-		contract: {
-			abi: signatureCheckerArtifact.abi,
-			bytecode: signatureCheckerArtifact.bytecode,
-		},
 		args: [],
 		log: true,
 		autoMine: true,
 	});
 
-	const artifactPath = path.resolve(
-		__dirname,
-		"../usdc-artifacts/FiatTokenV2_2.sol/FiatTokenV2_2.json",
-	);
-	const artifact = JSON.parse(fs.readFileSync(artifactPath, "utf8"));
+	// const artifactPath = path.resolve(
+	// 	__dirname,
+	// 	"../usdc-artifacts/FiatTokenV2_2.sol/FiatTokenV2_2.json",
+	// );
+	// const artifact = JSON.parse(fs.readFileSync(artifactPath, "utf8"));
 
 	const deployment = await deploy("FiatTokenV2_2", {
 		from: deployer,
-		contract: {
-			abi: artifact.abi,
-			bytecode: artifact.bytecode,
-		},
 		libraries: {
-			"contracts/util/SignatureChecker.sol:SignatureChecker":
-				signatureCheckerDeployment.address,
+			SignatureChecker: signatureCheckerDeployment.address,
 		},
 		args: [],
 		log: true,

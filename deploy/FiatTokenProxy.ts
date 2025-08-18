@@ -34,10 +34,10 @@ const deployFiatTokenProxy = async function (hre: HardhatRuntimeEnvironment): Pr
 
 	const deployment = await deploy("FiatTokenProxy", {
 		from: proxyDeployer,
-		contract: {
-			abi: fiatTokenProxyArtifact.abi,
-			bytecode: fiatTokenProxyArtifact.bytecode,
-		},
+		// contract: {
+		// 	abi: fiatTokenProxyArtifact.abi,
+		// 	bytecode: fiatTokenProxyArtifact.bytecode,
+		// },
 		args: [implementation],
 		log: true,
 		autoMine: true,

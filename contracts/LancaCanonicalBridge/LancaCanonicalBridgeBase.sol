@@ -18,7 +18,7 @@ import {IFiatTokenV1} from "../interfaces/IFiatTokenV1.sol";
 import {ILancaCanonicalBridgeClient} from "../LancaCanonicalBridgeClient/LancaCanonicalBridgeClient.sol";
 
 abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, ConceroOwnable {
-    uint256 internal constant BRIDGE_GAS_OVERHEAD = 100_000;
+    uint256 internal constant BRIDGE_GAS_OVERHEAD = 200_000;
 
     IFiatTokenV1 internal immutable i_usdc;
 

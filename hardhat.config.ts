@@ -73,16 +73,16 @@ const config: HardhatUserConfig = {
 	etherscan: {
 		apiKey: {
 			arbitrumSepolia: process.env.ARBISCAN_API_KEY || "",
-			// arbitrumSepolia: process.env.ARBISCAN_API_KEY,
+			baseSepolia: process.env.BASESCAN_API_KEY || "",
 			// ethereum: process.env.ETHERSCAN_API_KEY,
 			// ethereumSepolia: process.env.ETHERSCAN_API_KEY,
 			// polygon: process.env.POLYGONSCAN_API_KEY,
 			// polygonAmoy: process.env.POLYGONSCAN_API_KEY,
-			// optimism: process.env.OPTIMISMSCAN_API_KEY,
-			// optimismSepolia: process.env.OPTIMISMSCAN_API_KEY,
+			// optimism: process.env.OPTIMISMSCAN_API_KEY || "",
+			optimismSepolia: process.env.OPTIMISMSCAN_API_KEY || "",
 			// celo: process.env.CELOSCAN_API_KEY,
 			// avalanche: "snowtrace",
-			// avalancheFuji: "snowtrace",
+			// avalancheFuji: process.env.AVALANCHE_FUJI_KEY || "",
 		},
 		customChains: [
 			{
@@ -91,6 +91,22 @@ const config: HardhatUserConfig = {
 				urls: {
 					apiURL: "https://api.etherscan.io/v2/api?chainid=421614",
 					browserURL: "https://api.etherscan.io/v2/api?chainid=421614",
+				},
+			},
+			{
+				network: "baseSepolia",
+				chainId: 84532,
+				urls: {
+					apiURL: "https://api.etherscan.io/v2/api?chainid=84532",
+					browserURL: "https://api.etherscan.io/v2/api?chainid=84532",
+				},
+			},
+			{
+				network: "optimismSepolia",
+				chainId: 11155420,
+				urls: {
+					apiURL: "https://api.etherscan.io/v2/api?chainid=11155420",
+					browserURL: "https://api.etherscan.io/v2/api?chainid=11155420",
 				},
 			},
 		],

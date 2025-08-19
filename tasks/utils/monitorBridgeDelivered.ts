@@ -89,7 +89,7 @@ export async function monitorBridgeDelivered(
 						) {
 							const args = decoded.args as any;
 
-							const senderAddress = args.srcBridge;
+							const senderChainSelector = args.srcChainSelector;
 
 							log(
 								`✅ BridgeDelivered event found!`,
@@ -101,7 +101,7 @@ export async function monitorBridgeDelivered(
 								"monitorBridgeDelivered",
 								dstChain,
 							);
-							log(`   Sender: ${senderAddress}`, "monitorBridgeDelivered", dstChain);
+							log(`   Sender: ${senderChainSelector}`, "monitorBridgeDelivered", dstChain);
 							log(
 								`   TokenSender: ${args.tokenSender}`,
 								"monitorBridgeDelivered",

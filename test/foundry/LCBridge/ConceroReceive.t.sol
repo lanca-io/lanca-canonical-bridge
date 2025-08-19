@@ -60,7 +60,6 @@ contract ConceroReceiveTest is LCBridgeTest {
         vm.expectEmit(true, true, true, true);
         emit LancaCanonicalBridgeBase.BridgeDelivered(
             DEFAULT_MESSAGE_ID,
-            address(lancaBridgeL1Mock),
             SRC_CHAIN_SELECTOR,
             user,
             user,
@@ -89,7 +88,9 @@ contract ConceroReceiveTest is LCBridgeTest {
             "0x01"
         );
 
-        vm.expectRevert(abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidMessage.selector));
+        vm.expectRevert(
+            abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidConceroMessage.selector)
+        );
 
         vm.prank(conceroRouter);
         lancaCanonicalBridge.conceroReceive(
@@ -119,7 +120,8 @@ contract ConceroReceiveTest is LCBridgeTest {
             message
         );
 
-        assertEq(lcBridgeClient.token(), address(usdcE));
+        assertEq(lcBridgeClient.messageId(), DEFAULT_MESSAGE_ID);
+        assertEq(lcBridgeClient.srcChainSelector(), SRC_CHAIN_SELECTOR);
         assertEq(lcBridgeClient.tokenSender(), user);
         assertEq(lcBridgeClient.tokenAmount(), AMOUNT);
         assertEq(lcBridgeClient.testString(), testString);

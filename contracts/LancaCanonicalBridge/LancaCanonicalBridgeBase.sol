@@ -18,7 +18,7 @@ import {IFiatTokenV1} from "../interfaces/IFiatTokenV1.sol";
 import {ILancaCanonicalBridgeClient} from "../LancaCanonicalBridgeClient/LancaCanonicalBridgeClient.sol";
 
 abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, ConceroOwnable {
-    uint256 internal constant BRIDGE_GAS_OVERHEAD = 200_000;
+    uint256 internal constant BRIDGE_GAS_OVERHEAD = 150_000;
 
     IFiatTokenV1 internal immutable i_usdc;
 
@@ -37,7 +37,6 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, Concer
 
     event BridgeDelivered(
         bytes32 indexed messageId,
-        address indexed srcBridge,
         uint24 indexed srcChainSelector,
         address tokenSender,
         address tokenReceiver,
@@ -46,7 +45,7 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, Concer
 
     error InvalidBridgeSender();
     error InvalidDstGasLimitOrCallData();
-    error InvalidMessage();
+    error InvalidConceroMessage();
 
     constructor(address usdcAddress, address rateLimitAdmin) RateLimiter(rateLimitAdmin) {
         i_usdc = IFiatTokenV1(usdcAddress);
@@ -83,25 +82,6 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, Concer
                 gasLimit: BRIDGE_GAS_OVERHEAD + dstGasLimit
             }),
             messageData
-        );
-    }
-
-    function _decodeMessage(
-        bytes memory messageData
-    )
-        internal
-        pure
-        returns (
-            address tokenSender,
-            address tokenReceiver,
-            uint256 tokenAmount,
-            uint256 dstGasLimit,
-            bytes memory dstCallData
-        )
-    {
-        (tokenSender, tokenReceiver, tokenAmount, dstGasLimit, dstCallData) = abi.decode(
-            messageData,
-            (address, address, uint256, uint256, bytes)
         );
     }
 

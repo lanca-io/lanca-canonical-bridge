@@ -70,7 +70,6 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
         vm.expectEmit(true, true, true, true);
         emit LancaCanonicalBridgeBase.BridgeDelivered(
             DEFAULT_MESSAGE_ID,
-            lancaBridgeMock,
             DST_CHAIN_SELECTOR,
             user,
             user,
@@ -104,7 +103,7 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
         );
     }
 
-    function test_conceroReceive_WithCall_RevertsIfInvalidMessage() public {
+    function test_conceroReceive_WithCall_RevertsIfInvalidConceroMessage() public {
         _addDefaultPool();
         _addDefaultDstBridge();
 
@@ -118,7 +117,9 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
             "0x01"
         );
 
-        vm.expectRevert(abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidMessage.selector));
+        vm.expectRevert(
+            abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidConceroMessage.selector)
+        );
 
         vm.prank(conceroRouter);
         lancaCanonicalBridgeL1.conceroReceive(
@@ -153,7 +154,8 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
             message
         );
 
-        assertEq(lcBridgeClient.token(), address(usdc));
+        assertEq(lcBridgeClient.messageId(), DEFAULT_MESSAGE_ID);
+        assertEq(lcBridgeClient.srcChainSelector(), DST_CHAIN_SELECTOR);
         assertEq(lcBridgeClient.tokenSender(), user);
         assertEq(lcBridgeClient.tokenAmount(), AMOUNT);
         assertEq(lcBridgeClient.testString(), testString);

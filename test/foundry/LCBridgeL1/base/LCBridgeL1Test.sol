@@ -28,7 +28,7 @@ abstract contract LCBridgeL1Test is DeployLCBridgeL1, BridgeTest {
             DST_CHAIN_SELECTOR
         );
 
-        lcBridgeClient = new LancaCanonicalBridgeClientExample(address(lancaCanonicalBridgeL1));
+        lcBridgeClient = new LancaCanonicalBridgeClientExample(address(lancaCanonicalBridgeL1), usdc);
 
         deal(address(usdc), user, AMOUNT);
         vm.deal(user, 1e18);

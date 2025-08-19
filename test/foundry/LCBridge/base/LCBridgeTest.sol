@@ -20,7 +20,7 @@ abstract contract LCBridgeTest is DeployLCBridge, BridgeTest {
         super.setUp();
 
         lancaCanonicalBridge = LancaCanonicalBridge(deploy());
-        lcBridgeClient = new LancaCanonicalBridgeClientExample(address(lancaCanonicalBridge));
+        lcBridgeClient = new LancaCanonicalBridgeClientExample(address(lancaCanonicalBridge), usdcE);
 
         MockUSDCe(usdcE).setMinter(address(lancaCanonicalBridge));
         MockUSDCe(usdcE).mintTo(user, AMOUNT);

@@ -51,7 +51,8 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         require(dstBridge != address(0), InvalidDstBridge());
 
         _consumeRate(dstChainSelector, tokenAmount, true);
-        _depositToPool(msg.sender, tokenAmount, pool);
+
+        ILancaCanonicalBridgePool(pool).deposit(msg.sender, tokenAmount);
 
         messageId = _sendMessage(
             tokenReceiver,
@@ -72,9 +73,10 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         bytes calldata sender,
         bytes calldata message
     ) internal override nonReentrant {
-        address srcBridge = getBridgeAddress(srcChainSelector);
-        address messageSender = abi.decode(sender, (address));
-        require(messageSender == srcBridge, InvalidBridgeSender());
+        require(
+            abi.decode(sender, (address)) == getBridgeAddress(srcChainSelector),
+            InvalidBridgeSender()
+        );
 
         address pool = s.l1Bridge().pools[srcChainSelector];
         require(pool != address(0), PoolNotFound(srcChainSelector));
@@ -85,40 +87,24 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
             uint256 tokenAmount,
             uint256 dstGasLimit,
             bytes memory dstCallData
-        ) = _decodeMessage(message);
+        ) = abi.decode(message, (address, address, uint256, uint256, bytes));
 
-        _consumeRate(srcChainSelector, tokenAmount, false);
+        bool shouldCallHook = !(dstGasLimit == 0 && dstCallData.length == 0);
 
-        if (dstGasLimit == 0 && dstCallData.length == 0) {
-            _withdrawFromPool(pool, tokenReceiver, tokenAmount);
-        } else if (_isValidContractReceiver(tokenReceiver)) {
-            _withdrawFromPool(pool, tokenReceiver, tokenAmount);
-
-            ILancaCanonicalBridgeClient(tokenReceiver).lancaCanonicalBridgeReceive{
-                gas: dstGasLimit
-            }(address(i_usdc), tokenSender, tokenAmount, dstCallData);
-        } else {
-            revert InvalidMessage();
+        if (shouldCallHook && !_isValidContractReceiver(tokenReceiver)) {
+            revert InvalidConceroMessage();
         }
 
-        emit BridgeDelivered(
-            messageId,
-            srcBridge,
-            srcChainSelector,
-            tokenSender,
-            tokenReceiver,
-            tokenAmount
-        );
-    }
-
-    /* ------- Private Functions ------- */
-
-    function _depositToPool(address tokenSender, uint256 tokenAmount, address pool) private {
-        ILancaCanonicalBridgePool(pool).deposit(tokenSender, tokenAmount);
-    }
-
-    function _withdrawFromPool(address pool, address tokenReceiver, uint256 tokenAmount) private {
+        _consumeRate(srcChainSelector, tokenAmount, false);
         ILancaCanonicalBridgePool(pool).withdraw(tokenReceiver, tokenAmount);
+
+        if (shouldCallHook) {
+            ILancaCanonicalBridgeClient(tokenReceiver).lancaCanonicalBridgeReceive{
+                gas: dstGasLimit
+            }(messageId, srcChainSelector, tokenSender, tokenAmount, dstCallData);
+        }
+
+        emit BridgeDelivered(messageId, srcChainSelector, tokenSender, tokenReceiver, tokenAmount);
     }
 
     /* ------- Admin Functions ------- */

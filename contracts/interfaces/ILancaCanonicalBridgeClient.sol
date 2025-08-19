@@ -8,7 +8,8 @@ pragma solidity 0.8.28;
 
 interface ILancaCanonicalBridgeClient {
     function lancaCanonicalBridgeReceive(
-        address token,
+		bytes32 messageId,
+		uint24 srcChainSelector,
         address from,
         uint256 value,
         bytes memory data

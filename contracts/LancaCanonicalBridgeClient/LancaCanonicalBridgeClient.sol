@@ -30,17 +30,19 @@ abstract contract LancaCanonicalBridgeClient is ILancaCanonicalBridgeClient, ERC
     }
 
     function lancaCanonicalBridgeReceive(
-        address token,
+		bytes32 messageId,
+		uint24 srcChainSelector,
         address from,
         uint256 value,
         bytes memory data
     ) external {
         require(msg.sender == i_lancaCanonicalBridge, InvalidLancaCanonicalBridge(msg.sender));
-        _lancaCanonicalBridgeReceive(token, from, value, data);
+        _lancaCanonicalBridgeReceive(messageId, srcChainSelector, from, value, data);
     }
 
     function _lancaCanonicalBridgeReceive(
-        address token,
+		bytes32 messageId,
+		uint24 srcChainSelector,
         address from,
         uint256 value,
         bytes memory data

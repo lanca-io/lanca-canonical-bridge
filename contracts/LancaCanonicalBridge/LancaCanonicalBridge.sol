@@ -43,7 +43,9 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         require(tokenAmount > 0, CommonErrors.InvalidAmount());
 
         _consumeRate(i_dstChainSelector, tokenAmount, true);
-        _processTransferAndBurn(msg.sender, tokenAmount);
+
+        SafeERC20.safeTransferFrom(i_usdc, msg.sender, address(this), tokenAmount);
+        i_usdc.burn(tokenAmount);
 
         messageId = _sendMessage(
             tokenReceiver,
@@ -63,8 +65,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         bytes calldata sender,
         bytes calldata message
     ) internal override nonReentrant {
-        address messageSender = abi.decode(sender, (address));
-        require(messageSender == i_lancaCanonicalBridgeL1, InvalidBridgeSender());
+        require(abi.decode(sender, (address)) == i_lancaCanonicalBridgeL1, InvalidBridgeSender());
 
         (
             address tokenSender,
@@ -72,41 +73,24 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
             uint256 tokenAmount,
             uint256 dstGasLimit,
             bytes memory dstCallData
-        ) = _decodeMessage(message);
+        ) = abi.decode(message, (address, address, uint256, uint256, bytes));
 
-        _consumeRate(srcChainSelector, tokenAmount, false);
+        bool shouldCallHook = !(dstGasLimit == 0 && dstCallData.length == 0);
 
-        if (dstGasLimit == 0 && dstCallData.length == 0) {
-            _mintToken(tokenReceiver, tokenAmount);
-        } else if (_isValidContractReceiver(tokenReceiver)) {
-            _mintToken(tokenReceiver, tokenAmount);
-
-            ILancaCanonicalBridgeClient(tokenReceiver).lancaCanonicalBridgeReceive{
-                gas: dstGasLimit
-            }(address(i_usdc), tokenSender, tokenAmount, dstCallData);
-        } else {
-            revert InvalidMessage();
+        if (shouldCallHook && !_isValidContractReceiver(tokenReceiver)) {
+            revert InvalidConceroMessage();
         }
 
-        emit BridgeDelivered(
-            messageId,
-            i_lancaCanonicalBridgeL1,
-            srcChainSelector,
-            tokenSender,
-            tokenReceiver,
-            tokenAmount
-        );
-    }
+        _consumeRate(srcChainSelector, tokenAmount, false);
+        i_usdc.mint(tokenReceiver, tokenAmount);
 
-    /* ------- Private Functions ------- */
+        if (shouldCallHook) {
+            ILancaCanonicalBridgeClient(tokenReceiver).lancaCanonicalBridgeReceive{
+                gas: dstGasLimit
+            }(messageId, srcChainSelector, tokenSender, tokenAmount, dstCallData);
+        }
 
-    function _processTransferAndBurn(address tokenSender, uint256 tokenAmount) private {
-        SafeERC20.safeTransferFrom(i_usdc, tokenSender, address(this), tokenAmount);
-        i_usdc.burn(tokenAmount);
-    }
-
-    function _mintToken(address to, uint256 amount) private {
-        i_usdc.mint(to, amount);
+        emit BridgeDelivered(messageId, srcChainSelector, tokenSender, tokenReceiver, tokenAmount);
     }
 
     /* ------- View Functions ------- */

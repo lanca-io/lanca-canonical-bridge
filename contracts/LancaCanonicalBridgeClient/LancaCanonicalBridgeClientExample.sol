@@ -11,23 +11,31 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {LancaCanonicalBridgeClient} from "./LancaCanonicalBridgeClient.sol";
 
 contract LancaCanonicalBridgeClientExample is LancaCanonicalBridgeClient {
-    address public token;
+	address public immutable usdc;
+
+    bytes32 public messageId;
+	uint24 public srcChainSelector;
     address public tokenSender;
     uint256 public tokenAmount;
     string public testString;
 
-    error TransferFailed();
-    event TokensReceived(address token, address from, uint256 value, string testData);
 
-    constructor(address lancaCanonicalBridge) LancaCanonicalBridgeClient(lancaCanonicalBridge) {}
+    error TransferFailed();
+    event TokensReceived(bytes32 messageId, uint24 srcChainSelector, address tokenSender, uint256 tokenAmount, string testString);
+
+    constructor(address lancaCanonicalBridge, address _usdc) LancaCanonicalBridgeClient(lancaCanonicalBridge) {
+		usdc = _usdc;
+	}
 
     function _lancaCanonicalBridgeReceive(
-        address _token,
-        address _from,
+        bytes32 _messageId,
+        uint24 _srcChainSelector,
+        address _from,	
         uint256 _value,
         bytes memory _data
     ) internal override {
-        token = _token;
+        messageId = _messageId;
+        srcChainSelector = _srcChainSelector;
         tokenSender = _from;
         tokenAmount = _value;
 
@@ -37,7 +45,7 @@ contract LancaCanonicalBridgeClientExample is LancaCanonicalBridgeClient {
         }
         testString = _testString;
 
-        require(IERC20(_token).balanceOf(address(this)) >= _value, TransferFailed());
-        emit TokensReceived(_token, _from, _value, _testString);
+        require(IERC20(usdc).balanceOf(address(this)) >= _value, TransferFailed());
+        emit TokensReceived(_messageId, _srcChainSelector, _from, _value, _testString);
     }
 }

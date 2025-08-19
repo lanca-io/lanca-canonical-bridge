@@ -3,6 +3,7 @@ import { Deployment } from "hardhat-deploy/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { conceroNetworks } from "../constants";
+import { copyMetadataForVerification, saveVerificationData } from "../tasks/utils";
 import { log, updateEnvVariable } from "../utils";
 
 const deployFiatToken = async function (hre: HardhatRuntimeEnvironment): Promise<Deployment> {
@@ -10,11 +11,10 @@ const deployFiatToken = async function (hre: HardhatRuntimeEnvironment): Promise
 	const { deploy } = hre.deployments;
 	const { name } = hre.network;
 
-	const chain = conceroNetworks[name];
+	const chain = conceroNetworks[name as keyof typeof conceroNetworks];
 	const { type: networkType } = chain;
 
 	log(`Deploying FiatToken implementation:`, "deployFiatToken", name);
-
 
 	const signatureCheckerDeployment = await deploy("SignatureChecker", {
 		from: deployer,
@@ -38,8 +38,24 @@ const deployFiatToken = async function (hre: HardhatRuntimeEnvironment): Promise
 	updateEnvVariable(
 		`FIAT_TOKEN_IMPLEMENTATION_${getNetworkEnvKey(name)}`,
 		deployment.address,
-		`deployments.${networkType}`,
+		`deployments.${networkType}` as const,
 	);
+
+	await saveVerificationData(
+		name,
+		"SignatureChecker",
+		signatureCheckerDeployment.address,
+		signatureCheckerDeployment.transactionHash || "",
+	);
+	await saveVerificationData(
+		name,
+		"FiatTokenV2_2",
+		deployment.address,
+		deployment.transactionHash || "",
+	);
+
+	await copyMetadataForVerification(name, "SignatureChecker");
+	await copyMetadataForVerification(name, "FiatTokenV2_2");
 
 	if (hre.network.live) {
 		try {

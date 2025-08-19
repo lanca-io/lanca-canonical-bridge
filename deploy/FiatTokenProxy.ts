@@ -3,6 +3,7 @@ import { Deployment } from "hardhat-deploy/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { conceroNetworks, getViemReceiptConfig } from "../constants";
+import { copyMetadataForVerification, saveVerificationData } from "../tasks/utils";
 import {
 	err,
 	getEnvVar,
@@ -16,7 +17,7 @@ const deployFiatTokenProxy = async function (hre: HardhatRuntimeEnvironment): Pr
 	const { proxyDeployer } = await hre.getNamedAccounts();
 	const { deploy } = hre.deployments;
 	const { name } = hre.network;
-	const networkType = conceroNetworks[name].type;
+	const networkType = conceroNetworks[name as keyof typeof conceroNetworks].type;
 
 	const implementation = getEnvVar(`FIAT_TOKEN_IMPLEMENTATION_${getNetworkEnvKey(name)}`);
 
@@ -66,6 +67,18 @@ const deployFiatTokenProxy = async function (hre: HardhatRuntimeEnvironment): Pr
 		log(`Change admin completed: ${changeAdminTxHash}`, "deployFiatTokenProxy", name);
 	} catch (error) {
 		err(`Failed to change admin: ${error}`, "deployFiatTokenProxy", name);
+	}
+
+	try {
+		await saveVerificationData(
+			name,
+			"FiatTokenProxy",
+			deployment.address,
+			deployment.transactionHash || "",
+		);
+		await copyMetadataForVerification(name, "FiatTokenProxy");
+	} catch (error) {
+		log(`Warning: Failed to save verification data: ${error}`, "deployFiatTokenProxy", name);
 	}
 
 	return deployment;

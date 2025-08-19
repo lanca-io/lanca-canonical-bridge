@@ -11,3 +11,4 @@ export { removeDstPool } from "./removeDstPool";
 export { sendToken } from "./sendToken";
 export { setRateLimits } from "./setRateLimits";
 export { monitorBridgeDelivered } from "./monitorBridgeDelivered";
+export { saveVerificationData, copyMetadataForVerification } from "./saveVerificationData";

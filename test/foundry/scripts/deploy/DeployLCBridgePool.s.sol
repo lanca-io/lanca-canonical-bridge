@@ -8,13 +8,13 @@ pragma solidity 0.8.28;
 
 import {LancaCanonicalBridgePool} from "contracts/LancaCanonicalBridgePool/LancaCanonicalBridgePool.sol";
 import {
-    TransparentUpgradeableProxy,
+    LCBTransparentUpgradeableProxy,
     ITransparentUpgradeableProxy
-} from "contracts/Proxy/TransparentUpgradeableProxy.sol";
+} from "contracts/Proxy/LCBTransparentUpgradeableProxy.sol";
 import {LCBridgePoolBase} from "test/foundry/LCBridgePool/base/LCBridgePoolBase.sol";
 
 contract DeployLCBridgePool is LCBridgePoolBase {
-    TransparentUpgradeableProxy internal lancaCanonicalBridgePoolProxy;
+    LCBTransparentUpgradeableProxy internal lancaCanonicalBridgePoolProxy;
     LancaCanonicalBridgePool internal lancaCanonicalBridgePool;
 
     function setUp() public virtual override {
@@ -53,7 +53,7 @@ contract DeployLCBridgePool is LCBridgePoolBase {
 
     function _deployProxy(address implementation) internal {
         vm.startPrank(proxyDeployer);
-        lancaCanonicalBridgePoolProxy = new TransparentUpgradeableProxy(
+        lancaCanonicalBridgePoolProxy = new LCBTransparentUpgradeableProxy(
             implementation,
             proxyDeployer,
             ""

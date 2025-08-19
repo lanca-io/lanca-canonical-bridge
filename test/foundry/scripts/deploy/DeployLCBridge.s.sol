@@ -8,13 +8,13 @@ pragma solidity 0.8.28;
 
 import {LancaCanonicalBridge} from "contracts/LancaCanonicalBridge/LancaCanonicalBridge.sol";
 import {
-    TransparentUpgradeableProxy,
+    LCBTransparentUpgradeableProxy,
     ITransparentUpgradeableProxy
-} from "contracts/Proxy/TransparentUpgradeableProxy.sol";
+} from "contracts/Proxy/LCBTransparentUpgradeableProxy.sol";
 import {LCBridgeBaseTest} from "test/foundry/LCBridge/base/LCBridgeBaseTest.sol";
 
 contract DeployLCBridge is LCBridgeBaseTest {
-    TransparentUpgradeableProxy internal lancaCanonicalBridgeProxy;
+    LCBTransparentUpgradeableProxy internal lancaCanonicalBridgeProxy;
     LancaCanonicalBridge internal lancaCanonicalBridge;
 
     function setUp() public virtual override {
@@ -63,7 +63,7 @@ contract DeployLCBridge is LCBridgeBaseTest {
 
     function _deployProxy(address implementation) internal {
         vm.startPrank(proxyDeployer);
-        lancaCanonicalBridgeProxy = new TransparentUpgradeableProxy(
+        lancaCanonicalBridgeProxy = new LCBTransparentUpgradeableProxy(
             implementation,
             proxyDeployer,
             ""

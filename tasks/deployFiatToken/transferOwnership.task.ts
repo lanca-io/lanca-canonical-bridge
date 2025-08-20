@@ -7,7 +7,7 @@ import { fiatTokenTransferOwnership } from "../utils/fiatTokenTransferOwnership"
 task("fiat-token-transfer-ownership", "Fiat token transfer ownership")
 	.addParam("owner", "New owner address")
 	.setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
-		await fiatTokenTransferOwnership(hre, taskArgs.owner);
+		await fiatTokenTransferOwnership(hre.network.name, taskArgs.owner);
 	});
 
 export default {};

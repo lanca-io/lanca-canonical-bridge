@@ -10,13 +10,13 @@ const deployFiatTokenProxyAdmin = async function (
 ): Promise<Deployment> {
 	const { proxyDeployer } = await hre.getNamedAccounts();
 	const { deploy } = hre.deployments;
-	const { name } = hre.network;
+	const { name: srcChainName } = hre.network;
+	const srcChain = conceroNetworks[srcChainName as keyof typeof conceroNetworks];
+	const { type: networkType } = srcChain;
 
-	const networkType = conceroNetworks[name].type;
+	log("Deploying FiatTokenProxyAdmin...", "deployFiatTokenProxyAdmin", srcChainName);
 
-	log("Deploying FiatTokenProxyAdmin...", "deployFiatTokenProxyAdmin", name);
-
-	const implementation = getEnvVar(`FIAT_TOKEN_IMPLEMENTATION_${getNetworkEnvKey(name)}`);
+	const implementation = getEnvVar(`FIAT_TOKEN_IMPLEMENTATION_${getNetworkEnvKey(srcChainName)}`);
 
 	const deployment = await deploy("AdminUpgradeabilityProxy", {
 		from: proxyDeployer,
@@ -25,10 +25,14 @@ const deployFiatTokenProxyAdmin = async function (
 		autoMine: true,
 	});
 
-	log(`Deployment completed: ${deployment.address} \n`, "deployFiatTokenProxyAdmin", name);
+	log(
+		`Deployment completed: ${deployment.address} \n`,
+		"deployFiatTokenProxyAdmin",
+		srcChainName,
+	);
 
 	updateEnvVariable(
-		`FIAT_TOKEN_PROXY_ADMIN_${getNetworkEnvKey(name)}`,
+		`FIAT_TOKEN_PROXY_ADMIN_${getNetworkEnvKey(srcChainName)}`,
 		deployment.address,
 		`deployments.${networkType}` as const,
 	);

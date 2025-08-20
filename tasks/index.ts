@@ -1,11 +1,11 @@
-import { configureMinterTask } from "./deployFiatToken/configureMinterTask";
+import { configureMinterTask } from "./deployFiatToken/configureMinter.task";
 
 import { addDstBridgeTask } from "./addDstBridge/addDstBridge.task";
 import { addDstPoolTask } from "./addDstPool/addDstPool.task";
 import { changeProxyAdminOwnerTask } from "./changeProxyAdminOwner/changeProxyAdminOwner.task";
 import { deployBridgeTask } from "./deployBridge/deployBridge.task";
 import fiatTokenChangeAdmin from "./deployFiatToken/changeAdmin.task";
-import { deployFiatTokenTask } from "./deployFiatToken/deployFiatTokenTask";
+import { deployFiatTokenTask } from "./deployFiatToken/deployFiatToken.task";
 import fiatTokenTransferOwnership from "./deployFiatToken/transferOwnership.task";
 import { deployPoolTask } from "./deployPool/deployPool.task";
 import { getRateInfoTask } from "./getRateInfo/getRateInfo.task";

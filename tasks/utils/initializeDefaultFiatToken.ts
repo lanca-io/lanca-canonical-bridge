@@ -1,25 +1,21 @@
 import { getNetworkEnvKey } from "@concero/contract-utils";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { conceroNetworks, getViemReceiptConfig } from "../../constants";
 import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils";
 
-export async function initializeDefaultFiatToken(hre: HardhatRuntimeEnvironment): Promise<void> {
-	const { name: chainName } = hre.network;
-	const { viemChain, type } = conceroNetworks[chainName];
+export async function initializeDefaultFiatToken(srcChainName: string): Promise<void> {
+	const srcChain = conceroNetworks[srcChainName as keyof typeof conceroNetworks];
+	const { viemChain, type } = srcChain;
 
 	const { abi: fiatTokenAbi } = await import(
 		"../../artifacts/contracts/usdc/v2/FiatTokenV2_2.sol/FiatTokenV2_2.json"
 	);
 
 	const viemAccount = getViemAccount(type, "deployer");
-	const { walletClient, publicClient } = getFallbackClients(
-		conceroNetworks[chainName],
-		viemAccount,
-	);
+	const { walletClient, publicClient } = getFallbackClients(srcChain, viemAccount);
 
 	const fiatTokenImplementation = getEnvVar(
-		`FIAT_TOKEN_IMPLEMENTATION_${getNetworkEnvKey(chainName)}`,
+		`FIAT_TOKEN_IMPLEMENTATION_${getNetworkEnvKey(srcChainName)}`,
 	);
 	if (!fiatTokenImplementation) return;
 
@@ -57,7 +53,7 @@ export async function initializeDefaultFiatToken(hre: HardhatRuntimeEnvironment)
 		});
 
 		await publicClient.waitForTransactionReceipt({
-			...getViemReceiptConfig(conceroNetworks[chainName]),
+			...getViemReceiptConfig(srcChain),
 			hash: initTxHash,
 		});
 
@@ -71,7 +67,7 @@ export async function initializeDefaultFiatToken(hre: HardhatRuntimeEnvironment)
 		});
 
 		await publicClient.waitForTransactionReceipt({
-			...getViemReceiptConfig(conceroNetworks[chainName]),
+			...getViemReceiptConfig(srcChain),
 			hash: initV2TxHash,
 		});
 
@@ -85,7 +81,7 @@ export async function initializeDefaultFiatToken(hre: HardhatRuntimeEnvironment)
 		});
 
 		await publicClient.waitForTransactionReceipt({
-			...getViemReceiptConfig(conceroNetworks[chainName]),
+			...getViemReceiptConfig(srcChain),
 			hash: initV2_1TxHash,
 		});
 
@@ -99,13 +95,13 @@ export async function initializeDefaultFiatToken(hre: HardhatRuntimeEnvironment)
 		});
 
 		await publicClient.waitForTransactionReceipt({
-			...getViemReceiptConfig(conceroNetworks[chainName]),
+			...getViemReceiptConfig(srcChain),
 			hash: initV2_2TxHash,
 		});
 
-		log("Default initialization completed \n", "initializeDefaultFiatToken", chainName);
+		log("Default initialization completed \n", "initializeDefaultFiatToken", srcChainName);
 	} catch (error) {
-		err(`Error initializing USDC Proxy: ${error}`, "initializeFiatToken");
+		err(`Error initializing USDC Proxy: ${error}`, "initializeDefaultFiatToken", srcChainName);
 		throw error;
 	}
 }

@@ -2,17 +2,13 @@ import fs from "fs";
 import path from "path";
 
 import { getNetworkEnvKey } from "@concero/contract-utils";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { conceroNetworks, getViemReceiptConfig } from "../../constants";
 import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils";
 
-export async function fiatTokenChangeAdmin(
-	hre: HardhatRuntimeEnvironment,
-	admin: string,
-): Promise<void> {
-	const { name: chainName } = hre.network;
-	const { viemChain, type } = conceroNetworks[chainName];
+export async function fiatTokenChangeAdmin(srcChainName: string, admin: string): Promise<void> {
+	const srcChain = conceroNetworks[srcChainName as keyof typeof conceroNetworks];
+	const { viemChain, type } = srcChain;
 
 	const adminUpgradeableProxyArtifactPath = path.resolve(
 		__dirname,
@@ -24,19 +20,16 @@ export async function fiatTokenChangeAdmin(
 	);
 
 	const fiatTokenProxyAdminAddress = getEnvVar(
-		`FIAT_TOKEN_PROXY_ADMIN_${getNetworkEnvKey(chainName)}`,
+		`FIAT_TOKEN_PROXY_ADMIN_${getNetworkEnvKey(srcChainName)}`,
 	);
 	if (!fiatTokenProxyAdminAddress) return;
 
 	// viemAccount should be master minter address
 	const viemAccount = getViemAccount(type, "deployer");
-	const { walletClient, publicClient } = getFallbackClients(
-		conceroNetworks[chainName],
-		viemAccount,
-	);
+	const { walletClient, publicClient } = getFallbackClients(srcChain, viemAccount);
 
 	try {
-		log("Executing change admin of FiatToken...", "fiatTokenChangeAdmin", chainName);
+		log("Executing change admin of FiatToken...", "fiatTokenChangeAdmin", srcChainName);
 		const configTxHash = await walletClient.writeContract({
 			address: fiatTokenProxyAdminAddress as `0x${string}`,
 			abi: adminUpgradableProxyArtifact.abi,
@@ -47,16 +40,16 @@ export async function fiatTokenChangeAdmin(
 		});
 
 		const configReceipt = await publicClient.waitForTransactionReceipt({
-			...getViemReceiptConfig(conceroNetworks[chainName]),
+			...getViemReceiptConfig(srcChain),
 			hash: configTxHash,
 		});
 
 		log(
 			`ChangeAdmin completed: ${configReceipt.transactionHash}`,
 			"fiatTokenChangeAdmin",
-			chainName,
+			srcChainName,
 		);
 	} catch (error) {
-		err(`Failed change admin of FiatToken: ${error}`, "fiatTokenChangeAdmin", chainName);
+		err(`Failed change admin of FiatToken: ${error}`, "fiatTokenChangeAdmin", srcChainName);
 	}
 }

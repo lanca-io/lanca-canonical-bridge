@@ -11,7 +11,7 @@ import { initializeFiatToken } from "../utils/initializeFiatToken";
 async function deployFiatTokenTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	if (taskArgs.implementation) {
 		await deployFiatToken(hre);
-		await initializeDefaultFiatToken(hre);
+		await initializeDefaultFiatToken(hre.network.name);
 	}
 
 	if (taskArgs.proxy) {
@@ -20,7 +20,7 @@ async function deployFiatTokenTask(taskArgs: any, hre: HardhatRuntimeEnvironment
 	}
 
 	if (taskArgs.implementation) {
-		await initializeFiatToken(hre);
+		await initializeFiatToken(hre.network.name);
 	}
 }
 

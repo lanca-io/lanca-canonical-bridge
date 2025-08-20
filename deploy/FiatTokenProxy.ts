@@ -16,12 +16,13 @@ import {
 const deployFiatTokenProxy = async function (hre: HardhatRuntimeEnvironment): Promise<Deployment> {
 	const { proxyDeployer } = await hre.getNamedAccounts();
 	const { deploy } = hre.deployments;
-	const { name } = hre.network;
-	const networkType = conceroNetworks[name as keyof typeof conceroNetworks].type;
+	const { name: srcChainName } = hre.network;
+	const srcChain = conceroNetworks[srcChainName as keyof typeof conceroNetworks];
+	const { type: networkType } = srcChain;
 
-	const implementation = getEnvVar(`FIAT_TOKEN_IMPLEMENTATION_${getNetworkEnvKey(name)}`);
+	const implementation = getEnvVar(`FIAT_TOKEN_IMPLEMENTATION_${getNetworkEnvKey(srcChainName)}`);
 
-	log("Deploying FiatTokenProxy...", "deployFiatTokenProxy", name);
+	log("Deploying FiatTokenProxy...", "deployFiatTokenProxy", srcChainName);
 
 	const deployment = await deploy("FiatTokenProxy", {
 		from: proxyDeployer,
@@ -30,17 +31,16 @@ const deployFiatTokenProxy = async function (hre: HardhatRuntimeEnvironment): Pr
 		autoMine: true,
 	});
 
-	log(`Deployment completed: ${deployment.address} \n`, "deployFiatTokenProxy", name);
+	log(`Deployment completed: ${deployment.address} \n`, "deployFiatTokenProxy", srcChainName);
 
 	updateEnvVariable(
-		`FIAT_TOKEN_PROXY_${getNetworkEnvKey(name)}`,
+		`FIAT_TOKEN_PROXY_${getNetworkEnvKey(srcChainName)}`,
 		deployment.address,
 		`deployments.${networkType}` as const,
 	);
 
-	// TODO: Refactor this
 	const fiatTokenProxyAdminAddress = getEnvVar(
-		`FIAT_TOKEN_PROXY_ADMIN_${getNetworkEnvKey(name)}`,
+		`FIAT_TOKEN_PROXY_ADMIN_${getNetworkEnvKey(srcChainName)}`,
 	);
 
 	const { abi: fiatTokenProxyAbi } = await import(
@@ -48,7 +48,7 @@ const deployFiatTokenProxy = async function (hre: HardhatRuntimeEnvironment): Pr
 	);
 
 	const viemAccount = getViemAccount(networkType, "proxyDeployer");
-	const { walletClient, publicClient } = getFallbackClients(conceroNetworks[name], viemAccount);
+	const { walletClient, publicClient } = getFallbackClients(srcChain, viemAccount);
 
 	try {
 		const changeAdminTxHash = await walletClient.writeContract({
@@ -60,25 +60,29 @@ const deployFiatTokenProxy = async function (hre: HardhatRuntimeEnvironment): Pr
 		});
 
 		await publicClient.waitForTransactionReceipt({
-			...getViemReceiptConfig(conceroNetworks[name]),
+			...getViemReceiptConfig(srcChain),
 			hash: changeAdminTxHash,
 		});
 
-		log(`Change admin completed: ${changeAdminTxHash}`, "deployFiatTokenProxy", name);
+		log(`Change admin completed: ${changeAdminTxHash}`, "deployFiatTokenProxy", srcChainName);
 	} catch (error) {
-		err(`Failed to change admin: ${error}`, "deployFiatTokenProxy", name);
+		err(`Failed to change admin: ${error}`, "deployFiatTokenProxy", srcChainName);
 	}
 
 	try {
 		await saveVerificationData(
-			name,
+			srcChainName,
 			"FiatTokenProxy",
 			deployment.address,
 			deployment.transactionHash || "",
 		);
-		await copyMetadataForVerification(name, "FiatTokenProxy");
+		await copyMetadataForVerification(srcChainName, "FiatTokenProxy");
 	} catch (error) {
-		log(`Warning: Failed to save verification data: ${error}`, "deployFiatTokenProxy", name);
+		log(
+			`Warning: Failed to save verification data: ${error}`,
+			"deployFiatTokenProxy",
+			srcChainName,
+		);
 	}
 
 	return deployment;

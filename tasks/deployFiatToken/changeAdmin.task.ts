@@ -7,7 +7,7 @@ import { fiatTokenChangeAdmin } from "../utils/fiatTokenChangeAdmin";
 task("fiat-token-change-admin", "Fiat token change admin")
 	.addParam("admin", "New admin address")
 	.setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
-		await fiatTokenChangeAdmin(hre, taskArgs.admin);
+		await fiatTokenChangeAdmin(hre.network.name, taskArgs.admin);
 	});
 
 export default {};

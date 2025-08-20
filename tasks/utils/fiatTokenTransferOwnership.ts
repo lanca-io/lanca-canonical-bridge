@@ -2,17 +2,16 @@ import fs from "fs";
 import path from "path";
 
 import { getNetworkEnvKey } from "@concero/contract-utils";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { conceroNetworks, getViemReceiptConfig } from "../../constants";
 import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils";
 
 export async function fiatTokenTransferOwnership(
-	hre: HardhatRuntimeEnvironment,
+	srcChainName: string,
 	owner: string,
 ): Promise<void> {
-	const { name: chainName } = hre.network;
-	const { viemChain, type } = conceroNetworks[chainName];
+	const srcChain = conceroNetworks[srcChainName as keyof typeof conceroNetworks];
+	const { viemChain, type } = srcChain;
 
 	const fiatTokenArtifactPath = path.resolve(
 		__dirname,
@@ -20,21 +19,18 @@ export async function fiatTokenTransferOwnership(
 	);
 	const fiatTokenArtifact = JSON.parse(fs.readFileSync(fiatTokenArtifactPath, "utf8"));
 
-	const fiatTokenProxyAddress = getEnvVar(`FIAT_TOKEN_PROXY_${getNetworkEnvKey(chainName)}`);
+	const fiatTokenProxyAddress = getEnvVar(`FIAT_TOKEN_PROXY_${getNetworkEnvKey(srcChainName)}`);
 	if (!fiatTokenProxyAddress) return;
 
 	// viemAccount should be master minter address
 	const viemAccount = getViemAccount(type, "deployer");
-	const { walletClient, publicClient } = getFallbackClients(
-		conceroNetworks[chainName],
-		viemAccount,
-	);
+	const { walletClient, publicClient } = getFallbackClients(srcChain, viemAccount);
 
 	try {
 		log(
 			"Executing transfer ownership of FiatToken...",
 			"fiatTokenTransferOwnership",
-			chainName,
+			srcChainName,
 		);
 		const configTxHash = await walletClient.writeContract({
 			address: fiatTokenProxyAddress as `0x${string}`,
@@ -46,20 +42,20 @@ export async function fiatTokenTransferOwnership(
 		});
 
 		const configReceipt = await publicClient.waitForTransactionReceipt({
-			...getViemReceiptConfig(conceroNetworks[chainName]),
+			...getViemReceiptConfig(srcChain),
 			hash: configTxHash,
 		});
 
 		log(
 			`TransferOwnership completed: ${configReceipt.transactionHash}`,
 			"fiatTokenTransferOwnership",
-			chainName,
+			srcChainName,
 		);
 	} catch (error) {
 		err(
 			`Failed transfer ownership of FiatToken: ${error}`,
 			"fiatTokenTransferOwnership",
-			chainName,
+			srcChainName,
 		);
 	}
 }

@@ -8,7 +8,7 @@ export async function configureMinter(srcChainName: string, amount?: string): Pr
 	const srcChain = conceroNetworks[srcChainName as keyof typeof conceroNetworks];
 	const { viemChain, type } = srcChain;
 
-	const fiatTokenProxyAddress = getEnvVar(`FIAT_TOKEN_PROXY_${getNetworkEnvKey(srcChain.name)}`);
+	const fiatTokenProxyAddress = getEnvVar(`FIAT_TOKEN_PROXY_${getNetworkEnvKey(srcChainName)}`);
 	if (!fiatTokenProxyAddress) {
 		err(`FiatToken address not found`, "configureMinter", srcChainName);
 	}
@@ -22,7 +22,7 @@ export async function configureMinter(srcChainName: string, amount?: string): Pr
 	const { walletClient, publicClient } = getFallbackClients(srcChain, viemAccount);
 
 	const lancaCanonicalBridgeAddress = getEnvVar(
-		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(srcChain.name)}`,
+		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(srcChainName)}`,
 	);
 	if (!lancaCanonicalBridgeAddress) {
 		err(`LancaCanonicalBridge address not found`, "configureMinter", srcChainName);
@@ -31,11 +31,11 @@ export async function configureMinter(srcChainName: string, amount?: string): Pr
 	const minterAllowedAmount = amount ? amount : defaultMinterAllowedAmount;
 
 	try {
-		log("Executing configuration of FiatToken...", "configureFiatToken", srcChain.name);
+		log("Executing configuration of FiatToken...", "configureFiatToken", srcChainName);
 		log(
 			`Setting lancaCanonicalBridgeAddress ${lancaCanonicalBridgeAddress} as minter with minterAllowedAmount: ${minterAllowedAmount}`,
 			"configureFiatToken",
-			srcChain.name,
+			srcChainName,
 		);
 
 		const isMinter = await publicClient.readContract({
@@ -46,7 +46,7 @@ export async function configureMinter(srcChainName: string, amount?: string): Pr
 		});
 
 		if (isMinter) {
-			log("LancaCanonicalBridge is already a minter", "configureFiatToken", srcChain.name);
+			log("LancaCanonicalBridge is already a minter", "configureFiatToken", srcChainName);
 		}
 
 		const configTxHash = await walletClient.writeContract({
@@ -66,9 +66,9 @@ export async function configureMinter(srcChainName: string, amount?: string): Pr
 		log(
 			`Configuration completed: ${configReceipt.transactionHash}`,
 			"configureFiatToken",
-			srcChain.name,
+			srcChainName,
 		);
 	} catch (error) {
-		err(`Failed to configure FiatToken: ${error}`, "configureFiatToken", srcChain.name);
+		err(`Failed to configure FiatToken: ${error}`, "configureFiatToken", srcChainName);
 	}
 }

@@ -1,5 +1,4 @@
 import { getNetworkEnvKey } from "@concero/contract-utils";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { decodeEventLog, formatEther, parseUnits } from "viem";
 
 import { conceroNetworks, getViemReceiptConfig } from "../../constants";
@@ -10,21 +9,15 @@ interface SendTokenParams {
 	srcChain: string;
 	dstChain: string;
 	amount: string;
-	gasLimit?: string;
 }
 
-const ADDRESS_ZERO = "0x0000000000000000000000000000000000000000";
+export async function sendToken(params: SendTokenParams): Promise<void> {
+	const { srcChain, dstChain, amount } = params;
 
-export async function sendToken(
-	hre: HardhatRuntimeEnvironment,
-	params: SendTokenParams,
-): Promise<void> {
-	const { srcChain, dstChain, amount, gasLimit = "150000" } = params;
-
-	const srcNetwork = conceroNetworks[srcChain];
+	const srcNetwork = conceroNetworks[srcChain as keyof typeof conceroNetworks];
 	const { viemChain, type, chainSelector: srcChainSelector } = srcNetwork;
 
-	const dstNetwork = conceroNetworks[dstChain];
+	const dstNetwork = conceroNetworks[dstChain as keyof typeof conceroNetworks];
 	if (!dstNetwork) {
 		err(`Destination network ${dstChain} not found`, "sendToken");
 		return;
@@ -38,15 +31,25 @@ export async function sendToken(
 	);
 
 	const bridgeAddress = getEnvVar(`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(srcChain)}`);
-	if (!bridgeAddress) return;
+	if (!bridgeAddress) {
+		err(`Bridge address not found for ${srcChain}`, "sendToken");
+	};
 
 	const usdcAddress = getEnvVar(`FIAT_TOKEN_PROXY_${getNetworkEnvKey(srcChain)}`);
-	if (!usdcAddress) return;
+	if (!usdcAddress) {
+		err(`USDC address not found for ${srcChain}`, "sendToken");
+	};
 
 	const dstBridgeAddress = getEnvVar(
 		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChain)}`,
 	);
-	if (!dstBridgeAddress) return;
+	if (!dstBridgeAddress) {
+		err(`Destination bridge address not found for ${dstChain}`, "sendToken");
+	};
+
+	if (!bridgeAddress || !usdcAddress || !dstBridgeAddress) {
+		return;
+	}
 
 	// Determine if we need to approve to pool or bridge
 	const isEthereumChain = srcChain.startsWith("ethereum");

@@ -12,6 +12,7 @@ async function sendTokenTask(taskArgs: any) {
 	});
 }
 
+// yarn hardhat send-token --from <source_network> --to <destination_network> --amount <amount>
 task("send-token", "Send tokens from one network to another via bridge")
 	.addParam("from", "Source network name (e.g., 'arbitrumSepolia', 'baseSepolia')")
 	.addParam("to", "Destination network name (e.g., 'arbitrumSepolia', 'baseSepolia')")

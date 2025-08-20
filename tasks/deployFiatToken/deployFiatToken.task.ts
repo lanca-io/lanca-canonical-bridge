@@ -24,6 +24,7 @@ async function deployFiatTokenTask(taskArgs: any, hre: HardhatRuntimeEnvironment
 	}
 }
 
+// yarn hardhat deploy-fiat-token [--implementation] [--proxy] --network <network_name>
 task("deploy-fiat-token", "Deploy FiatToken")
 	.addFlag("implementation", "Deploy implementation")
 	.addFlag("proxy", "Deploy proxy")

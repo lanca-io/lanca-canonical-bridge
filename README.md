@@ -1,32 +1,23 @@
 # Hardhat Tasks
 
+## Prerequisites
+- Add Concero Router address to environment variables
+
 ## Add new chain process
-1. [ ] Add Concero Router address to environment variables
-2. [ ] (L2) Deploy USDC.e to a new chain
+1. [ ] (L2) Deploy USDC.e to a new chain
 ```bash
-yarn hardhat deploy-fiat-token [--implementation] [--proxy] --network <network_name>
+yarn hardhat deploy-fiat-token --implementation --proxy --network <network_name>
 ```
-3. [ ] (L2) Deploy LancaCanonicalBridge to a new network
+2. [ ] (L2) Deploy LancaCanonicalBridge to a new network
 ```bash
-yarn hardhat deploy-bridge [--implementation] [--proxy] [--pause] --chain <chain_name> --network <network_name>
+yarn hardhat deploy-bridge --implementation --proxy --network <network_name>
 ```
-4. [ ] (L2) Configure minter for USDC.e -> LancaCanonicalBridge
+3. [ ] (L1) Deploy pool for new network and add pool to L1
 ```bash
-yarn hardhat configure-minter [--bridge] [--test] --network <network_name>
+yarn hardhat deploy-pool --implementation --proxy --dstchain <chain_name> --network <network_name>
 ```
-5. [ ] (L1) Deploy pool for new network and add pool to L1
-```bash
-yarn hardhat deploy-pool [--implementation] [--proxy] [--addpool] [--pause] --chain <chain_name> --network <network_name>
-```
-6. [ ] (L1) Add destination bridge for new network in L1
-```bash
-yarn hardhat add-dst-bridge --chain <destination_chain_name> --network <network_name>
-```
-7. [ ] (L1) Set rate limits for new network
-```bash
-yarn hardhat set-rate-limits [--dstchain <chain_name>] [--outmax <amount>] [--outrefill <speed>] [--inmax <amount>] [--inrefill <speed>] --network <network_name>
-```
-8. [ ] (L1, L2) Ready, transactions can be sent
+
+Ready, transactions can be sent
 ```bash
 yarn hardhat send-token --from <source_network> --to <destination_network> --amount <amount>
 ```
@@ -37,7 +28,7 @@ yarn hardhat send-token --from <source_network> --to <destination_network> --amo
 Deploy LancaCanonicalBridge contracts with flexible options.
 
 ```bash
-yarn hardhat deploy-bridge [--implementation] [--proxy] [--pause] [--owner <address>] --chain <l1-chain_name> --network <network_name>
+yarn hardhat deploy-bridge [--implementation] [--proxy] [--pause] [--owner <address>] --network <network_name>
 ```
 
 **Flags:**
@@ -46,84 +37,55 @@ yarn hardhat deploy-bridge [--implementation] [--proxy] [--pause] [--owner <addr
 - `--pause` - Pause bridge
 
 **Parameters:**
-- `--chain` - Destination chain name (required) (L1 chain name)
 - `--owner` - Custom proxy admin owner address (optional)
 
 **Examples:**
 ```bash
 # Deploy implementation only
-yarn hardhat deploy-bridge --implementation --chain ethereum --network base
+yarn hardhat deploy-bridge --implementation --network base
 
 # Deploy proxy and admin only
-yarn hardhat deploy-bridge --proxy --chain ethereum --network base
+yarn hardhat deploy-bridge --proxy --network base
 
 # Deploy implementation + proxy (with automatic upgrade)
-yarn hardhat deploy-bridge --implementation --proxy --chain ethereum --network base
+yarn hardhat deploy-bridge --implementation --proxy --network base
 
 # Pause bridge
-yarn hardhat deploy-bridge --pause --chain ethereum --network base
-```
-
-### Bridge L1 Deployment
-Deploy LancaCanonicalBridge L1 specific components.
-
-```bash
-yarn hardhat deploy-bridge-l1 [--implementation] [--proxy] [--pause] [--owner <address>] --network <network_name>
-```
-
-**Flags:**
-- `--implementation` - Deploy L1 bridge implementation
-- `--proxy` - Deploy proxy and proxy admin
-- `--pause` - Pause L1 bridge
-
-**Parameters:**
-- `--owner` - Custom proxy admin owner address (optional)
-
-**Examples:**
-```bash
-# Deploy L1 implementation only
-yarn hardhat deploy-bridge-l1 --implementation --network ethereum
-
-# Deploy L1 complete setup
-yarn hardhat deploy-bridge-l1 --implementation --proxy --network ethereum
-
-# Pause L1 bridge
-yarn hardhat deploy-bridge-l1 --pause --network ethereum
+yarn hardhat deploy-bridge --pause --network base
 ```
 
 ### Pool Deployment
 Deploy LancaCanonicalBridgePool contracts with proxy setup and pool configuration.
 
 ```bash
-yarn hardhat deploy-pool [--implementation] [--proxy] [--addpool] [--pause] [--owner <address>] --chain <dst_chain_name> --network <network_name>
+yarn hardhat deploy-pool [--implementation] [--proxy] [--pause] [--owner <address>] --dstchain <chain_name> --network <network_name>
 ```
 
 **Flags:**
 - `--implementation` - Deploy pool implementation
 - `--proxy` - Deploy proxy and proxy admin for pool
-- `--addpool` - Add pool to L1 Bridge contract
 - `--pause` - Pause pool
 
 **Parameters:**
-- `--chain` - Destination chain name for the pool (required)
+- `--dstchain` - Destination chain name for the pool (required)
 - `--owner` - Custom proxy admin owner address (optional)
 
 **Examples:**
 ```bash
 # Deploy pool implementation only
-yarn hardhat deploy-pool --implementation --chain base --network ethereum
+yarn hardhat deploy-pool --implementation --dstchain base --network ethereum
 
 # Deploy proxy and admin only
-yarn hardhat deploy-pool --proxy --chain base --network ethereum
+yarn hardhat deploy-pool --proxy --dstchain base --network ethereum
 
 # Deploy implementation + proxy with automatic upgrade
-yarn hardhat deploy-pool --implementation --proxy --chain base --network ethereum
+yarn hardhat deploy-pool --implementation --proxy --dstchain base --network ethereum
 
 # Deploy complete setup and add pool to L1 Bridge
-yarn hardhat deploy-pool --implementation --proxy --addpool --chain base --network ethereum
+yarn hardhat deploy-pool --implementation --proxy --dstchain base --network ethereum
 
 # Pause pool
-yarn hardhat deploy-pool --pause --chain base --network ethereum
+yarn hardhat deploy-pool --pause --dstchain base --network ethereum
 ```
 
 ### Fiat Token Deployment
@@ -149,49 +111,56 @@ yarn hardhat deploy-fiat-token --implementation --proxy --network arbitrum
 ### Configure Fiat Token
 
 ```bash
-yarn hardhat configure-minter [--bridge] [--test] --network <network_name>
+yarn hardhat configure-minter --network <network_name>
 ```
-
-**Flags:**
-- `--bridge` - Configure Minter for bridge
-- `--test` - Configure Minter for test
 
 ### Add Destination Bridge
 Add destination bridge to LancaCanonicalBridgeL1 contract.
 
 ```bash
-yarn hardhat add-dst-bridge --chain <destination_chain_name> --network <network_name>
+yarn hardhat add-dst-pool --dstchain <destination_chain_name>
 ```
 
 **Parameters:**
-- `--chain` - Destination chain name for the bridge (required)
+- `--dstchain` - Destination chain name for the bridge (required)
 
 **Examples:**
 ```bash
 # Add destination bridge for Arbitrum chain
-yarn hardhat add-dst-bridge --chain arbitrum --network ethereum
+yarn hardhat add-dst-bridge --dstchain arbitrum
+```
+
+### Add Destination Pool
+Add destination pool to LancaCanonicalBridgeL1 contract.
+
+```bash
+yarn hardhat add-dst-pool --dstchain <destination_chain_name>
+```
+**Parameters:**
+- `--dstchain` - Destination chain name for the pool (required)
+
+**Examples:**
+```bash
+# Add destination pool for Arbitrum chain
+yarn hardhat add-dst-pool --dstchain arbitrum
 ```
 
 ### Send Tokens
 Send tokens from one chain to another through the Lanca Canonical Bridge.
 
 ```bash
-yarn hardhat send-token --from <source_network> --to <destination_network> --amount <amount> [--gaslimit <gas_limit>]
+yarn hardhat send-token --from <source_network> --to <destination_network> --amount <amount>
 ```
 
 **Parameters:**
 - `--from` - Source network name (e.g., 'arbitrumSepolia', 'baseSepolia')
 - `--to` - Destination network name (e.g., 'arbitrumSepolia', 'baseSepolia')
 - `--amount` - Amount of USDC to send (e.g., '10.5')
-- `--gaslimit` - Gas limit for destination transaction (optional, defaults to 150000)
 
 **Examples:**
 ```bash
-# Send 5 USDC from Arbitrum Sepolia to Base Sepolia (with default gas limit)
+# Send 5 USDC from Arbitrum Sepolia to Base Sepolia
 yarn hardhat send-token --from arbitrumSepolia --to baseSepolia --amount 5
-
-# Send 100 USDC from Ethereum to Base with custom gas limit
-yarn hardhat send-token --from ethereum --to base --amount 100 --gaslimit 200000
 ```
 
 ### Set Rate Limits
@@ -229,16 +198,16 @@ Deploy proxy admins with custom owners and change ownership of existing proxy ad
 ```bash
 # Deploy with custom owner
 yarn hardhat deploy-bridge --proxy --owner <address> --network <network>
-yarn hardhat deploy-pool --proxy --owner <address> --chain <dst_chain> --network <network>
+yarn hardhat deploy-pool --proxy --owner <address> --dstchain <dst_chain>
 
 # Change existing proxy admin owner
-yarn hardhat change-proxy-admin-owner --type <bridge|pool> --newowner <address> [--chain <chain>] --network <network>
+yarn hardhat change-proxy-admin-owner --type <bridge|pool> --newowner <address> [--dstchain <chain_name>] --network <network_name>
 ```
 
 **Parameters:**
 - `--type` - ProxyAdmin type (`bridge`, `pool`)
 - `--newowner` - New owner address
-- `--chain` - Destination chain name (required for pool type)
+- `--dstchain` - Destination chain name (required for pool type)
 - `--owner` - Custom owner address for deployment
 
 **Examples:**
@@ -247,51 +216,18 @@ yarn hardhat change-proxy-admin-owner --type <bridge|pool> --newowner <address> 
 yarn hardhat deploy-bridge --proxy --owner 0x1234567890123456789012345678901234567890 --network ethereum
 
 # Deploy pool proxy with custom owner
-yarn hardhat deploy-pool --proxy --owner 0x1234567890123456789012345678901234567890 --chain base --network ethereum
+yarn hardhat deploy-pool --proxy --owner 0x1234567890123456789012345678901234567890 --dstchain base --network ethereum
 
 # Change bridge proxy admin owner
 yarn hardhat change-proxy-admin-owner --type bridge --newowner 0x5678901234567890123456789012345678901234 --network ethereum
 
 # Change pool proxy admin owner
-yarn hardhat change-proxy-admin-owner --type pool --newowner 0x5678901234567890123456789012345678901234 --chain base --network ethereum
-```
-
-### Mint Test USDC
-Mint Test USDC tokens to a specified address.
-
-```bash
-yarn hardhat mint-test-usdc --to <recipient_address> --amount <amount> --network <network_name>
-```
-
-**Parameters:**
-- `--to` - The address to mint USDC to
-- `--amount` - The amount of USDC to mint
-
-**Examples:**
-```bash
-# Mint 1000 USDC to specific address
-yarn hardhat mint-test-usdc --to 0x1234567890123456789012345678901234567890 --amount 1000000000 --network arbitrumSepolia
-```
-
-## Alternative: Using Hardhat Deploy Tags
-
-You can also use the standard hardhat-deploy plugin:
-
-```bash
-# Deploy bridge implementation
-yarn hardhat deploy --tags LancaCanonicalBridge --network <network_name>
-
-# Deploy bridge proxy
-yarn hardhat deploy --tags LancaCanonicalBridgeProxy --network <network_name>
-
-# Deploy proxy admin
-yarn hardhat deploy --tags LancaCanonicalBridgeProxyAdmin --network <network_name>
+yarn hardhat change-proxy-admin-owner --type pool --newowner 0x5678901234567890123456789012345678901234 --dstchain base --network ethereum
 ```
 
 ## Environment Setup
 
 Make sure to configure your environment variables:
-- Create `.env.usdc` based on `.env.usdc.example`
 - Set `CONCERO_ROUTER_PROXY_<NETWORK_NAME>` for each network
 
 ## Contract Addresses
@@ -300,9 +236,11 @@ After deployment, addresses are saved to environment variables:
 - `LANCA_CANONICAL_BRIDGE_<NETWORK_NAME>` - Implementation address
 - `LANCA_CANONICAL_BRIDGE_PROXY_<NETWORK_NAME>` - Proxy address
 - `LANCA_CANONICAL_BRIDGE_PROXY_ADMIN_<NETWORK_NAME>` - Proxy admin address
-- `LANCA_CANONICAL_BRIDGE_POOL_<NETWORK_NAME>` - Pool implementation address
-- `LANCA_CANONICAL_BRIDGE_POOL_PROXY_<NETWORK_NAME>` - Pool proxy address
-- `LANCA_CANONICAL_BRIDGE_POOL_PROXY_ADMIN_<NETWORK_NAME>` - Pool proxy admin address
+
+- `LC_BRIDGE_POOL_<NETWORK_NAME>_<NETWORK_NAME>` - Pool implementation address
+- `LC_BRIDGE_POOL_PROXY_<NETWORK_NAME>_<NETWORK_NAME>` - Pool proxy address
+- `LC_BRIDGE_POOL_PROXY_ADMIN_<NETWORK_NAME>_<NETWORK_NAME>` - Pool proxy admin address
+
 - `FIAT_TOKEN_<NETWORK_NAME>` - FiatToken implementation address
 - `FIAT_TOKEN_PROXY_<NETWORK_NAME>` - FiatToken proxy address
 - `FIAT_TOKEN_PROXY_ADMIN_<NETWORK_NAME>` - FiatToken proxy admin address 

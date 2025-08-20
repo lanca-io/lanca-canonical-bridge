@@ -3,22 +3,30 @@ import { task } from "hardhat/config";
 import { type HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { ProxyEnum, envPrefixes } from "../../constants";
-import { deployLancaCanonicalBridgeL1 } from "../../deploy/LancaCanonicalBridgeL1";
+import { deployLancaCanonicalBridge } from "../../deploy/LancaCanonicalBridge";
 import { deployLancaCanonicalBridgeProxy } from "../../deploy/LancaCanonicalBridgeProxy";
 import { deployProxyAdmin } from "../../deploy/ProxyAdmin";
 import { compileContracts } from "../../utils";
-import { upgradeLancaProxyImplementation } from "../utils";
+import { configureMinter, setRateLimits, upgradeLancaProxyImplementation } from "../utils";
 
-async function deployBridgeL1Task(taskArgs: any, hre: HardhatRuntimeEnvironment) {
+async function deployBridgeTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	compileContracts({ quiet: true });
 
+	const isL1Deployment =
+		hre.network.name === "ethereum" || hre.network.name === "ethereumSepolia";
+
 	if (taskArgs.implementation) {
-		await deployLancaCanonicalBridgeL1(hre);
+		await deployLancaCanonicalBridge(hre);
 	}
 
 	if (taskArgs.proxy) {
 		await deployProxyAdmin(hre, envPrefixes.lcBridgeProxyAdmin, taskArgs.owner);
 		await deployLancaCanonicalBridgeProxy(hre, ProxyEnum.lcBridgeProxy);
+	}
+
+	if (!isL1Deployment && taskArgs.proxy) {
+		await setRateLimits(hre.network.name);
+		await configureMinter(hre.network.name);
 	}
 
 	if (taskArgs.implementation) {
@@ -30,14 +38,14 @@ async function deployBridgeL1Task(taskArgs: any, hre: HardhatRuntimeEnvironment)
 	}
 }
 
-// yarn hardhat deploy-bridge-l1 [--implementation] [--proxy] [--pause] [--owner <address>] --network <network_name>
-task("deploy-bridge-l1", "Deploy LancaCanonicalBridge L1 components")
-	.addFlag("implementation", "Deploy L1 bridge implementation")
+// yarn hardhat deploy-bridge [--implementation] [--proxy] [--pause] [--owner <address>] --network <network_name>
+task("deploy-bridge", "Deploy LancaCanonicalBridge")
+	.addFlag("implementation", "Deploy implementation")
 	.addFlag("proxy", "Deploy proxy and proxy admin")
 	.addOptionalParam("owner", "Override proxy admin owner address")
-	.addFlag("pause", "Pause L1 bridge")
+	.addFlag("pause", "Pause bridge")
 	.setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
-		await deployBridgeL1Task(taskArgs, hre);
+		await deployBridgeTask(taskArgs, hre);
 	});
 
-export { deployBridgeL1Task };
+export { deployBridgeTask };

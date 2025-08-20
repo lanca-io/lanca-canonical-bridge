@@ -5,9 +5,8 @@ import { addDstPoolTask } from "./addDstPool/addDstPoolTask";
 import { removeDstBridgeTask } from "./removeDstBridge/removeDstBridgeTask";
 import { removeDstPoolTask } from "./removeDstPool/removeDstPoolTask";
 import { changeProxyAdminOwnerTask } from "./changeProxyAdminOwner/changeProxyAdminOwnerTask";
-import { deployBridgeL1Task } from "./deployBridge/deployBridgeL1Task";
-import { deployBridgeTask } from "./deployBridge/deployBridgeTask";
-import { setRateLimitsTask } from "./deployBridge/setRateLimitsTask";
+import { deployBridgeTask } from "./deployBridge/deployBridge.task";
+import { setRateLimitsTask } from "./setRateLimits/setRateLimits.task";
 import fiatTokenChangeAdmin from "./deployFiatToken/changeAdmin.task";
 import { deployFiatTokenTask } from "./deployFiatToken/deployFiatTokenTask";
 import fiatTokenTransferOwnership from "./deployFiatToken/transferOwnership.task";
@@ -25,7 +24,6 @@ export default {
 	removeDstPoolTask,
 	changeProxyAdminOwnerTask,
 	deployBridgeTask,
-	deployBridgeL1Task,
 	deployPoolTask,
 	deployFiatTokenTask,
 	configureMinterTask,

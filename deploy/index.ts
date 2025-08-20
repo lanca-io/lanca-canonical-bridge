@@ -1,5 +1,4 @@
 export { deployLancaCanonicalBridge } from "./LancaCanonicalBridge";
-export { deployLancaCanonicalBridgeL1 } from "./LancaCanonicalBridgeL1";
 export { deployLancaCanonicalBridgeProxy } from "./LancaCanonicalBridgeProxy";
 export { deployProxyAdmin } from "./ProxyAdmin";
 export { deployFiatToken } from "./FiatToken";

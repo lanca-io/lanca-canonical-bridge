@@ -38,7 +38,7 @@ export async function setRateLimits(
 		// Set rate limits on L1 bridge
 		dstChain = conceroNetworks[dstChainName as keyof typeof conceroNetworks];
 		if (!dstChain) {
-			err(`Destination network ${dstChainName} not found`, "setRateLimits", srcChain.name);
+			err(`Destination network ${dstChainName} not found`, "setRateLimits", srcChainName);
 			return;
 		}
 	} else {
@@ -46,7 +46,7 @@ export async function setRateLimits(
 		dstChain =
 			networkType === "testnet" ? conceroNetworks.ethereumSepolia : conceroNetworks.ethereum;
 		if (!dstChain) {
-			err(`Destination network ${dstChainName} not found`, "setRateLimits", srcChain.name);
+			err(`Destination network ${dstChainName} not found`, "setRateLimits", srcChainName);
 			return;
 		}
 	}
@@ -55,17 +55,17 @@ export async function setRateLimits(
 		err(
 			`You need to specify a destination chain name for rate limits`,
 			"setRateLimits",
-			srcChain.name,
+			srcChainName,
 		);
 		return;
 	}
 
 	const contractAddress = getEnvVar(
-		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(srcChain.name)}`,
+		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(srcChainName)}`,
 	);
 
 	if (!contractAddress) {
-		err(`Contract address not found for ${srcChain.name}`, "setRateLimits", srcChain.name);
+		err(`Contract address not found for ${srcChainName}`, "setRateLimits", srcChainName);
 		return;
 	}
 
@@ -83,32 +83,32 @@ export async function setRateLimits(
 	// Get current rate info using the new utility
 	const currentRateInfo = await getRateInfo(srcChainName, dstChainName);
 	if (!currentRateInfo.srcChainSelector) {
-		err(`Failed to get rate info`, "setRateLimits", srcChain.name);
+		err(`Failed to get rate info`, "setRateLimits", srcChainName);
 		return;
 	}
 
 	// If rate limits are not provided, use current rate limits
 	// If current rate limits are not set, use default rate limits
 	const rateLimits = {
-		outMax: outMax || currentRateInfo.outbound.maxAmount || defaultRateLimits.outMax,
-		outRefill: outRefill || currentRateInfo.outbound.refillSpeed || defaultRateLimits.outRefill,
-		inMax: inMax || currentRateInfo.inbound.maxAmount || defaultRateLimits.inMax,
-		inRefill: inRefill || currentRateInfo.inbound.refillSpeed || defaultRateLimits.inRefill,
+		outMax: outMax || Number(currentRateInfo.outbound.maxAmount) || defaultRateLimits.outMax,
+		outRefill: outRefill || Number(currentRateInfo.outbound.refillSpeed) || defaultRateLimits.outRefill,
+		inMax: inMax || Number(currentRateInfo.inbound.maxAmount) || defaultRateLimits.inMax,
+		inRefill: inRefill || Number(currentRateInfo.inbound.refillSpeed) || defaultRateLimits.inRefill,
 	};
 
 	try {
 		log(
-			`Setting rate limits for ${isL1Bridge ? "L1" : "L2"} bridge on ${srcChain.name} -> ${dstChain?.name}`,
+			`Setting rate limits for ${isL1Bridge ? "L1" : "L2"} bridge on ${srcChainName} -> ${dstChain?.name}`,
 			"setRateLimits",
-			srcChain.name,
+			srcChainName,
 		);
 
 		// Set rate limits if parameters provided
 		// Convert from USDC to wei (6 decimals)
-		const outMaxWei = parseUnits(rateLimits.outMax, 6);
-		const outRefillWei = parseUnits(rateLimits.outRefill, 6);
-		const inMaxWei = parseUnits(rateLimits.inMax, 6);
-		const inRefillWei = parseUnits(rateLimits.inRefill, 6);
+		const outMaxWei = parseUnits(rateLimits.outMax.toString(), 6);
+		const outRefillWei = parseUnits(rateLimits.outRefill.toString(), 6);
+		const inMaxWei = parseUnits(rateLimits.inMax.toString(), 6);
+		const inRefillWei = parseUnits(rateLimits.inRefill.toString(), 6);
 
 		const currentOutMaxWei = parseUnits(currentRateInfo.outbound.maxAmount, 6);
 		const currentOutRefillWei = parseUnits(currentRateInfo.outbound.refillSpeed, 6);
@@ -124,7 +124,7 @@ export async function setRateLimits(
 			log(
 				`Setting outbound rate limit: maxAmount=${rateLimits.outMax} USDC, refillSpeed=${rateLimits.outRefill} USDC/sec${isL1Bridge ? `, dstChain=${dstChain.name} (${dstChain.chainSelector})` : ""}`,
 				"setRateLimits",
-				srcChain.name,
+				srcChainName,
 			);
 
 			const outboundTxHash = await walletClient.writeContract({
@@ -144,13 +144,13 @@ export async function setRateLimits(
 			log(
 				`Outbound rate limit set successfully! Transaction: ${outboundReceipt.transactionHash}`,
 				"setRateLimits",
-				srcChain.name,
+				srcChainName,
 			);
 		} else {
 			log(
 				`Outbound rate limits are already set: (maxAmount=${rateLimits.outMax} USDC, refillSpeed=${rateLimits.outRefill} USDC/sec). Skipping transaction.`,
 				"setRateLimits",
-				srcChain.name,
+				srcChainName,
 			);
 		}
 
@@ -163,7 +163,7 @@ export async function setRateLimits(
 			log(
 				`Setting inbound rate limit: maxAmount=${rateLimits.inMax} USDC, refillSpeed=${rateLimits.inRefill} USDC/sec${isL1Bridge ? `, dstChain=${dstChain.name} (${dstChain.chainSelector})` : ""}`,
 				"setRateLimits",
-				srcChain.name,
+				srcChainName,
 			);
 
 			const inboundTxHash = await walletClient.writeContract({
@@ -183,13 +183,13 @@ export async function setRateLimits(
 			log(
 				`Inbound rate limit set successfully! Transaction: ${inboundReceipt.transactionHash}`,
 				"setRateLimits",
-				srcChain.name,
+				srcChainName,
 			);
 		} else {
 			log(
 				`Inbound rate limits are already set: (maxAmount=${rateLimits.inMax} USDC, refillSpeed=${rateLimits.inRefill} USDC/sec). Skipping transaction.`,
 				"setRateLimits",
-				srcChain.name,
+				srcChainName,
 			);
 		}
 
@@ -197,11 +197,11 @@ export async function setRateLimits(
 			log(
 				`All rate limits are already set. No transactions sent.`,
 				"setRateLimits",
-				srcChain.name,
+				srcChainName,
 			);
 		}
 	} catch (error) {
-		err(`Failed to set rate limits: ${error}`, "setRateLimits", srcChain.name);
+		err(`Failed to set rate limits: ${error}`, "setRateLimits", srcChainName);
 		throw error;
 	}
 }

@@ -30,11 +30,11 @@ async function deployBridgeTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	}
 
 	if (taskArgs.implementation) {
-		await upgradeLancaProxyImplementation(hre, ProxyEnum.lcBridgeProxy, false);
+		await upgradeLancaProxyImplementation(hre.network.name, ProxyEnum.lcBridgeProxy, false);
 	}
 
 	if (taskArgs.pause) {
-		await upgradeLancaProxyImplementation(hre, ProxyEnum.lcBridgeProxy, true);
+		await upgradeLancaProxyImplementation(hre.network.name, ProxyEnum.lcBridgeProxy, true);
 	}
 }
 

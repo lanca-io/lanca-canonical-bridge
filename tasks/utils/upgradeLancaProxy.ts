@@ -1,16 +1,14 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-
 import { ProxyEnum, conceroNetworks, getViemReceiptConfig } from "../../constants";
 import { EnvPrefixes, IProxyType } from "../../types/deploymentVariables";
 import { err, getEnvAddress, getFallbackClients, getViemAccount, log } from "../../utils";
 
 export async function upgradeLancaProxyImplementation(
-	hre: HardhatRuntimeEnvironment,
+	srcChainName: string,
 	proxyType: IProxyType,
 	shouldPause: boolean,
 ): Promise<void> {
-	const { name: chainName } = hre.network;
-	const { viemChain, type } = conceroNetworks[chainName];
+	const srcChain = conceroNetworks[srcChainName as keyof typeof conceroNetworks];
+	const { viemChain, type } = srcChain;
 
 	let implementationKey: keyof EnvPrefixes;
 
@@ -19,7 +17,7 @@ export async function upgradeLancaProxyImplementation(
 	} else if (proxyType === ProxyEnum.lcBridgeProxy) {
 		implementationKey = "lcBridge";
 	} else {
-		err(`Proxy type ${proxyType} not found`, "upgradeProxyImplementation", chainName);
+		err(`Proxy type ${proxyType} not found`, "upgradeProxyImplementation", srcChainName);
 		return;
 	}
 
@@ -28,19 +26,19 @@ export async function upgradeLancaProxyImplementation(
 	);
 
 	const viemAccount = getViemAccount(type, "proxyDeployer");
-	const { walletClient, publicClient } = getFallbackClients(
-		conceroNetworks[chainName],
-		viemAccount,
-	);
+	const { walletClient, publicClient } = getFallbackClients(srcChain, viemAccount);
 
-	const [lcBridgeProxy, lcBridgeProxyAlias] = getEnvAddress(proxyType, chainName);
-	const [proxyAdmin, proxyAdminAlias] = getEnvAddress(`${proxyType}Admin`, chainName);
-	const [newImplementation, newImplementationAlias] = getEnvAddress(implementationKey, chainName);
+	const [lcBridgeProxy, lcBridgeProxyAlias] = getEnvAddress(proxyType, srcChainName);
+	const [proxyAdmin, proxyAdminAlias] = getEnvAddress(`${proxyType}Admin`, srcChainName);
+	const [newImplementation, newImplementationAlias] = getEnvAddress(
+		implementationKey,
+		srcChainName,
+	);
 
 	log(
 		`Upgrading ${lcBridgeProxyAlias} to implementation ${newImplementationAlias}`,
 		"upgradeLancaProxy",
-		chainName,
+		srcChainName,
 	);
 
 	const txHash = await walletClient.writeContract({
@@ -53,13 +51,13 @@ export async function upgradeLancaProxyImplementation(
 	});
 
 	const { cumulativeGasUsed } = await publicClient.waitForTransactionReceipt({
-		...getViemReceiptConfig(conceroNetworks[chainName]),
+		...getViemReceiptConfig(srcChain),
 		hash: txHash,
 	});
 
 	log(
 		`Upgraded via ${proxyAdminAlias}: ${lcBridgeProxyAlias}.implementation -> ${newImplementationAlias}. Gas: ${cumulativeGasUsed}, hash: ${txHash}`,
 		`upgradeLancaProxy: ${proxyType}`,
-		chainName,
+		srcChainName,
 	);
 }

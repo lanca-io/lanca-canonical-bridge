@@ -114,6 +114,22 @@ yarn hardhat deploy-fiat-token --implementation --proxy --network arbitrum
 yarn hardhat configure-minter --network <network_name>
 ```
 
+### Get Rate Information
+Get current rate limit information for bridges.
+
+```bash
+yarn hardhat get-rate-info [--dstchain <chain_name>] --network <network_name>
+```
+
+**Examples:**
+```bash
+# Get rate info for L1 bridge
+yarn hardhat get-rate-info --dstchain base --network ethereum
+
+# Get rate info for L2 bridge
+yarn hardhat get-rate-info --network baseSepolia
+```
+
 ### Add Destination Bridge
 Add destination bridge to LancaCanonicalBridgeL1 contract.
 
@@ -143,6 +159,32 @@ yarn hardhat add-dst-pool --dstchain <destination_chain_name>
 ```bash
 # Add destination pool for Arbitrum chain
 yarn hardhat add-dst-pool --dstchain arbitrum
+```
+
+### Remove Destination Bridge
+Remove destination bridge from LancaCanonicalBridgeL1 contract.
+
+```bash
+yarn hardhat remove-dst-bridge --dstchain <destination_chain_name>
+```
+
+**Examples:**
+```bash
+# Remove destination bridge for Arbitrum chain
+yarn hardhat remove-dst-bridge --dstchain arbitrum
+```
+
+### Remove Destination Pool
+Remove destination pool from LancaCanonicalBridgeL1 contract.
+
+```bash
+yarn hardhat remove-dst-pool --dstchain <destination_chain_name>
+```
+
+**Examples:**
+```bash
+# Remove destination pool for Arbitrum chain
+yarn hardhat remove-dst-pool --dstchain arbitrum
 ```
 
 ### Send Tokens
@@ -223,6 +265,66 @@ yarn hardhat change-proxy-admin-owner --type bridge --newowner 0x567890123456789
 
 # Change pool proxy admin owner
 yarn hardhat change-proxy-admin-owner --type pool --newowner 0x5678901234567890123456789012345678901234 --dstchain base --network ethereum
+```
+
+### Fiat Token Admin Management
+Manage FiatToken admin and ownership.
+
+```bash
+# Change FiatToken admin
+yarn hardhat fiat-token-change-admin --admin <address> --network <network_name>
+
+# Transfer FiatToken ownership
+yarn hardhat fiat-token-transfer-ownership --owner <address> --network <network_name>
+```
+
+**Examples:**
+```bash
+# Change admin
+yarn hardhat fiat-token-change-admin --admin 0x1234567890123456789012345678901234567890 --network base
+
+# Transfer ownership
+yarn hardhat fiat-token-transfer-ownership --owner 0x5678901234567890123456789012345678901234 --network base
+```
+
+### Deploy Pause Contracts
+Deploy pause contracts for emergency situations.
+
+```bash
+# Deploy pause contract to single network
+yarn hardhat deploy-pause --network <network_name>
+
+# Deploy pause contracts to all testnet networks
+yarn hardhat deploy-concero-pause-to-all-chains
+```
+
+**Examples:**
+```bash
+# Deploy to single network
+yarn hardhat deploy-pause --network base
+
+# Deploy to all testnets
+yarn hardhat deploy-concero-pause-to-all-chains
+```
+
+### Bulk Update Operations
+Update multiple contract implementations across networks.
+
+```bash
+# Update all bridge implementations
+yarn hardhat update-all-bridge-implementations --l1chain <l1_chain_name>
+
+# Update all pool implementations
+yarn hardhat update-all-pool-implementations --l1chain <l1_chain_name>
+```
+
+**Examples:**
+```bash
+# Update all bridges
+yarn hardhat update-all-bridge-implementations --l1chain ethereum
+
+# Update all pools
+yarn hardhat update-all-pool-implementations --l1chain ethereum
 ```
 
 ## Environment Setup

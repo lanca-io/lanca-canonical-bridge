@@ -72,14 +72,15 @@ const config: HardhatUserConfig = {
 	networks: conceroNetworks,
 	etherscan: {
 		apiKey: {
-			arbitrumSepolia: process.env.ARBISCAN_API_KEY || "",
-			baseSepolia: process.env.BASESCAN_API_KEY || "",
+			arbitrumSepolia: process.env.ETHERSCAN_API_KEY || "",
+			baseSepolia: process.env.ETHERSCAN_API_KEY || "",
+			bnbTestnet: process.env.ETHERSCAN_API_KEY || "",
 			// ethereum: process.env.ETHERSCAN_API_KEY,
 			// ethereumSepolia: process.env.ETHERSCAN_API_KEY,
 			// polygon: process.env.POLYGONSCAN_API_KEY,
 			// polygonAmoy: process.env.POLYGONSCAN_API_KEY,
 			// optimism: process.env.OPTIMISMSCAN_API_KEY || "",
-			optimismSepolia: process.env.OPTIMISMSCAN_API_KEY || "",
+			optimismSepolia: process.env.ETHERSCAN_API_KEY || "",
 			// celo: process.env.CELOSCAN_API_KEY,
 			// avalanche: "snowtrace",
 			// avalancheFuji: process.env.AVALANCHE_FUJI_KEY || "",
@@ -107,6 +108,14 @@ const config: HardhatUserConfig = {
 				urls: {
 					apiURL: "https://api.etherscan.io/v2/api?chainid=11155420",
 					browserURL: "https://api.etherscan.io/v2/api?chainid=11155420",
+				},
+			},
+			{
+				network: "bnbTestnet",
+				chainId: 97,
+				urls: {
+					apiURL: "https://api.etherscan.io/v2/api?chainid=97",
+					browserURL: "https://api.etherscan.io/v2/api?chainid=97",
 				},
 			},
 		],

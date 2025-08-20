@@ -4,7 +4,22 @@ import { parseUnits } from "viem";
 import { conceroNetworks, getViemReceiptConfig } from "../../constants";
 import { defaultRateLimits } from "../../constants/deploymentVariables";
 import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils";
+import { getRateInfo } from "./getRateInfo";
 
+/**
+ * Set rate limits for src -> dst bridge
+ * @param srcChainName - The name of the source chain
+ * @param dstChainName - The name of the destination chain
+ * @param outMax - The maximum amount of USDC that can be sent per second (without decimals)
+ * @param outRefill - The amount of USDC that is refilled per second (without decimals)
+ * @param inMax - The maximum amount of USDC that can be received per second (without decimals)
+ * @param inRefill - The amount of USDC that is refilled per second (without decimals)
+ *
+ * @dev If this is the first setup and no parameters are passed, default values from config are used.
+ * After initialization, you can change one or more parameters by passing them as arguments.
+ * If dstChainName is passed, values will be set on L1 for that chain, otherwise default dstChain is Ethereum.
+ * Before setting, current rate limit values are checked, if they match the passed parameters, the transaction is not sent.
+ */
 export async function setRateLimits(
 	srcChainName: string,
 	dstChainName?: string,
@@ -36,11 +51,23 @@ export async function setRateLimits(
 		}
 	}
 
+	if (srcChain.name === dstChain.name) {
+		err(
+			`You need to specify a destination chain name for rate limits`,
+			"setRateLimits",
+			srcChain.name,
+		);
+		return;
+	}
+
 	const contractAddress = getEnvVar(
 		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(srcChain.name)}`,
 	);
 
-	if (!contractAddress) return;
+	if (!contractAddress) {
+		err(`Contract address not found for ${srcChain.name}`, "setRateLimits", srcChain.name);
+		return;
+	}
 
 	const { abi: bridgeAbi } = isL1Bridge
 		? await import(
@@ -53,11 +80,20 @@ export async function setRateLimits(
 	const viemAccount = getViemAccount(networkType, "rateLimitAdmin");
 	const { walletClient, publicClient } = getFallbackClients(srcChain, viemAccount);
 
+	// Get current rate info using the new utility
+	const currentRateInfo = await getRateInfo(srcChainName, dstChainName);
+	if (!currentRateInfo.srcChainSelector) {
+		err(`Failed to get rate info`, "setRateLimits", srcChain.name);
+		return;
+	}
+
+	// If rate limits are not provided, use current rate limits
+	// If current rate limits are not set, use default rate limits
 	const rateLimits = {
-		outMax: outMax || defaultRateLimits.outMax,
-		outRefill: outRefill || defaultRateLimits.outRefill,
-		inMax: inMax || defaultRateLimits.inMax,
-		inRefill: inRefill || defaultRateLimits.inRefill,
+		outMax: outMax || currentRateInfo.outbound.maxAmount || defaultRateLimits.outMax,
+		outRefill: outRefill || currentRateInfo.outbound.refillSpeed || defaultRateLimits.outRefill,
+		inMax: inMax || currentRateInfo.inbound.maxAmount || defaultRateLimits.inMax,
+		inRefill: inRefill || currentRateInfo.inbound.refillSpeed || defaultRateLimits.inRefill,
 	};
 
 	try {
@@ -67,74 +103,103 @@ export async function setRateLimits(
 			srcChain.name,
 		);
 
-		// Set outbound rate limit if parameters provided
+		// Set rate limits if parameters provided
 		// Convert from USDC to wei (6 decimals)
 		const outMaxWei = parseUnits(rateLimits.outMax, 6);
 		const outRefillWei = parseUnits(rateLimits.outRefill, 6);
-
-		const outboundArgs = isL1Bridge
-			? [dstChain.chainSelector, outMaxWei, outRefillWei, true]
-			: [dstChain.chainSelector, outMaxWei, outRefillWei, true];
-
-		log(
-			`Setting outbound rate limit: maxAmount=${rateLimits.outMax} USDC, refillSpeed=${rateLimits.outRefill} USDC/sec${isL1Bridge ? `, dstChain=${dstChain.name} (${dstChain.chainSelector})` : ""}`,
-			"setRateLimits",
-			srcChain.name,
-		);
-
-		const outboundTxHash = await walletClient.writeContract({
-			address: contractAddress as `0x${string}`,
-			abi: bridgeAbi,
-			functionName: "setRateLimit",
-			account: viemAccount,
-			args: outboundArgs,
-			chain: viemChain,
-		});
-
-		const outboundReceipt = await publicClient.waitForTransactionReceipt({
-			...getViemReceiptConfig(srcChain),
-			hash: outboundTxHash,
-		});
-
-		log(
-			`Outbound rate limit set successfully! Transaction: ${outboundTxHash}`,
-			"setRateLimits",
-			srcChain.name,
-		);
-
-		// Convert from USDC to wei (6 decimals)
 		const inMaxWei = parseUnits(rateLimits.inMax, 6);
 		const inRefillWei = parseUnits(rateLimits.inRefill, 6);
 
-		const inboundArgs = isL1Bridge
-			? [dstChain.chainSelector, inMaxWei, inRefillWei, false]
-			: [dstChain.chainSelector, inMaxWei, inRefillWei, false];
+		const currentOutMaxWei = parseUnits(currentRateInfo.outbound.maxAmount, 6);
+		const currentOutRefillWei = parseUnits(currentRateInfo.outbound.refillSpeed, 6);
+		const currentInMaxWei = parseUnits(currentRateInfo.inbound.maxAmount, 6);
+		const currentInRefillWei = parseUnits(currentRateInfo.inbound.refillSpeed, 6);
 
-		log(
-			`Setting inbound rate limit: maxAmount=${rateLimits.inMax} USDC, refillSpeed=${rateLimits.inRefill} USDC/sec${isL1Bridge ? `, dstChain=${dstChain.name} (${dstChain.chainSelector})` : ""}`,
-			"setRateLimits",
-			srcChain.name,
-		);
+		const outboundNeedsUpdate =
+			currentOutMaxWei !== outMaxWei || currentOutRefillWei !== outRefillWei;
 
-		const inboundTxHash = await walletClient.writeContract({
-			address: contractAddress as `0x${string}`,
-			abi: bridgeAbi,
-			functionName: "setRateLimit",
-			account: viemAccount,
-			args: inboundArgs,
-			chain: viemChain,
-		});
+		if (outboundNeedsUpdate) {
+			const outboundArgs = [dstChain.chainSelector, outMaxWei, outRefillWei, true];
 
-		const inboundReceipt = await publicClient.waitForTransactionReceipt({
-			...getViemReceiptConfig(srcChain),
-			hash: inboundTxHash,
-		});
+			log(
+				`Setting outbound rate limit: maxAmount=${rateLimits.outMax} USDC, refillSpeed=${rateLimits.outRefill} USDC/sec${isL1Bridge ? `, dstChain=${dstChain.name} (${dstChain.chainSelector})` : ""}`,
+				"setRateLimits",
+				srcChain.name,
+			);
 
-		log(
-			`Inbound rate limit set successfully! Transaction: ${inboundTxHash}`,
-			"setRateLimits",
-			srcChain.name,
-		);
+			const outboundTxHash = await walletClient.writeContract({
+				address: contractAddress as `0x${string}`,
+				abi: bridgeAbi,
+				functionName: "setRateLimit",
+				account: viemAccount,
+				args: outboundArgs,
+				chain: viemChain,
+			});
+
+			const outboundReceipt = await publicClient.waitForTransactionReceipt({
+				...getViemReceiptConfig(srcChain),
+				hash: outboundTxHash,
+			});
+
+			log(
+				`Outbound rate limit set successfully! Transaction: ${outboundReceipt.transactionHash}`,
+				"setRateLimits",
+				srcChain.name,
+			);
+		} else {
+			log(
+				`Outbound rate limits are already set: (maxAmount=${rateLimits.outMax} USDC, refillSpeed=${rateLimits.outRefill} USDC/sec). Skipping transaction.`,
+				"setRateLimits",
+				srcChain.name,
+			);
+		}
+
+		const inboundNeedsUpdate =
+			currentInMaxWei !== inMaxWei || currentInRefillWei !== inRefillWei;
+
+		if (inboundNeedsUpdate) {
+			const inboundArgs = [dstChain.chainSelector, inMaxWei, inRefillWei, false];
+
+			log(
+				`Setting inbound rate limit: maxAmount=${rateLimits.inMax} USDC, refillSpeed=${rateLimits.inRefill} USDC/sec${isL1Bridge ? `, dstChain=${dstChain.name} (${dstChain.chainSelector})` : ""}`,
+				"setRateLimits",
+				srcChain.name,
+			);
+
+			const inboundTxHash = await walletClient.writeContract({
+				address: contractAddress as `0x${string}`,
+				abi: bridgeAbi,
+				functionName: "setRateLimit",
+				account: viemAccount,
+				args: inboundArgs,
+				chain: viemChain,
+			});
+
+			const inboundReceipt = await publicClient.waitForTransactionReceipt({
+				...getViemReceiptConfig(srcChain),
+				hash: inboundTxHash,
+			});
+
+			log(
+				`Inbound rate limit set successfully! Transaction: ${inboundReceipt.transactionHash}`,
+				"setRateLimits",
+				srcChain.name,
+			);
+		} else {
+			log(
+				`Inbound rate limits are already set: (maxAmount=${rateLimits.inMax} USDC, refillSpeed=${rateLimits.inRefill} USDC/sec). Skipping transaction.`,
+				"setRateLimits",
+				srcChain.name,
+			);
+		}
+
+		if (!outboundNeedsUpdate && !inboundNeedsUpdate) {
+			log(
+				`All rate limits are already set. No transactions sent.`,
+				"setRateLimits",
+				srcChain.name,
+			);
+		}
 	} catch (error) {
 		err(`Failed to set rate limits: ${error}`, "setRateLimits", srcChain.name);
 		throw error;

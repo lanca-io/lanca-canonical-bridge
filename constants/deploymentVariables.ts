@@ -27,6 +27,8 @@ const defaultRateLimits = {
 
 const defaultMinterAllowedAmount = 1000000e6;
 
+const ADDRESS_ZERO = "0x0000000000000000000000000000000000000000";
+
 function getViemReceiptConfig(chain: ConceroNetwork): Partial<WaitForTransactionReceiptParameters> {
 	return {
 		timeout: 0,
@@ -52,4 +54,5 @@ export {
 	getViemReceiptConfig,
 	defaultRateLimits,
 	defaultMinterAllowedAmount,
+	ADDRESS_ZERO,
 };

@@ -1,9 +1,7 @@
 import { getNetworkEnvKey } from "@concero/contract-utils";
 
-import { conceroNetworks, getViemReceiptConfig } from "../../constants";
+import { ADDRESS_ZERO, conceroNetworks, getViemReceiptConfig } from "../../constants";
 import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils";
-
-const ADDRESS_ZERO = "0x0000000000000000000000000000000000000000";
 
 export async function removeDstBridge(dstChainName: string): Promise<void> {
 	const dstChain = conceroNetworks[dstChainName as keyof typeof conceroNetworks];
@@ -40,15 +38,6 @@ export async function removeDstBridge(dstChainName: string): Promise<void> {
 			functionName: "getBridgeAddress",
 			args: [dstChain.chainSelector],
 		});
-
-		if (!currentDstBridgeAddress) {
-			err(
-				`Destination bridge not found for chain ${dstChainName}`,
-				"removeDstBridge",
-				srcChainName,
-			);
-			return;
-		}
 
 		if (
 			currentDstBridgeAddress &&

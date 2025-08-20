@@ -1,6 +1,6 @@
 import { getNetworkEnvKey } from "@concero/contract-utils";
 
-import { conceroNetworks, getViemReceiptConfig } from "../../constants";
+import { ADDRESS_ZERO, conceroNetworks, getViemReceiptConfig } from "../../constants";
 import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils";
 
 export async function addPool(dstChainName: string): Promise<void> {
@@ -52,7 +52,7 @@ export async function addPool(dstChainName: string): Promise<void> {
 		args: [BigInt(dstChain.chainId)],
 	});
 
-	if (currentPool) {
+	if (currentPool && currentPool.toString() !== ADDRESS_ZERO) {
 		err(
 			`Pool already exists for chain ${dstChainName} (${dstChain.chainId})`,
 			"addPool",

@@ -1,5 +1,6 @@
 import { conceroNetworks } from "./conceroNetworks";
 import {
+	ADDRESS_ZERO,
 	ProxyEnum,
 	envPrefixes,
 	getViemReceiptConfig,
@@ -16,4 +17,5 @@ export {
 	ProxyEnum,
 	envPrefixes,
 	getViemReceiptConfig,
+	ADDRESS_ZERO,
 };

@@ -1,6 +1,6 @@
 import { getNetworkEnvKey } from "@concero/contract-utils";
 
-import { conceroNetworks, getViemReceiptConfig } from "../../constants";
+import { ADDRESS_ZERO, conceroNetworks, getViemReceiptConfig } from "../../constants";
 import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils";
 
 export async function addDstBridge(dstChainName: string): Promise<void> {
@@ -52,7 +52,7 @@ export async function addDstBridge(dstChainName: string): Promise<void> {
 		args: [dstChain.chainSelector],
 	});
 
-	if (currentDstBridge) {
+	if (currentDstBridge && currentDstBridge.toString() !== ADDRESS_ZERO) {
 		err(
 			`Destination bridge already exists for chain ${dstChainName}`,
 			"addDstBridge",

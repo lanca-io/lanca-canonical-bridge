@@ -1,69 +1,85 @@
 import { getNetworkEnvKey } from "@concero/contract-utils";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { conceroNetworks, getViemReceiptConfig } from "../../constants";
 import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils";
 
 export async function changeProxyAdminOwner(
-	hre: HardhatRuntimeEnvironment,
+	networkName: string,
 	envPrefix: string,
 	newOwner: string,
 	dstChainName?: string,
 ): Promise<void> {
-	const { name } = hre.network;
-	const networkType = conceroNetworks[name].type;
+	const chain = conceroNetworks[networkName as keyof typeof conceroNetworks];
+	const { type: networkType } = chain;
 
 	let envVarName: string;
 	if (dstChainName) {
-		envVarName = `${envPrefix}_${getNetworkEnvKey(name)}_${getNetworkEnvKey(dstChainName)}`;
+		envVarName = `${envPrefix}_${getNetworkEnvKey(networkName)}_${getNetworkEnvKey(dstChainName)}`;
 	} else {
-		envVarName = `${envPrefix}_${getNetworkEnvKey(name)}`;
+		envVarName = `${envPrefix}_${getNetworkEnvKey(networkName)}`;
 	}
 
 	const proxyAdminAddress = getEnvVar(envVarName);
 	if (!proxyAdminAddress) {
-		throw new Error(
+		err(
 			`ProxyAdmin address not found. Set ${envVarName} in environment variables.`,
+			"changeProxyAdminOwner",
+			networkName,
 		);
+		return;
 	}
 
-	log(`Changing owner of ProxyAdmin at: ${proxyAdminAddress}`, "changeProxyAdminOwner", name);
-	log(`  New owner: ${newOwner}`, "changeProxyAdminOwner", name);
-
 	const viemAccount = getViemAccount(networkType, "proxyDeployer");
-	const { walletClient, publicClient } = getFallbackClients(conceroNetworks[name], viemAccount);
+	const { walletClient, publicClient } = getFallbackClients(chain, viemAccount);
 
-	const proxyAdminABI = [
-		{
-			inputs: [{ internalType: "address", name: "newOwner", type: "address" }],
-			name: "transferOwnership",
-			outputs: [],
-			stateMutability: "nonpayable",
-			type: "function",
-		},
-	];
+	const { abi: proxyAdminAbi } = await import(
+		"../../artifacts/contracts/proxy/LCBProxyAdmin.sol/LCBProxyAdmin.json"
+	);
+
+	const owner: string = (await publicClient.readContract({
+		address: proxyAdminAddress as `0x${string}`,
+		abi: proxyAdminAbi,
+		functionName: "owner",
+	})) as string;
+
+	log(
+		`Changing owner of ProxyAdmin at: ${proxyAdminAddress}`,
+		"changeProxyAdminOwner",
+		networkName,
+	);
+	log(` Old owner: ${owner}`, "changeProxyAdminOwner", networkName);
+	log(` New owner: ${newOwner}`, "changeProxyAdminOwner", networkName);
+
+	if (owner && owner.toLowerCase() === newOwner.toLowerCase()) {
+		err(
+			`Owner is already set to the same address`,
+			"changeProxyAdminOwner",
+			networkName,
+		);
+		return;
+	}
 
 	try {
 		const txHash = await walletClient.writeContract({
 			address: proxyAdminAddress as `0x${string}`,
-			abi: proxyAdminABI,
+			abi: proxyAdminAbi,
 			functionName: "transferOwnership",
 			account: viemAccount,
 			args: [newOwner as `0x${string}`],
 		});
 
-		await publicClient.waitForTransactionReceipt({
-			...getViemReceiptConfig(conceroNetworks[name]),
+		const receipt = await publicClient.waitForTransactionReceipt({
+			...getViemReceiptConfig(chain),
 			hash: txHash,
 		});
 
 		log(
-			`Owner changed successfully. Transaction hash: ${txHash}`,
+			`Owner changed successfully. Transaction hash: ${receipt.transactionHash}`,
 			"changeProxyAdminOwner",
-			name,
+			networkName,
 		);
 	} catch (error) {
-		err(`Failed to change owner: ${error}`, "changeProxyAdminOwner", name);
-		throw error;
+		err(`Failed to change owner: ${error}`, "changeProxyAdminOwner", networkName);
+		return;
 	}
 }

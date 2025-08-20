@@ -2,7 +2,7 @@ import { configureMinterTask } from "./deployFiatToken/configureMinterTask";
 
 import { addDstBridgeTask } from "./addDstBridge/addDstBridgeTask";
 import { addDstPoolTask } from "./addDstPool/addDstPoolTask";
-import { changeProxyAdminOwnerTask } from "./changeProxyAdminOwner/changeProxyAdminOwnerTask";
+import { changeProxyAdminOwnerTask } from "./changeProxyAdminOwner/changeProxyAdminOwner.task";
 import { deployBridgeTask } from "./deployBridge/deployBridge.task";
 import fiatTokenChangeAdmin from "./deployFiatToken/changeAdmin.task";
 import { deployFiatTokenTask } from "./deployFiatToken/deployFiatTokenTask";

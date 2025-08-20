@@ -4,9 +4,10 @@ import { type HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { envPrefixes } from "../../constants";
 import { changeProxyAdminOwner } from "../utils/changeProxyAdminOwner";
+import { err } from "../../utils";
 
 async function changeProxyAdminOwnerTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
-	const { type, newowner, chain } = taskArgs;
+	const { type, newowner, dstchain } = taskArgs;
 
 	let envPrefix: string;
 	let dstChainName: string | undefined;
@@ -17,23 +18,25 @@ async function changeProxyAdminOwnerTask(taskArgs: any, hre: HardhatRuntimeEnvir
 			break;
 		case "pool":
 			envPrefix = envPrefixes.lcBridgePoolProxyAdmin;
-			dstChainName = chain;
+			dstChainName = dstchain;
 			if (!dstChainName) {
-				throw new Error("--chain parameter is required for pool type");
+				err(`dstchain parameter is required for pool type`, "changeProxyAdminOwnerTask", hre.network.name);
+				return;
 			}
 			break;
 		default:
-			throw new Error(`Invalid type: ${type}. Valid types are: bridge, pool`);
+			err(`Invalid type: ${type}. Valid types are: bridge, pool`, "changeProxyAdminOwnerTask", hre.network.name);
+			return;
 	}
 
-	await changeProxyAdminOwner(hre, envPrefix, newowner, dstChainName);
+	await changeProxyAdminOwner(hre.network.name, envPrefix, newowner, dstChainName);
 }
 
-// yarn hardhat change-proxy-admin-owner --type <bridge|pool> --newowner <address> [--chain <chain_name>] --network <network_name>
+// yarn hardhat change-proxy-admin-owner --type <bridge|pool> --newowner <address> [--dstchain <chain_name>] --network <network_name>
 task("change-proxy-admin-owner", "Change owner of ProxyAdmin contract")
 	.addParam("type", "Type of ProxyAdmin (bridge, pool)")
 	.addParam("newowner", "New owner address")
-	.addOptionalParam("chain", "Destination chain name (required for pool type)")
+	.addOptionalParam("dstchain", "Destination chain name (required for pool type)")
 	.setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
 		await changeProxyAdminOwnerTask(taskArgs, hre);
 	});

@@ -3,7 +3,7 @@ import { Deployment } from "hardhat-deploy/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { conceroNetworks } from "../constants";
-import { getEnvVar, log, updateEnvVariable } from "../utils/";
+import { err, getEnvVar, log, updateEnvVariable } from "../utils/";
 
 type DeployArgs = {
 	usdcAddress: string;
@@ -26,13 +26,17 @@ const deployLancaCanonicalBridgePool: DeploymentFunction = async function (
 	const { deploy } = hre.deployments;
 	const { name: srcChainName } = hre.network;
 
-	const srcChain = conceroNetworks[srcChainName];
-	const { type: networkType} = srcChain;
+	const srcChain = conceroNetworks[srcChainName as keyof typeof conceroNetworks];
+	const { type: networkType } = srcChain;
 
-	const dstChain = conceroNetworks[dstChainName];
+	const dstChain = conceroNetworks[dstChainName as keyof typeof conceroNetworks];
 
 	if (!dstChain) {
-		throw new Error(`Destination chain ${dstChainName} not found.`);
+		err(
+			`Destination chain ${dstChainName} not found.`,
+			"deployLancaCanonicalBridgePool",
+			srcChainName,
+		);
 	}
 
 	const lancaCanonicalBridgeAddress = getEnvVar(
@@ -40,16 +44,24 @@ const deployLancaCanonicalBridgePool: DeploymentFunction = async function (
 	);
 
 	if (!lancaCanonicalBridgeAddress) {
-		throw new Error(
+		err(
 			`LancaCanonicalBridge address not found. Set LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(srcChainName)} in environment variables.`,
+			"deployLancaCanonicalBridgePool",
+			srcChainName,
 		);
 	}
 
 	const usdcAddress = getEnvVar(`FIAT_TOKEN_PROXY_${getNetworkEnvKey(srcChainName)}`);
 	if (!usdcAddress) {
-		throw new Error(
+		err(
 			`USDC address not found. Set FIAT_TOKEN_PROXY_${getNetworkEnvKey(srcChainName)} in environment variables.`,
+			"deployLancaCanonicalBridgePool",
+			srcChainName,
 		);
+	}
+
+	if (!dstChain || !usdcAddress || !lancaCanonicalBridgeAddress) {
+		return {} as Deployment;
 	}
 
 	const defaultArgs: DeployArgs = {
@@ -63,14 +75,22 @@ const deployLancaCanonicalBridgePool: DeploymentFunction = async function (
 		...overrideArgs,
 	};
 
-	log(`Deploying LancaCanonicalBridgePool with args:`, "deployLancaCanonicalBridgePool", srcChainName);
+	log(
+		`Deploying LancaCanonicalBridgePool with args:`,
+		"deployLancaCanonicalBridgePool",
+		srcChainName,
+	);
 	log(`  usdcAddress: ${args.usdcAddress}`, "deployLancaCanonicalBridgePool", srcChainName);
 	log(
 		`  lancaCanonicalBridgeAddress: ${args.lancaCanonicalBridgeAddress}`,
 		"deployLancaCanonicalBridgePool",
 		srcChainName,
 	);
-	log(`  dstChainSelector: ${args.dstChainSelector}`, "deployLancaCanonicalBridgePool", srcChainName);
+	log(
+		`  dstChainSelector: ${args.dstChainSelector}`,
+		"deployLancaCanonicalBridgePool",
+		srcChainName,
+	);
 
 	const deployment = await deploy("LancaCanonicalBridgePool", {
 		from: deployer,
@@ -82,16 +102,13 @@ const deployLancaCanonicalBridgePool: DeploymentFunction = async function (
 	log(`Deployed at: ${deployment.address}`, "deployLancaCanonicalBridgePool", srcChainName);
 
 	updateEnvVariable(
-		`LC_BRIDGE_POOL_${getNetworkEnvKey(srcChainName)}_${getNetworkEnvKey(dstChain.name)}`,
+		`LC_BRIDGE_POOL_${getNetworkEnvKey(srcChainName)}_${getNetworkEnvKey(dstChainName)}`,
 		deployment.address,
 		`deployments.${networkType}`,
 	);
 
 	return deployment;
 };
-
-// Assign tags to the function
-(deployLancaCanonicalBridgePool as any).tags = ["LancaCanonicalBridgePool"];
 
 export default deployLancaCanonicalBridgePool;
 export { deployLancaCanonicalBridgePool };

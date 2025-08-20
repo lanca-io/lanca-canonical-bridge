@@ -21,7 +21,8 @@ const deployProxyAdmin: DeploymentFunction = async function (
 	const { proxyDeployer } = await hre.getNamedAccounts();
 	const { deploy } = hre.deployments;
 	const { name } = hre.network;
-	const networkType = conceroNetworks[name].type;
+	const chain = conceroNetworks[name as keyof typeof conceroNetworks];
+	const { type: networkType } = chain;
 
 	const initialOwner = overrideOwner || getWallet(networkType, "proxyDeployer", "address");
 
@@ -47,9 +48,6 @@ const deployProxyAdmin: DeploymentFunction = async function (
 
 	return deployment;
 };
-
-// Assign tags to the function
-(deployProxyAdmin as any).tags = ["ProxyAdmin"];
 
 export { deployProxyAdmin };
 export default deployProxyAdmin;

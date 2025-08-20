@@ -2,7 +2,7 @@ import { task } from "hardhat/config";
 
 import { type HardhatRuntimeEnvironment } from "hardhat/types";
 
-import { setRateLimits } from "../utils";
+import { setRateLimits } from "./utils";
 
 async function setRateLimitsTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	await setRateLimits(

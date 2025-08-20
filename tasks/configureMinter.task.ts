@@ -1,4 +1,4 @@
-import { configureMinter } from "../utils/configureMinter";
+import { configureMinter } from "./utils/configureMinter";
 import { task } from "hardhat/config";
 
 import { type HardhatRuntimeEnvironment } from "hardhat/types";

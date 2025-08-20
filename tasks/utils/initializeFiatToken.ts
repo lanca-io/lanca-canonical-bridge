@@ -44,7 +44,7 @@ export async function initializeFiatToken(srcChainName: string): Promise<void> {
 
 	try {
 		// 1. Main initialization (V1)
-		log("Executing initialization V1...", "initializeFiatToken", chainName);
+		log("Executing initialization V1...", "initializeFiatToken", srcChainName);
 		const initTxHash = await walletClient.writeContract({
 			address: fiatTokenProxy as `0x${string}`,
 			abi: fiatTokenAbi,

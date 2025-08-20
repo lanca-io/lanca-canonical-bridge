@@ -1,6 +1,6 @@
 import { task } from "hardhat/config";
 
-import { addPool } from "../utils";
+import { addPool } from "./utils";
 
 async function addDstPoolTask(taskArgs: any) {
 	await addPool(taskArgs.dstchain);

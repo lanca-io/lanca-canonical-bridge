@@ -2,7 +2,7 @@ import { task } from "hardhat/config";
 
 import { type HardhatRuntimeEnvironment } from "hardhat/types";
 
-import { fiatTokenTransferOwnership } from "../utils/fiatTokenTransferOwnership";
+import { fiatTokenTransferOwnership } from "./utils/fiatTokenTransferOwnership";
 
 task("fiat-token-transfer-ownership", "Fiat token transfer ownership")
 	.addParam("owner", "New owner address")

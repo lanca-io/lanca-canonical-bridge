@@ -14,13 +14,10 @@ task("update-all-bridge-implementations")
 			if (network === taskArgs.l1chain) continue;
 			if (getEnvVar(`LANCA_CANONICAL_BRIDGE_${getNetworkEnvKey(network)}`)) {
 				console.log(`Updating bridge implementation for ${network}`);
-				execSync(
-					`yarn hardhat deploy-bridge --implementation --chain ${taskArgs.l1chain} --network ${network}`,
-					{
-						encoding: "utf8",
-						stdio: "inherit",
-					},
-				);
+				execSync(`yarn hardhat deploy-bridge --implementation --network ${network}`, {
+					encoding: "utf8",
+					stdio: "inherit",
+				});
 			}
 		}
 	});

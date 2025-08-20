@@ -1,6 +1,6 @@
 import { task } from "hardhat/config";
 
-import { sendToken } from "../utils/sendToken";
+import { sendToken } from "./utils/sendToken";
 
 async function sendTokenTask(taskArgs: any) {
 	const { from, to, amount } = taskArgs;

@@ -2,8 +2,8 @@ import { task } from "hardhat/config";
 
 import { type HardhatRuntimeEnvironment } from "hardhat/types";
 
-import { getRateInfo } from "../utils";
-import { err } from "../../utils";
+import { getRateInfo } from "./utils";
+import { err } from "../utils";
 
 async function getRateInfoTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	const rateInfo = await getRateInfo(hre.network.name, taskArgs.dstchain);

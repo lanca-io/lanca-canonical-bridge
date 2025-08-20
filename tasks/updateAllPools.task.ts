@@ -19,7 +19,7 @@ task("update-all-pool-implementations")
 			) {
 				console.log(`Updating pool implementation for ${network}`);
 				execSync(
-					`yarn hardhat deploy-pool --implementation --chain ${chain.name} --network ${taskArgs.l1chain}`,
+					`yarn hardhat deploy-pool --implementation --dstchain ${chain.name} --network ${taskArgs.l1chain}`,
 					{
 						encoding: "utf8",
 						stdio: "inherit",

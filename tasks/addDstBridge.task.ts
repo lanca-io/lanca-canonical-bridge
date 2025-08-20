@@ -1,6 +1,6 @@
 import { task } from "hardhat/config";
 
-import { addDstBridge } from "../utils";
+import { addDstBridge } from "./utils";
 
 async function addDstBridgeTask(taskArgs: any) {
 	await addDstBridge(taskArgs.dstchain);
@@ -9,7 +9,7 @@ async function addDstBridgeTask(taskArgs: any) {
 // yarn hardhat add-dst-bridge --dstchain <destination_chain_name>
 task("add-dst-bridge", "Add destination bridge to LancaCanonicalBridgeL1")
 	.addParam("dstchain", "Destination dstchain name for the bridge")
-	.setAction(async (taskArgs) => {
+	.setAction(async taskArgs => {
 		await addDstBridgeTask(taskArgs);
 	});
 

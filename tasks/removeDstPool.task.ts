@@ -1,6 +1,6 @@
 import { task } from "hardhat/config";
 
-import { removeDstPool } from "../utils";
+import { removeDstPool } from "./utils";
 
 async function removeDstPoolTask(taskArgs: any) {
 	await removeDstPool(taskArgs.dstchain);

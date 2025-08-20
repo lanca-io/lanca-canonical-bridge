@@ -2,9 +2,9 @@ import { task } from "hardhat/config";
 
 import { type HardhatRuntimeEnvironment } from "hardhat/types";
 
-import { envPrefixes } from "../../constants";
-import { changeProxyAdminOwner } from "../utils/changeProxyAdminOwner";
-import { err } from "../../utils";
+import { envPrefixes } from "../constants";
+import { changeProxyAdminOwner } from "./utils/changeProxyAdminOwner";
+import { err } from "../utils";
 
 async function changeProxyAdminOwnerTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	const { type, newowner, dstchain } = taskArgs;

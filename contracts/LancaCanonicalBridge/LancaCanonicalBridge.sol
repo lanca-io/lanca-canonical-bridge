@@ -13,8 +13,7 @@ import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.
 
 import {
     LancaCanonicalBridgeBase,
-    ILancaCanonicalBridgeClient,
-    ConceroClient
+    ILancaCanonicalBridgeClient
 } from "./LancaCanonicalBridgeBase.sol";
 
 contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
@@ -27,7 +26,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         address usdcAddress,
         address lancaCanonicalBridgeL1,
         address rateLimitAdmin
-    ) LancaCanonicalBridgeBase(usdcAddress, rateLimitAdmin) ConceroClient(conceroRouter) {
+    ) LancaCanonicalBridgeBase(usdcAddress, rateLimitAdmin, conceroRouter) {
         i_dstChainSelector = dstChainSelector;
         i_lancaCanonicalBridgeL1 = lancaCanonicalBridgeL1;
     }

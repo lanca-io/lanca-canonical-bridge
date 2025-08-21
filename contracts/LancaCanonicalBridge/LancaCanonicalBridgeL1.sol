@@ -12,8 +12,7 @@ import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.
 
 import {
     LancaCanonicalBridgeBase,
-    ILancaCanonicalBridgeClient,
-    ConceroClient
+    ILancaCanonicalBridgeClient
 } from "./LancaCanonicalBridgeBase.sol";
 import {Storage as s} from "./libraries/Storage.sol";
 import {ILancaCanonicalBridgePool} from "../interfaces/ILancaCanonicalBridgePool.sol";
@@ -30,7 +29,7 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         address conceroRouter,
         address usdcAddress,
         address rateLimitAdmin
-    ) LancaCanonicalBridgeBase(usdcAddress, rateLimitAdmin) ConceroClient(conceroRouter) {}
+    ) LancaCanonicalBridgeBase(usdcAddress, rateLimitAdmin, conceroRouter) {}
 
     /* ------- Main Functions ------- */
 

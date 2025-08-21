@@ -98,9 +98,13 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         ILancaCanonicalBridgePool(pool).withdraw(tokenReceiver, tokenAmount);
 
         if (shouldCallHook) {
-            ILancaCanonicalBridgeClient(tokenReceiver).lancaCanonicalBridgeReceive{
-                gas: dstGasLimit
-            }(messageId, srcChainSelector, tokenSender, tokenAmount, dstCallData);
+            ILancaCanonicalBridgeClient(tokenReceiver).lancaCanonicalBridgeReceive(
+                messageId,
+                srcChainSelector,
+                tokenSender,
+                tokenAmount,
+                dstCallData
+            );
         }
 
         emit BridgeDelivered(messageId, srcChainSelector, tokenSender, tokenReceiver, tokenAmount);

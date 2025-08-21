@@ -13,22 +13,21 @@ import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.
 
 import {
     LancaCanonicalBridgeBase,
-    ILancaCanonicalBridgeClient,
-    ConceroClient
+    ILancaCanonicalBridgeClient
 } from "./LancaCanonicalBridgeBase.sol";
 
 contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
-    uint24 internal immutable i_dstChainSelector;
+    uint24 internal immutable i_l1ChainSelector;
     address internal immutable i_lancaCanonicalBridgeL1;
 
     constructor(
-        uint24 dstChainSelector,
+        uint24 l1ChainSelector,
         address conceroRouter,
         address usdcAddress,
         address lancaCanonicalBridgeL1,
         address rateLimitAdmin
-    ) LancaCanonicalBridgeBase(usdcAddress, rateLimitAdmin) ConceroClient(conceroRouter) {
-        i_dstChainSelector = dstChainSelector;
+    ) LancaCanonicalBridgeBase(usdcAddress, rateLimitAdmin, conceroRouter) {
+        i_l1ChainSelector = l1ChainSelector;
         i_lancaCanonicalBridgeL1 = lancaCanonicalBridgeL1;
     }
 
@@ -42,7 +41,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
     ) external payable nonReentrant returns (bytes32 messageId) {
         require(tokenAmount > 0, CommonErrors.InvalidAmount());
 
-        _consumeRate(i_dstChainSelector, tokenAmount, true);
+        _consumeRate(i_l1ChainSelector, tokenAmount, true);
 
         SafeERC20.safeTransferFrom(i_usdc, msg.sender, address(this), tokenAmount);
         i_usdc.burn(tokenAmount);
@@ -50,7 +49,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         messageId = _sendMessage(
             tokenReceiver,
             tokenAmount,
-            i_dstChainSelector,
+            i_l1ChainSelector,
             dstGasLimit,
             dstCallData,
             i_lancaCanonicalBridgeL1
@@ -65,8 +64,11 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         bytes calldata sender,
         bytes calldata message
     ) internal override nonReentrant {
-        require(abi.decode(sender, (address)) == i_lancaCanonicalBridgeL1, InvalidBridgeSender());
-
+        require(
+            abi.decode(sender, (address)) == i_lancaCanonicalBridgeL1 &&
+                srcChainSelector == i_l1ChainSelector,
+            InvalidBridgeSender()
+        );
         (
             address tokenSender,
             address tokenReceiver,
@@ -85,9 +87,13 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         i_usdc.mint(tokenReceiver, tokenAmount);
 
         if (shouldCallHook) {
-            ILancaCanonicalBridgeClient(tokenReceiver).lancaCanonicalBridgeReceive{
-                gas: dstGasLimit
-            }(messageId, srcChainSelector, tokenSender, tokenAmount, dstCallData);
+            ILancaCanonicalBridgeClient(tokenReceiver).lancaCanonicalBridgeReceive(
+                messageId,
+                srcChainSelector,
+                tokenSender,
+                tokenAmount,
+                dstCallData
+            );
         }
 
         emit BridgeDelivered(messageId, srcChainSelector, tokenSender, tokenReceiver, tokenAmount);
@@ -96,6 +102,6 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
     /* ------- View Functions ------- */
 
     function getBridgeNativeFee(uint256 dstGasLimit) external view returns (uint256) {
-        return getBridgeNativeFee(i_dstChainSelector, i_lancaCanonicalBridgeL1, dstGasLimit);
+        return getBridgeNativeFee(i_l1ChainSelector, i_lancaCanonicalBridgeL1, dstGasLimit);
     }
 }

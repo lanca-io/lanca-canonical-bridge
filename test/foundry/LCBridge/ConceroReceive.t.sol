@@ -52,6 +52,18 @@ contract ConceroReceiveTest is LCBridgeTest {
             abi.encode(address(0)),
             message
         );
+
+        vm.expectRevert(
+            abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidBridgeSender.selector)
+        );
+
+        vm.prank(conceroRouter);
+        lancaCanonicalBridge.conceroReceive(
+            DEFAULT_MESSAGE_ID,
+            SRC_CHAIN_SELECTOR + 1,
+            abi.encode(lancaBridgeL1Mock),
+            message
+        );
     }
 
     function test_conceroReceive_EmitsBridgeDelivered() public {

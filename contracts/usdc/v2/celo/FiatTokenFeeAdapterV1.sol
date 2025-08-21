@@ -23,7 +23,7 @@ import {
 } from "../../interface/celo/IFiatTokenFeeAdapter.sol";
 import { ICeloGasToken } from "../../interface/celo/ICeloGasToken.sol";
 import { IDecimals } from "../../interface/celo/IDecimals.sol";
-import { SafeMath } from "../../libs/@openzeppelin/contracts/math/SafeMath.sol";
+import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 
 contract FiatTokenFeeAdapterV1 is IFiatTokenFeeAdapter {
     using SafeMath for uint256;

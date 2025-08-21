@@ -6,7 +6,7 @@
  */
 pragma solidity 0.8.28;
 
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import {ERC165} from "@openzeppelin/contracts-v5/utils/introspection/ERC165.sol";
 
 import {ILancaCanonicalBridgeClient} from "../interfaces/ILancaCanonicalBridgeClient.sol";
 

@@ -19,7 +19,7 @@
 pragma solidity 0.6.12;
 
 import { Proxy } from "./Proxy.sol";
-import { Address } from "../libs/@openzeppelin/contracts/utils/Address.sol";
+import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
 /**
  * @notice This contract implements a proxy that allows to change the

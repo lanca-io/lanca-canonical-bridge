@@ -6,7 +6,7 @@
  */
 pragma solidity 0.8.28;
 
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {IERC165} from "@openzeppelin/contracts-v5/utils/introspection/IERC165.sol";
 
 import {ConceroClient} from "@concero/v2-contracts/contracts/ConceroClient/ConceroClient.sol";
 import {ConceroOwnable} from "@concero/v2-contracts/contracts/common/ConceroOwnable.sol";

@@ -1,17 +1,17 @@
 {
   "SignatureChecker": {
-    "contractAddress": "0xD5e323dFE6F1DEF993427ca225F3D1F4268EE873",
-    "contractCreationTxHash": "0x6f72950824d7813831ddfd7f6cb64d942c7e7d1d08617aafcb7c837e0804fe8f",
+    "contractAddress": "0x3FB24aFB171Eb346cEDa51993699Bf81E56854a3",
+    "contractCreationTxHash": "0x73783b36e3fffb016942c2a0d4178c5bafb5cb4283c4d82763067b5afd66fca5",
     "verificationType": "partial"
   },
   "FiatTokenV2_2": {
-    "contractAddress": "0x8480d64327bDBa8ae6b27901C4306ba7388df4b8",
-    "contractCreationTxHash": "0xd2632169eb5f368e5910bec536c4d2b2f5c1773eb1e56db30dd5b2ba95d659e2",
+    "contractAddress": "0xA78Dcce3E8D814CB3b5753B27EC2d05EfcaA6978",
+    "contractCreationTxHash": "0x032bdd71ebef6149b7be20f59751611982f65d9abbf0dbdf0351104b39edc762",
     "verificationType": "partial"
   },
   "FiatTokenProxy": {
-    "contractAddress": "0xB63aAD29e5413FB681E6438a4e8D35485968fa1a",
-    "contractCreationTxHash": "0x2fcea44ea96d34c9fb9881406032a222d1b465b7d162a2428466050a0fd6cc10",
+    "contractAddress": "0x99682059738C30B6Ba6F223B61C019e774Ce24e3",
+    "contractCreationTxHash": "0xb892f88030b38ed17cb01771fc8addc9379ab9e3318a3d71194ffb274d6bfaea",
     "verificationType": "partial"
   },
   "rpcUrl": "https://bnb-testnet.api.onfinality.io/public"

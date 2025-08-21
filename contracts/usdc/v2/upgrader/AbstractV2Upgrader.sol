@@ -18,8 +18,8 @@
 
 pragma solidity 0.6.12;
 
-import { SafeMath } from "../../libs/@openzeppelin/contracts/math/SafeMath.sol";
-import { IERC20 } from "../../libs/@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Ownable } from "../../v1/Ownable.sol";
 import { FiatTokenProxy } from "../../v1/FiatTokenProxy.sol";
 import { AbstractUpgraderHelper } from "./helpers/AbstractUpgraderHelper.sol";

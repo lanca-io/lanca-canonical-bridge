@@ -18,7 +18,7 @@
 
 pragma solidity 0.6.12;
 
-import { SafeMath } from "../../libs/@openzeppelin/contracts/math/SafeMath.sol";
+import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { FiatTokenV2_2 } from "../FiatTokenV2_2.sol";
 import { ICeloGasToken } from "../../interface/celo/ICeloGasToken.sol";
 

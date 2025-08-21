@@ -18,7 +18,7 @@
 
 pragma solidity 0.6.12;
 
-import { SafeMath } from "../libs/@openzeppelin/contracts/math/SafeMath.sol";
+import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { AbstractFiatTokenV1 } from "./AbstractFiatTokenV1.sol";
 import { Ownable } from "./Ownable.sol";
 import { Pausable } from "./Pausable.sol";

@@ -6,7 +6,7 @@
  */
 pragma solidity 0.8.28;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts-v5/token/ERC20/IERC20.sol";
 
 import {LancaCanonicalBridgeClient} from "./LancaCanonicalBridgeClient.sol";
 

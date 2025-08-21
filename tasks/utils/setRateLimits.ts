@@ -91,9 +91,13 @@ export async function setRateLimits(
 	// If current rate limits are not set, use default rate limits
 	const rateLimits = {
 		outMax: outMax || Number(currentRateInfo.outbound.maxAmount) || defaultRateLimits.outMax,
-		outRefill: outRefill || Number(currentRateInfo.outbound.refillSpeed) || defaultRateLimits.outRefill,
+		outRefill:
+			outRefill ||
+			Number(currentRateInfo.outbound.refillSpeed) ||
+			defaultRateLimits.outRefill,
 		inMax: inMax || Number(currentRateInfo.inbound.maxAmount) || defaultRateLimits.inMax,
-		inRefill: inRefill || Number(currentRateInfo.inbound.refillSpeed) || defaultRateLimits.inRefill,
+		inRefill:
+			inRefill || Number(currentRateInfo.inbound.refillSpeed) || defaultRateLimits.inRefill,
 	};
 
 	try {
@@ -142,7 +146,7 @@ export async function setRateLimits(
 			});
 
 			log(
-				`Outbound rate limit set successfully! Transaction: ${outboundReceipt.transactionHash}`,
+				`Outbound rate limit set with status: ${outboundReceipt.status}! Transaction: ${outboundReceipt.transactionHash}`,
 				"setRateLimits",
 				srcChainName,
 			);
@@ -181,7 +185,7 @@ export async function setRateLimits(
 			});
 
 			log(
-				`Inbound rate limit set successfully! Transaction: ${inboundReceipt.transactionHash}`,
+				`Inbound rate limit set with status: ${inboundReceipt.status}! Transaction: ${inboundReceipt.transactionHash}`,
 				"setRateLimits",
 				srcChainName,
 			);

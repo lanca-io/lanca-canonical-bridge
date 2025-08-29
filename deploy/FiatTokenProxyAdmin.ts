@@ -16,7 +16,7 @@ const deployFiatTokenProxyAdmin = async function (
 
 	log("Deploying FiatTokenProxyAdmin...", "deployFiatTokenProxyAdmin", srcChainName);
 
-	const implementation = getEnvVar(`FIAT_TOKEN_IMPLEMENTATION_${getNetworkEnvKey(srcChainName)}`);
+	const implementation = getEnvVar(`USDC_${getNetworkEnvKey(srcChainName)}`);
 
 	const deployment = await deploy("AdminUpgradeabilityProxy", {
 		from: proxyDeployer,
@@ -32,7 +32,7 @@ const deployFiatTokenProxyAdmin = async function (
 	);
 
 	updateEnvVariable(
-		`FIAT_TOKEN_PROXY_ADMIN_${getNetworkEnvKey(srcChainName)}`,
+		`USDC_PROXY_ADMIN_${getNetworkEnvKey(srcChainName)}`,
 		deployment.address,
 		`deployments.${networkType}` as const,
 	);

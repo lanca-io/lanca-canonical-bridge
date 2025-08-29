@@ -14,9 +14,7 @@ export async function initializeDefaultFiatToken(srcChainName: string): Promise<
 	const viemAccount = getViemAccount(type, "deployer");
 	const { walletClient, publicClient } = getFallbackClients(srcChain, viemAccount);
 
-	const fiatTokenImplementation = getEnvVar(
-		`FIAT_TOKEN_IMPLEMENTATION_${getNetworkEnvKey(srcChainName)}`,
-	);
+	const fiatTokenImplementation = getEnvVar(`USDC_${getNetworkEnvKey(srcChainName)}`);
 	if (!fiatTokenImplementation) return;
 
 	const THROWAWAY_ADDRESS = "0x0000000000000000000000000000000000000001";

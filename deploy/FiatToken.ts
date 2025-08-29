@@ -36,7 +36,7 @@ const deployFiatToken = async function (hre: HardhatRuntimeEnvironment): Promise
 	log(`Deployed at: ${deployment.address} \n`, "deployFiatToken", name);
 
 	updateEnvVariable(
-		`FIAT_TOKEN_IMPLEMENTATION_${getNetworkEnvKey(name)}`,
+		`USDC_${getNetworkEnvKey(name)}`,
 		deployment.address,
 		`deployments.${networkType}` as const,
 	);

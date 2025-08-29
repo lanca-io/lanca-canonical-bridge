@@ -19,7 +19,7 @@ export async function fiatTokenTransferOwnership(
 	);
 	const fiatTokenArtifact = JSON.parse(fs.readFileSync(fiatTokenArtifactPath, "utf8"));
 
-	const fiatTokenProxyAddress = getEnvVar(`FIAT_TOKEN_PROXY_${getNetworkEnvKey(srcChainName)}`);
+	const fiatTokenProxyAddress = getEnvVar(`USDC_PROXY_${getNetworkEnvKey(srcChainName)}`);
 	if (!fiatTokenProxyAddress) return;
 
 	// viemAccount should be master minter address

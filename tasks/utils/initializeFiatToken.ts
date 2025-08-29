@@ -15,7 +15,7 @@ export async function initializeFiatToken(srcChainName: string): Promise<void> {
 	const viemAccount = getViemAccount(type, "deployer");
 	const { walletClient, publicClient } = getFallbackClients(srcChain, viemAccount);
 
-	const fiatTokenProxy = getEnvVar(`FIAT_TOKEN_PROXY_${getNetworkEnvKey(srcChainName)}`);
+	const fiatTokenProxy = getEnvVar(`USDC_PROXY_${getNetworkEnvKey(srcChainName)}`);
 	if (!fiatTokenProxy) return;
 
 	const defaultArgs = {
@@ -25,11 +25,11 @@ export async function initializeFiatToken(srcChainName: string): Promise<void> {
 		tokenDecimals: 6,
 	};
 
-	const masterMinterAddress = getEnvVar(`FIAT_TOKEN_MASTER_MINTER_ADDRESS`);
-	const pauserAddress = getEnvVar(`FIAT_TOKEN_PAUSER_ADDRESS`);
-	const blacklisterAddress = getEnvVar(`FIAT_TOKEN_BLACKLISTER_ADDRESS`);
-	const ownerAddress = getEnvVar(`FIAT_TOKEN_OWNER_ADDRESS`);
-	const lostAndFoundAddress = getEnvVar(`FIAT_TOKEN_LOST_AND_FOUND_ADDRESS`);
+	const masterMinterAddress = getEnvVar(`USDC_MASTER_MINTER_ADDRESS`);
+	const pauserAddress = getEnvVar(`USDC_PAUSER_ADDRESS`);
+	const blacklisterAddress = getEnvVar(`USDC_BLACKLISTER_ADDRESS`);
+	const ownerAddress = getEnvVar(`USDC_OWNER_ADDRESS`);
+	const lostAndFoundAddress = getEnvVar(`USDC_LOST_AND_FOUND_ADDRESS`);
 
 	if (
 		!masterMinterAddress ||

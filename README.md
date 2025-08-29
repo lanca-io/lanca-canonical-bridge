@@ -343,6 +343,6 @@ After deployment, addresses are saved to environment variables:
 - `LC_BRIDGE_POOL_PROXY_<NETWORK_NAME>_<NETWORK_NAME>` - Pool proxy address
 - `LC_BRIDGE_POOL_PROXY_ADMIN_<NETWORK_NAME>_<NETWORK_NAME>` - Pool proxy admin address
 
-- `FIAT_TOKEN_<NETWORK_NAME>` - FiatToken implementation address
-- `FIAT_TOKEN_PROXY_<NETWORK_NAME>` - FiatToken proxy address
-- `FIAT_TOKEN_PROXY_ADMIN_<NETWORK_NAME>` - FiatToken proxy admin address 
+- `USDC_<NETWORK_NAME>` - FiatToken implementation address
+- `USDC_PROXY_<NETWORK_NAME>` - FiatToken proxy address
+- `USDC_PROXY_ADMIN_<NETWORK_NAME>` - FiatToken proxy admin address 

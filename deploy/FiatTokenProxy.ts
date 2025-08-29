@@ -20,7 +20,7 @@ const deployFiatTokenProxy = async function (hre: HardhatRuntimeEnvironment): Pr
 	const srcChain = conceroNetworks[srcChainName as keyof typeof conceroNetworks];
 	const { type: networkType } = srcChain;
 
-	const implementation = getEnvVar(`FIAT_TOKEN_IMPLEMENTATION_${getNetworkEnvKey(srcChainName)}`);
+	const implementation = getEnvVar(`USDC_${getNetworkEnvKey(srcChainName)}`);
 
 	log("Deploying FiatTokenProxy...", "deployFiatTokenProxy", srcChainName);
 
@@ -34,13 +34,13 @@ const deployFiatTokenProxy = async function (hre: HardhatRuntimeEnvironment): Pr
 	log(`Deployment completed: ${deployment.address} \n`, "deployFiatTokenProxy", srcChainName);
 
 	updateEnvVariable(
-		`FIAT_TOKEN_PROXY_${getNetworkEnvKey(srcChainName)}`,
+		`USDC_PROXY_${getNetworkEnvKey(srcChainName)}`,
 		deployment.address,
 		`deployments.${networkType}` as const,
 	);
 
 	const fiatTokenProxyAdminAddress = getEnvVar(
-		`FIAT_TOKEN_PROXY_ADMIN_${getNetworkEnvKey(srcChainName)}`,
+		`USDC_PROXY_ADMIN_${getNetworkEnvKey(srcChainName)}`,
 	);
 
 	const { abi: fiatTokenProxyAbi } = await import(

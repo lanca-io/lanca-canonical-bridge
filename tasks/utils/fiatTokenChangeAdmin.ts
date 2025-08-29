@@ -20,7 +20,7 @@ export async function fiatTokenChangeAdmin(srcChainName: string, admin: string):
 	);
 
 	const fiatTokenProxyAdminAddress = getEnvVar(
-		`FIAT_TOKEN_PROXY_ADMIN_${getNetworkEnvKey(srcChainName)}`,
+		`USDC_PROXY_ADMIN_${getNetworkEnvKey(srcChainName)}`,
 	);
 	if (!fiatTokenProxyAdminAddress) return;
 

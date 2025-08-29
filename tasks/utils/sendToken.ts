@@ -33,19 +33,19 @@ export async function sendToken(params: SendTokenParams): Promise<void> {
 	const bridgeAddress = getEnvVar(`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(srcChain)}`);
 	if (!bridgeAddress) {
 		err(`Bridge address not found for ${srcChain}`, "sendToken");
-	};
+	}
 
-	const usdcAddress = getEnvVar(`FIAT_TOKEN_PROXY_${getNetworkEnvKey(srcChain)}`);
+	const usdcAddress = getEnvVar(`USDC_PROXY_${getNetworkEnvKey(srcChain)}`);
 	if (!usdcAddress) {
 		err(`USDC address not found for ${srcChain}`, "sendToken");
-	};
+	}
 
 	const dstBridgeAddress = getEnvVar(
 		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChain)}`,
 	);
 	if (!dstBridgeAddress) {
 		err(`Destination bridge address not found for ${dstChain}`, "sendToken");
-	};
+	}
 
 	if (!bridgeAddress || !usdcAddress || !dstBridgeAddress) {
 		return;

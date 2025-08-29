@@ -8,7 +8,7 @@ export async function configureMinter(srcChainName: string, amount?: string): Pr
 	const srcChain = conceroNetworks[srcChainName as keyof typeof conceroNetworks];
 	const { viemChain, type } = srcChain;
 
-	const fiatTokenProxyAddress = getEnvVar(`FIAT_TOKEN_PROXY_${getNetworkEnvKey(srcChainName)}`);
+	const fiatTokenProxyAddress = getEnvVar(`USDC_PROXY_${getNetworkEnvKey(srcChainName)}`);
 	if (!fiatTokenProxyAddress) {
 		err(`FiatToken address not found`, "configureMinter", srcChainName);
 	}

@@ -1,0 +1,51 @@
+import { task } from "hardhat/config";
+
+import { type HardhatRuntimeEnvironment } from "hardhat/types";
+
+import { ProxyEnum, envPrefixes } from "../../constants";
+import { deployLancaCanonicalBridge } from "../../deploy/LancaCanonicalBridge";
+import { deployLancaCanonicalBridgeProxy } from "../../deploy/LancaCanonicalBridgeProxy";
+import { deployProxyAdmin } from "../../deploy/ProxyAdmin";
+import { compileContracts } from "../../utils";
+import { configureMinter, setRateLimits, upgradeLancaProxyImplementation } from "../utils";
+
+async function deployBridgeTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
+	compileContracts({ quiet: true });
+
+	const isL1Deployment =
+		hre.network.name === "ethereum" || hre.network.name === "ethereumSepolia";
+
+	if (taskArgs.implementation) {
+		await deployLancaCanonicalBridge(hre);
+	}
+
+	if (taskArgs.proxy) {
+		await deployProxyAdmin(hre, envPrefixes.lcBridgeProxyAdmin, taskArgs.owner);
+		await deployLancaCanonicalBridgeProxy(hre, ProxyEnum.lcBridgeProxy);
+	}
+
+	if (taskArgs.implementation) {
+		await upgradeLancaProxyImplementation(hre.network.name, ProxyEnum.lcBridgeProxy, false);
+	}
+
+	if (!isL1Deployment && !taskArgs.pause) {
+		await setRateLimits(hre.network.name);
+		await configureMinter(hre.network.name);
+	}
+
+	if (taskArgs.pause) {
+		await upgradeLancaProxyImplementation(hre.network.name, ProxyEnum.lcBridgeProxy, true);
+	}
+}
+
+// yarn hardhat deploy-bridge [--implementation] [--proxy] [--pause] [--owner <address>] --network <network_name>
+task("deploy-bridge", "Deploy LancaCanonicalBridge")
+	.addFlag("implementation", "Deploy implementation")
+	.addFlag("proxy", "Deploy proxy and proxy admin")
+	.addOptionalParam("owner", "Override proxy admin owner address")
+	.addFlag("pause", "Pause bridge")
+	.setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
+		await deployBridgeTask(taskArgs, hre);
+	});
+
+export { deployBridgeTask };

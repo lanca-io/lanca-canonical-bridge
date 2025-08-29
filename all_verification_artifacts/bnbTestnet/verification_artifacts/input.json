@@ -1,0 +1,18 @@
+{
+  "SignatureChecker": {
+    "contractAddress": "0x3FB24aFB171Eb346cEDa51993699Bf81E56854a3",
+    "contractCreationTxHash": "0x73783b36e3fffb016942c2a0d4178c5bafb5cb4283c4d82763067b5afd66fca5",
+    "verificationType": "partial"
+  },
+  "FiatTokenV2_2": {
+    "contractAddress": "0xA78Dcce3E8D814CB3b5753B27EC2d05EfcaA6978",
+    "contractCreationTxHash": "0x032bdd71ebef6149b7be20f59751611982f65d9abbf0dbdf0351104b39edc762",
+    "verificationType": "partial"
+  },
+  "FiatTokenProxy": {
+    "contractAddress": "0x99682059738C30B6Ba6F223B61C019e774Ce24e3",
+    "contractCreationTxHash": "0xb892f88030b38ed17cb01771fc8addc9379ab9e3318a3d71194ffb274d6bfaea",
+    "verificationType": "partial"
+  },
+  "rpcUrl": "https://bnb-testnet.api.onfinality.io/public"
+}

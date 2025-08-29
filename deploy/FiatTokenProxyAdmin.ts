@@ -1,10 +1,6 @@
-import fs from "fs";
-import path from "path";
-
+import { getNetworkEnvKey } from "@concero/contract-utils";
 import { Deployment } from "hardhat-deploy/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-
-import { getNetworkEnvKey } from "@concero/contract-utils";
 
 import { conceroNetworks } from "../constants";
 import { getEnvVar, log, updateEnvVariable } from "../utils";
@@ -14,38 +10,29 @@ const deployFiatTokenProxyAdmin = async function (
 ): Promise<Deployment> {
 	const { proxyDeployer } = await hre.getNamedAccounts();
 	const { deploy } = hre.deployments;
-	const { name } = hre.network;
+	const { name: srcChainName } = hre.network;
+	const srcChain = conceroNetworks[srcChainName as keyof typeof conceroNetworks];
+	const { type: networkType } = srcChain;
 
-	const networkType = conceroNetworks[name].type;
+	log("Deploying FiatTokenProxyAdmin...", "deployFiatTokenProxyAdmin", srcChainName);
 
-	log("Deploying FiatTokenProxyAdmin...", "deployFiatTokenProxyAdmin", name);
+	const implementation = getEnvVar(`FIAT_TOKEN_IMPLEMENTATION_${getNetworkEnvKey(srcChainName)}`);
 
-	const adminUpgradeableProxyArtifactPath = path.resolve(
-		__dirname,
-		"../usdc-artifacts/AdminUpgradeabilityProxy.sol/AdminUpgradeabilityProxy.json",
-	);
-
-	const adminUpgradableProxyArtifact = JSON.parse(
-		fs.readFileSync(adminUpgradeableProxyArtifactPath, "utf8"),
-	);
-
-    const implementation = getEnvVar(`FIAT_TOKEN_IMPLEMENTATION_${getNetworkEnvKey(name)}`);
-
-	const deployment = await deploy("FiatTokenProxyAdmin", {
+	const deployment = await deploy("AdminUpgradeabilityProxy", {
 		from: proxyDeployer,
-		contract: {
-			abi: adminUpgradableProxyArtifact.abi,
-			bytecode: adminUpgradableProxyArtifact.bytecode,
-		},
 		args: [implementation],
 		log: true,
 		autoMine: true,
 	});
 
-	log(`Deployment completed: ${deployment.address} \n`, "deployFiatTokenProxyAdmin", name);
+	log(
+		`Deployment completed: ${deployment.address} \n`,
+		"deployFiatTokenProxyAdmin",
+		srcChainName,
+	);
 
 	updateEnvVariable(
-		`FIAT_TOKEN_PROXY_ADMIN_${getNetworkEnvKey(name)}`,
+		`FIAT_TOKEN_PROXY_ADMIN_${getNetworkEnvKey(srcChainName)}`,
 		deployment.address,
 		`deployments.${networkType}` as const,
 	);

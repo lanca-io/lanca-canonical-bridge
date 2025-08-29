@@ -1,29 +1,23 @@
-import { formatEther, parseUnits } from "viem";
-
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-
 import { getNetworkEnvKey } from "@concero/contract-utils";
+import { decodeEventLog, formatEther, parseUnits } from "viem";
 
 import { conceroNetworks, getViemReceiptConfig } from "../../constants";
 import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils";
+import { monitorBridgeDelivered } from "./monitorBridgeDelivered";
 
 interface SendTokenParams {
+	srcChain: string;
 	dstChain: string;
 	amount: string;
-	gasLimit: string;
 }
 
-export async function sendToken(
-	hre: HardhatRuntimeEnvironment,
-	params: SendTokenParams,
-): Promise<void> {
-	const { dstChain, amount, gasLimit } = params;
-	const { name: srcChain } = hre.network;
+export async function sendToken(params: SendTokenParams): Promise<void> {
+	const { srcChain, dstChain, amount } = params;
 
-	const srcNetwork = conceroNetworks[srcChain];
+	const srcNetwork = conceroNetworks[srcChain as keyof typeof conceroNetworks];
 	const { viemChain, type, chainSelector: srcChainSelector } = srcNetwork;
 
-	const dstNetwork = conceroNetworks[dstChain];
+	const dstNetwork = conceroNetworks[dstChain as keyof typeof conceroNetworks];
 	if (!dstNetwork) {
 		err(`Destination network ${dstChain} not found`, "sendToken");
 		return;
@@ -37,13 +31,25 @@ export async function sendToken(
 	);
 
 	const bridgeAddress = getEnvVar(`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(srcChain)}`);
-	if (!bridgeAddress) return;
+	if (!bridgeAddress) {
+		err(`Bridge address not found for ${srcChain}`, "sendToken");
+	};
 
 	const usdcAddress = getEnvVar(`FIAT_TOKEN_PROXY_${getNetworkEnvKey(srcChain)}`);
-	if (!usdcAddress) return;
+	if (!usdcAddress) {
+		err(`USDC address not found for ${srcChain}`, "sendToken");
+	};
 
-	const laneAddress = getEnvVar(`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChain)}`);
-	if (!laneAddress) return;
+	const dstBridgeAddress = getEnvVar(
+		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChain)}`,
+	);
+	if (!dstBridgeAddress) {
+		err(`Destination bridge address not found for ${dstChain}`, "sendToken");
+	};
+
+	if (!bridgeAddress || !usdcAddress || !dstBridgeAddress) {
+		return;
+	}
 
 	// Determine if we need to approve to pool or bridge
 	const isEthereumChain = srcChain.startsWith("ethereum");
@@ -78,35 +84,30 @@ export async function sendToken(
 	}
 
 	const { abi: usdcAbi } = await import(
-		"../../usdc-artifacts/FiatTokenV2_2.sol/FiatTokenV2_2.json"
+		"../../artifacts/contracts/usdc/v2/FiatTokenV2_2.sol/FiatTokenV2_2.json"
 	);
 
 	const viemAccount = getViemAccount(type, "deployer");
 	const { walletClient, publicClient } = getFallbackClients(srcNetwork, viemAccount);
 
 	const amountInWei = parseUnits(amount, 6);
-	const gasLimitBigInt = BigInt(gasLimit);
-
-	const dstChainData = {
-		receiver: laneAddress as `0x${string}`,
-		gasLimit: gasLimitBigInt,
-	};
 
 	try {
 		log("Getting message fee...", "sendToken", srcChain);
+
 		const messageFee = await publicClient.readContract({
 			address: bridgeAddress as `0x${string}`,
 			abi: bridgeAbi,
-			functionName: "getMessageFee",
+			functionName: "getBridgeNativeFee",
 			args: [
 				dstChainSelector,
-				"0x0000000000000000000000000000000000000000", // feeToken (ETH)
-				dstChainData,
+				dstBridgeAddress as `0x${string}`,
+				BigInt(0), // dstGasLimit (not needed for simple transfer)
 			],
 		});
 
 		log(
-			`Message fee: ${formatEther(messageFee as bigint)} ETH (${messageFee} wei)`,
+			`Message fee: ${formatEther(messageFee)} ETH (${messageFee} wei)`,
 			"sendToken",
 			srcChain,
 		);
@@ -132,26 +133,28 @@ export async function sendToken(
 
 		// Send token - prepare arguments based on contract type
 		log(
-			`Sending ${amount} USDC to ${dstChain} (lane: ${laneAddress})...`,
+			`Sending ${amount} USDC to ${dstChain} (dstBridge: ${dstBridgeAddress})...`,
 			"sendToken",
 			srcChain,
 		);
 
 		let sendTokenArgs: any[];
 		if (isEthereumChain) {
-			// L1 contract: sendToken(amount, dstChainSelector, feeToken, dstChainData)
+			// L1 contract: sendToken(tokenReceiver, tokenAmount, dstChainSelector, isTokenReceiverContract, dstGasLimit, dstCallData)
 			sendTokenArgs = [
-				amountInWei,
-				dstChainSelector,
-				"0x0000000000000000000000000000000000000000", // feeToken
-				dstChainData,
+				viemAccount.address as `0x${string}`, // tokenReceiver
+				amountInWei, // tokenAmount
+				dstChainSelector, // dstChainSelector
+				BigInt(0), // dstGasLimit (not needed for simple transfer)
+				"0x", // dstCallData (empty for simple transfer)
 			];
 		} else {
-			// L2 contract: sendToken(amount, feeToken, dstChainData)
+			// L2 contract: sendToken(tokenReceiver, tokenAmount)
 			sendTokenArgs = [
-				amountInWei,
-				"0x0000000000000000000000000000000000000000", // feeToken
-				dstChainData,
+				viemAccount.address as `0x${string}`, // tokenReceiver
+				amountInWei, // tokenAmount
+				BigInt(0), // dstGasLimit (not needed for simple transfer)
+				"0x", // dstCallData (empty for simple transfer)
 			];
 		}
 
@@ -161,7 +164,7 @@ export async function sendToken(
 			functionName: "sendToken",
 			account: viemAccount,
 			args: sendTokenArgs,
-			value: messageFee as bigint,
+			value: messageFee,
 			chain: viemChain,
 		});
 
@@ -170,11 +173,43 @@ export async function sendToken(
 			hash: sendTxHash,
 		});
 
-		log(
-			`🎉 Token transfer successful! Transaction hash: ${sendTxHash} \n`,
-			"sendToken",
-			srcChain,
-		);
+		log(`🎉 Token transfer initiated! Transaction hash: ${sendTxHash}`, "sendToken", srcChain);
+
+		try {
+			let messageId: string | null = null;
+
+			for (const receiptLog of receipt.logs) {
+				try {
+					const decoded = decodeEventLog({
+						abi: bridgeAbi,
+						data: receiptLog.data,
+						topics: receiptLog.topics,
+					});
+
+					if (decoded.eventName === "TokenSent") {
+						messageId = (decoded.args as any).messageId;
+						break;
+					}
+				} catch (decodeError) {
+					continue;
+				}
+			}
+
+			if (messageId) {
+				log(`📡 MessageId: ${messageId}`, "sendToken", srcChain);
+				log(`🔄 Starting cross-chain monitoring...`, "sendToken", srcChain);
+
+				await monitorBridgeDelivered(messageId, srcChain, dstChain, amount);
+			} else {
+				log(`⚠️ TokenSent event not found in transaction receipt`, "sendToken", srcChain);
+			}
+		} catch (parseError) {
+			log(
+				`⚠️ Could not parse events from transaction receipt: ${parseError}`,
+				"sendToken",
+				srcChain,
+			);
+		}
 	} catch (error) {
 		err(`Failed to send tokens: ${error}`, "sendToken", srcChain);
 		throw error;

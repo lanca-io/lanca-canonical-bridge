@@ -6,49 +6,116 @@
  */
 pragma solidity 0.8.28;
 
-import {IConceroRouter} from "@concero/messaging-contracts-v2/contracts/interfaces/IConceroRouter.sol";
-import {CommonErrors} from "@concero/messaging-contracts-v2/contracts/common/CommonErrors.sol";
-import {ConceroClient} from "@concero/messaging-contracts-v2/contracts/ConceroClient/ConceroClient.sol";
-import {ConceroOwnable} from "@concero/messaging-contracts-v2/contracts/common/ConceroOwnable.sol";
-import {ConceroTypes} from "@concero/messaging-contracts-v2/contracts/ConceroClient/ConceroTypes.sol";
+import {IERC165} from "@openzeppelin/contracts-v5/utils/introspection/IERC165.sol";
 
+import {ConceroClient} from "@concero/v2-contracts/contracts/ConceroClient/ConceroClient.sol";
+import {ConceroOwnable} from "@concero/v2-contracts/contracts/common/ConceroOwnable.sol";
+import {ConceroTypes} from "@concero/v2-contracts/contracts/ConceroClient/ConceroTypes.sol";
+import {IConceroRouter} from "@concero/v2-contracts/contracts/interfaces/IConceroRouter.sol";
+
+import {RateLimiter} from "./RateLimiter.sol";
 import {IFiatTokenV1} from "../interfaces/IFiatTokenV1.sol";
+import {ILancaCanonicalBridgeClient} from "../LancaCanonicalBridgeClient/LancaCanonicalBridgeClient.sol";
 
-abstract contract LancaCanonicalBridgeBase is ConceroClient, ConceroOwnable {
+abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, ConceroOwnable {
+    uint256 internal constant BRIDGE_GAS_OVERHEAD = 150_000;
+
     IFiatTokenV1 internal immutable i_usdc;
 
     event TokenSent(
-        bytes32 messageId,
-        address dstBridgeAddress,
-        uint24 dstChainSelector,
-        address tokenSender,
-        uint256 amount,
-        uint256 fee
+        bytes32 indexed messageId,
+        address indexed tokenSender,
+        address indexed tokenReceiver,
+        uint256 tokenAmount
     );
 
-    event TokenReceived(
-        bytes32 messageId,
-        uint24 srcChainSelector,
-        address sender,
-        address tokenSender,
-        uint256 amount
+    event SentToDestinationBridge(
+        bytes32 indexed messageId,
+        uint24 indexed dstChainSelector,
+        address indexed dstBridge
     );
 
-    constructor(address usdcAddress) ConceroOwnable() {
+    event BridgeDelivered(
+        bytes32 indexed messageId,
+        uint24 indexed srcChainSelector,
+        address tokenSender,
+        address tokenReceiver,
+        uint256 tokenAmount
+    );
+
+    error InvalidBridgeSender();
+    error InvalidDstGasLimitOrCallData();
+    error InvalidConceroMessage();
+
+    constructor(
+        address usdcAddress,
+        address rateLimitAdmin,
+        address conceroRouter
+    ) RateLimiter(rateLimitAdmin) ConceroClient(conceroRouter) {
         i_usdc = IFiatTokenV1(usdcAddress);
     }
 
-    function getMessageFee(
+    function _sendMessage(
+        address tokenReceiver,
+        uint256 tokenAmount,
         uint24 dstChainSelector,
-        address feeToken,
-        ConceroTypes.EvmDstChainData memory dstChainData
+        uint256 dstGasLimit,
+        bytes calldata dstCallData,
+        address dstBridge
+    ) internal returns (bytes32 messageId) {
+        require(
+            (dstGasLimit == 0 && dstCallData.length == 0) ||
+                (dstGasLimit > 0 && dstCallData.length > 0),
+            InvalidDstGasLimitOrCallData()
+        );
+
+        bytes memory messageData = abi.encode(
+            msg.sender,
+            tokenReceiver,
+            tokenAmount,
+            dstGasLimit,
+            dstCallData
+        );
+
+        messageId = IConceroRouter(i_conceroRouter).conceroSend{value: msg.value}(
+            dstChainSelector,
+            false,
+            address(0),
+            ConceroTypes.EvmDstChainData({
+                receiver: dstBridge,
+                gasLimit: BRIDGE_GAS_OVERHEAD + dstGasLimit
+            }),
+            messageData
+        );
+    }
+
+    function _isValidContractReceiver(address tokenReceiver) internal view returns (bool) {
+        if (
+            tokenReceiver.code.length == 0 ||
+            !IERC165(tokenReceiver).supportsInterface(type(ILancaCanonicalBridgeClient).interfaceId)
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /* ------- View Functions ------- */
+
+    function getBridgeNativeFee(
+        uint24 dstChainSelector,
+        address dstPool,
+        uint256 dstGasLimit
     ) public view returns (uint256) {
         return
             IConceroRouter(i_conceroRouter).getMessageFee(
                 dstChainSelector,
-                false,
-                feeToken,
-                dstChainData
+                false, // shouldFinaliseSrc
+                address(0), // feeToken (native)
+                ConceroTypes.EvmDstChainData({
+                    receiver: dstPool,
+                    gasLimit: BRIDGE_GAS_OVERHEAD + dstGasLimit
+                })
             );
     }
 }

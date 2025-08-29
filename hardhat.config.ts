@@ -1,11 +1,4 @@
-import "solidity-coverage";
-
 import "./utils/configureDotEnv";
-
-import "hardhat-contract-sizer";
-import "hardhat-deploy";
-import "hardhat-deploy-ethers";
-import "hardhat-gas-reporter";
 import { HardhatUserConfig } from "hardhat/config";
 
 import "@nomicfoundation/hardhat-chai-matchers";
@@ -13,8 +6,13 @@ import "@nomicfoundation/hardhat-ethers";
 import "@nomicfoundation/hardhat-network-helpers";
 import "@nomicfoundation/hardhat-verify";
 import "@nomicfoundation/hardhat-viem";
-import "@tenderly/hardhat-tenderly";
 import "@typechain/hardhat";
+import "hardhat-contract-sizer";
+import "hardhat-deploy";
+import "hardhat-deploy-ethers";
+import "hardhat-gas-reporter";
+import "solidity-coverage";
+import "@tenderly/hardhat-tenderly";
 
 import { conceroNetworks } from "./constants";
 import "./tasks";
@@ -51,6 +49,15 @@ const config: HardhatUserConfig = {
 					},
 				},
 			},
+			{
+				version: "0.6.12",
+				settings: {
+					optimizer: {
+						enabled: true,
+						runs: parseInt(process.env.OPTIMIZER_RUNS || "10000000"),
+					},
+				},
+			},
 		],
 	},
 	defaultNetwork: "localhost",
@@ -59,24 +66,59 @@ const config: HardhatUserConfig = {
 			default: 0,
 		},
 		proxyDeployer: {
-			default: 0,
+			default: 1,
 		},
 	},
 	networks: conceroNetworks,
 	etherscan: {
 		apiKey: {
-			// arbitrum: process.env.ARBISCAN_API_KEY,
-			// arbitrumSepolia: process.env.ARBISCAN_API_KEY,
+			arbitrumSepolia: process.env.ETHERSCAN_API_KEY || "",
+			baseSepolia: process.env.ETHERSCAN_API_KEY || "",
+			bnbTestnet: process.env.ETHERSCAN_API_KEY || "",
 			// ethereum: process.env.ETHERSCAN_API_KEY,
 			// ethereumSepolia: process.env.ETHERSCAN_API_KEY,
 			// polygon: process.env.POLYGONSCAN_API_KEY,
 			// polygonAmoy: process.env.POLYGONSCAN_API_KEY,
-			// optimism: process.env.OPTIMISMSCAN_API_KEY,
-			// optimismSepolia: process.env.OPTIMISMSCAN_API_KEY,
+			// optimism: process.env.OPTIMISMSCAN_API_KEY || "",
+			optimismSepolia: process.env.ETHERSCAN_API_KEY || "",
 			// celo: process.env.CELOSCAN_API_KEY,
 			// avalanche: "snowtrace",
-			// avalancheFuji: "snowtrace",
+			// avalancheFuji: process.env.AVALANCHE_FUJI_KEY || "",
 		},
+		customChains: [
+			{
+				network: "arbitrumSepolia",
+				chainId: 421614,
+				urls: {
+					apiURL: "https://api.etherscan.io/v2/api?chainid=421614",
+					browserURL: "https://api.etherscan.io/v2/api?chainid=421614",
+				},
+			},
+			{
+				network: "baseSepolia",
+				chainId: 84532,
+				urls: {
+					apiURL: "https://api.etherscan.io/v2/api?chainid=84532",
+					browserURL: "https://api.etherscan.io/v2/api?chainid=84532",
+				},
+			},
+			{
+				network: "optimismSepolia",
+				chainId: 11155420,
+				urls: {
+					apiURL: "https://api.etherscan.io/v2/api?chainid=11155420",
+					browserURL: "https://api.etherscan.io/v2/api?chainid=11155420",
+				},
+			},
+			{
+				network: "bnbTestnet",
+				chainId: 97,
+				urls: {
+					apiURL: "https://api.etherscan.io/v2/api?chainid=97",
+					browserURL: "https://api.etherscan.io/v2/api?chainid=97",
+				},
+			},
+		],
 	},
 	sourcify: {
 		enabled: true,

@@ -18,6 +18,17 @@ const writeContractConfig: WriteContractParameters = {
 	gas: 3000000n, // 3M
 };
 
+const defaultRateLimits = {
+	outMax: "10000000",
+	outRefill: "1000000",
+	inMax: "10000000",
+	inRefill: "1000000",
+};
+
+const defaultMinterAllowedAmount = 1000000e6;
+
+const ADDRESS_ZERO = "0x0000000000000000000000000000000000000000";
+
 function getViemReceiptConfig(chain: ConceroNetwork): Partial<WaitForTransactionReceiptParameters> {
 	return {
 		timeout: 0,
@@ -35,4 +46,13 @@ const envPrefixes: EnvPrefixes = {
 	pause: "CONCERO_PAUSE",
 };
 
-export { viemReceiptConfig, writeContractConfig, ProxyEnum, envPrefixes, getViemReceiptConfig };
+export {
+	viemReceiptConfig,
+	writeContractConfig,
+	ProxyEnum,
+	envPrefixes,
+	getViemReceiptConfig,
+	defaultRateLimits,
+	defaultMinterAllowedAmount,
+	ADDRESS_ZERO,
+};

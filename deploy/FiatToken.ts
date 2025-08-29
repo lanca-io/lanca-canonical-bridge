@@ -1,60 +1,32 @@
-import fs from "fs";
-import path from "path";
-
+import { getNetworkEnvKey } from "@concero/contract-utils";
 import { Deployment } from "hardhat-deploy/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-import { getNetworkEnvKey } from "@concero/contract-utils";
-
 import { conceroNetworks } from "../constants";
+import { copyMetadataForVerification, saveVerificationData } from "../tasks/utils";
 import { log, updateEnvVariable } from "../utils";
 
-const deployFiatToken = async function (
-	hre: HardhatRuntimeEnvironment,
-): Promise<Deployment> {
+const deployFiatToken = async function (hre: HardhatRuntimeEnvironment): Promise<Deployment> {
 	const { deployer } = await hre.getNamedAccounts();
 	const { deploy } = hre.deployments;
 	const { name } = hre.network;
 
-	const chain = conceroNetworks[name];
+	const chain = conceroNetworks[name as keyof typeof conceroNetworks];
 	const { type: networkType } = chain;
 
 	log(`Deploying FiatToken implementation:`, "deployFiatToken", name);
 
-	const signatureCheckerArtifactPath = path.resolve(
-		__dirname,
-		"../usdc-artifacts/SignatureChecker.sol/SignatureChecker.json",
-	);
-	const signatureCheckerArtifact = JSON.parse(
-		fs.readFileSync(signatureCheckerArtifactPath, "utf8"),
-	);
-
 	const signatureCheckerDeployment = await deploy("SignatureChecker", {
 		from: deployer,
-		contract: {
-			abi: signatureCheckerArtifact.abi,
-			bytecode: signatureCheckerArtifact.bytecode,
-		},
 		args: [],
 		log: true,
 		autoMine: true,
 	});
 
-	const artifactPath = path.resolve(
-		__dirname,
-		"../usdc-artifacts/FiatTokenV2_2.sol/FiatTokenV2_2.json",
-	);
-	const artifact = JSON.parse(fs.readFileSync(artifactPath, "utf8"));
-
 	const deployment = await deploy("FiatTokenV2_2", {
 		from: deployer,
-		contract: {
-			abi: artifact.abi,
-			bytecode: artifact.bytecode,
-		},
 		libraries: {
-			"contracts/util/SignatureChecker.sol:SignatureChecker":
-				signatureCheckerDeployment.address,
+			SignatureChecker: signatureCheckerDeployment.address,
 		},
 		args: [],
 		log: true,
@@ -66,8 +38,39 @@ const deployFiatToken = async function (
 	updateEnvVariable(
 		`FIAT_TOKEN_IMPLEMENTATION_${getNetworkEnvKey(name)}`,
 		deployment.address,
-		`deployments.${networkType}`,
+		`deployments.${networkType}` as const,
 	);
+
+	await saveVerificationData(
+		name,
+		"SignatureChecker",
+		signatureCheckerDeployment.address,
+		signatureCheckerDeployment.transactionHash || "",
+	);
+	await saveVerificationData(
+		name,
+		"FiatTokenV2_2",
+		deployment.address,
+		deployment.transactionHash || "",
+	);
+
+	await copyMetadataForVerification(name, "SignatureChecker");
+	await copyMetadataForVerification(name, "FiatTokenV2_2");
+
+	if (hre.network.live) {
+		try {
+			log("Verifying FiatTokenV2_2 contract...", "deployFiatToken", name);
+			await hre.run("verify:verify", {
+				address: deployment.address,
+				constructorArguments: [],
+				libraries: {
+					SignatureChecker: signatureCheckerDeployment.address,
+				},
+			});
+		} catch (error) {
+			log(`Verification failed: ${error}`, "deployFiatToken", name);
+		}
+	}
 
 	return deployment;
 };

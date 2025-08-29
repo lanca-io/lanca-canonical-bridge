@@ -1,9 +1,15 @@
+export { changeProxyAdminOwner } from "./changeProxyAdminOwner";
 export { upgradeLancaProxyImplementation } from "./upgradeLancaProxy";
 export { upgradeLancaPoolProxyImplementation } from "./upgradeLancaPool";
 export { initializeDefaultFiatToken } from "./initializeDefaultFiatToken";
 export { initializeFiatToken } from "./initializeFiatToken";
 export { configureMinter } from "./configureMinter";
-export { configureMinterTest } from "./configureMinterTest";
 export { addPool } from "./addPool";
-export { addLane } from "./addLane";
+export { addDstBridge } from "./addDstBridge";
+export { removeDstBridge } from "./removeDstBridge";
+export { removeDstPool } from "./removeDstPool";
 export { sendToken } from "./sendToken";
+export { setRateLimits } from "./setRateLimits";
+export { getRateInfo } from "./getRateInfo";
+export { monitorBridgeDelivered } from "./monitorBridgeDelivered";
+export { saveVerificationData, copyMetadataForVerification } from "./saveVerificationData";

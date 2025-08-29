@@ -1,0 +1,53 @@
+import { getNetworkEnvKey } from "@concero/contract-utils";
+import { Deployment } from "hardhat-deploy/types";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
+
+import { conceroNetworks } from "../constants";
+import { getWallet, log, updateEnvVariable } from "../utils";
+
+type DeploymentFunction = (
+	hre: HardhatRuntimeEnvironment,
+	envPrefix: string,
+	overrideOwner?: string,
+	dstChainName?: string,
+) => Promise<Deployment>;
+
+const deployProxyAdmin: DeploymentFunction = async function (
+	hre: HardhatRuntimeEnvironment,
+	envPrefix: string,
+	overrideOwner?: string,
+	dstChainName?: string,
+): Promise<Deployment> {
+	const { proxyDeployer } = await hre.getNamedAccounts();
+	const { deploy } = hre.deployments;
+	const { name } = hre.network;
+	const chain = conceroNetworks[name as keyof typeof conceroNetworks];
+	const { type: networkType } = chain;
+
+	const initialOwner = overrideOwner || getWallet(networkType, "proxyDeployer", "address");
+
+	log(`Deploying ProxyAdmin...`, "deployProxyAdmin", name);
+	log(`  initialOwner: ${initialOwner}`, "deployProxyAdmin", name);
+
+	const deployment = await deploy("LCBProxyAdmin", {
+		from: proxyDeployer,
+		args: [initialOwner],
+		log: true,
+		autoMine: true,
+	});
+
+	log(`Deployed at: ${deployment.address}`, "deployProxyAdmin", name);
+
+	let envVarName: string;
+	if (dstChainName) {
+		envVarName = `${envPrefix}_${getNetworkEnvKey(name)}_${getNetworkEnvKey(dstChainName)}`;
+	} else {
+		envVarName = `${envPrefix}_${getNetworkEnvKey(name)}`;
+	}
+	updateEnvVariable(envVarName, deployment.address, `deployments.${networkType}`);
+
+	return deployment;
+};
+
+export { deployProxyAdmin };
+export default deployProxyAdmin;

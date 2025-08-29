@@ -6,38 +6,41 @@
  */
 pragma solidity 0.8.28;
 
-import {CommonErrors} from "@concero/messaging-contracts-v2/contracts/common/CommonErrors.sol";
+import {IERC20} from "@openzeppelin/contracts-v5/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts-v5/token/ERC20/utils/SafeERC20.sol";
 
-import {IFiatTokenV1} from "../interfaces/IFiatTokenV1.sol";
+import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
+
 import {ILancaCanonicalBridgePool} from "../interfaces/ILancaCanonicalBridgePool.sol";
 
 contract LancaCanonicalBridgePool is ILancaCanonicalBridgePool {
-    address public immutable i_owner;
-    IFiatTokenV1 private immutable i_usdc;
+    using SafeERC20 for IERC20;
+
+    IERC20 private immutable i_usdc;
+    address public immutable i_lancaCanonicalBridgeL1;
     uint24 private immutable i_dstChainSelector;
 
-    modifier onlyOwner() {
-        require(msg.sender == i_owner, CommonErrors.Unauthorized());
+    modifier onlyLancaCanonicalBridge() {
+        require(msg.sender == i_lancaCanonicalBridgeL1, CommonErrors.Unauthorized());
         _;
     }
 
     constructor(address usdcAddress, address lancaCanonicalBridge, uint24 dstChainSelector) {
-        i_usdc = IFiatTokenV1(usdcAddress);
+        i_usdc = IERC20(usdcAddress);
+        i_lancaCanonicalBridgeL1 = lancaCanonicalBridge;
         i_dstChainSelector = dstChainSelector;
-        i_owner = lancaCanonicalBridge;
     }
 
-	function deposit(address from, uint256 amount) external onlyOwner returns (bool success) {
-		success = i_usdc.transferFrom(from, address(this), amount);
-	}
-
-    function withdraw(address to, uint256 amount) external onlyOwner returns (bool success) {
-        // TODO: add limit?
-        success = i_usdc.transfer(to, amount);
+    function deposit(address from, uint256 amount) external onlyLancaCanonicalBridge {
+        i_usdc.safeTransferFrom(from, address(this), amount);
     }
 
-    function getPoolInfo() external view returns (uint24 dstChainSelector, uint256 lockedUSDC) {
+    function withdraw(address to, uint256 amount) external onlyLancaCanonicalBridge {
+        i_usdc.safeTransfer(to, amount);
+    }
+
+    function getPoolInfo() external view returns (uint24 dstChainSelector, uint256 lockedUsdc) {
         dstChainSelector = i_dstChainSelector;
-        lockedUSDC = i_usdc.balanceOf(address(this));
+        lockedUsdc = i_usdc.balanceOf(address(this));
     }
 }

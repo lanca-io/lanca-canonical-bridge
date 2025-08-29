@@ -6,47 +6,56 @@
  */
 pragma solidity 0.8.28;
 
-import {LancaCanonicalBridgeBase, ConceroClient, CommonErrors, ConceroTypes, IConceroRouter} from "./LancaCanonicalBridgeBase.sol";
-import {ReentrancyGuard} from "../common/ReentrancyGuard.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts-v5/utils/ReentrancyGuard.sol";
+import {SafeERC20} from "@openzeppelin/contracts-v5/token/ERC20/utils/SafeERC20.sol";
+
+import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
+
+import {
+    LancaCanonicalBridgeBase,
+    ILancaCanonicalBridgeClient
+} from "./LancaCanonicalBridgeBase.sol";
 
 contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
-    uint24 internal immutable i_dstChainSelector;
-    address internal immutable i_lancaBridgeL1;
+    uint24 internal immutable i_l1ChainSelector;
+    address internal immutable i_lancaCanonicalBridgeL1;
 
     constructor(
-        uint24 dstChainSelector,
+        uint24 l1ChainSelector,
         address conceroRouter,
         address usdcAddress,
-        address lancaBridgeL1
-    ) LancaCanonicalBridgeBase(usdcAddress) ConceroClient(conceroRouter) {
-        i_dstChainSelector = dstChainSelector;
-        i_lancaBridgeL1 = lancaBridgeL1;
+        address lancaCanonicalBridgeL1,
+        address rateLimitAdmin
+    ) LancaCanonicalBridgeBase(usdcAddress, rateLimitAdmin, conceroRouter) {
+        i_l1ChainSelector = l1ChainSelector;
+        i_lancaCanonicalBridgeL1 = lancaCanonicalBridgeL1;
     }
 
+    /* ------- Main Functions ------- */
+
     function sendToken(
-        uint256 amount,
-        address /* feeToken */,
-        ConceroTypes.EvmDstChainData memory dstChainData
+        address tokenReceiver,
+        uint256 tokenAmount,
+        uint256 dstGasLimit,
+        bytes calldata dstCallData
     ) external payable nonReentrant returns (bytes32 messageId) {
-        bytes memory message = abi.encode(msg.sender, amount);
+        require(tokenAmount > 0, CommonErrors.InvalidAmount());
 
-        uint256 fee = getMessageFee(i_dstChainSelector, address(0), dstChainData);
-        require(msg.value >= fee, InsufficientFee(msg.value, fee));
+        _consumeRate(i_l1ChainSelector, tokenAmount, true);
 
-        bool success = i_usdc.transferFrom(msg.sender, address(this), amount);
-        require(success, CommonErrors.TransferFailed());
+        SafeERC20.safeTransferFrom(i_usdc, msg.sender, address(this), tokenAmount);
+        i_usdc.burn(tokenAmount);
 
-        i_usdc.burn(amount);
-
-        messageId = IConceroRouter(i_conceroRouter).conceroSend{value: msg.value}(
-            i_dstChainSelector,
-            false,
-            address(0),
-            dstChainData,
-            message
+        messageId = _sendMessage(
+            tokenReceiver,
+            tokenAmount,
+            i_l1ChainSelector,
+            dstGasLimit,
+            dstCallData,
+            i_lancaCanonicalBridgeL1
         );
 
-        emit TokenSent(messageId, i_lancaBridgeL1, i_dstChainSelector, msg.sender, amount, fee);
+        emit TokenSent(messageId, msg.sender, tokenReceiver, tokenAmount);
     }
 
     function _conceroReceive(
@@ -55,17 +64,44 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         bytes calldata sender,
         bytes calldata message
     ) internal override nonReentrant {
-        (address tokenSender, uint256 amount) = abi.decode(message, (address, uint256));
-
-        bool success = i_usdc.mint(tokenSender, amount);
-        require(success, CommonErrors.TransferFailed());
-
-        emit TokenReceived(
-            messageId,
-            srcChainSelector,
-            address(bytes20(sender)),
-            tokenSender,
-            amount
+        require(
+            abi.decode(sender, (address)) == i_lancaCanonicalBridgeL1 &&
+                srcChainSelector == i_l1ChainSelector,
+            InvalidBridgeSender()
         );
+        (
+            address tokenSender,
+            address tokenReceiver,
+            uint256 tokenAmount,
+            uint256 dstGasLimit,
+            bytes memory dstCallData
+        ) = abi.decode(message, (address, address, uint256, uint256, bytes));
+
+        bool shouldCallHook = !(dstGasLimit == 0 && dstCallData.length == 0);
+
+        if (shouldCallHook && !_isValidContractReceiver(tokenReceiver)) {
+            revert InvalidConceroMessage();
+        }
+
+        _consumeRate(srcChainSelector, tokenAmount, false);
+        i_usdc.mint(tokenReceiver, tokenAmount);
+
+        if (shouldCallHook) {
+            ILancaCanonicalBridgeClient(tokenReceiver).lancaCanonicalBridgeReceive(
+                messageId,
+                srcChainSelector,
+                tokenSender,
+                tokenAmount,
+                dstCallData
+            );
+        }
+
+        emit BridgeDelivered(messageId, srcChainSelector, tokenSender, tokenReceiver, tokenAmount);
+    }
+
+    /* ------- View Functions ------- */
+
+    function getBridgeNativeFee(uint256 dstGasLimit) external view returns (uint256) {
+        return getBridgeNativeFee(i_l1ChainSelector, i_lancaCanonicalBridgeL1, dstGasLimit);
     }
 }

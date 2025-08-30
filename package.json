@@ -21,7 +21,8 @@
         "clean": "npm run clean:hardhat && npm run clean:forge",
         "size-contracts": "hardhat size-contracts",
         "check-updates": "npx npm-check-updates",
-        "prepare": "husky"
+        "prepare": "husky",
+        "preinstall": "sh validatePackageManager.sh yarn"
     },
     "devDependencies": {
         "@chainlink/env-enc": "1.0.5",
@@ -30,7 +31,6 @@
         "@concero/rpcs": "github:concero/rpcs",
         "@concero/v2-contracts": "github:concero/messaging-contracts-v2",
         "@concero/v2-networks": "github:concero/v2-networks",
-        "@concero/v2-operators": "github:concero/v2-operators#8d5c215f17a377b0fa16620723a61a140562d24a",
         "@nomicfoundation/hardhat-chai-matchers": "2.0.8",
         "@nomicfoundation/hardhat-ethers": "3.0.8",
         "@nomicfoundation/hardhat-network-helpers": "1.0.12",

@@ -10,16 +10,14 @@ import {
 	ConceroLocalNetwork,
 	ConceroNetwork,
 } from "../types/ConceroNetwork";
-import { getEnvVar, getWallet } from "../utils";
+import { getWallet } from "../utils";
 import { createViemChain } from "../utils/createViemChain";
 import { urls } from "./rpcUrls";
 
 const mainnetProxyDeployerPK = getWallet("mainnet", "proxyDeployer", "privateKey");
 const testnetProxyDeployerPK = getWallet("testnet", "proxyDeployer", "privateKey");
-const localhostProxyDeployerPK = getWallet("localhost", "proxyDeployer", "privateKey");
 const mainnetDeployerPK = getWallet("mainnet", "deployer", "privateKey");
 const testnetDeployerPK = getWallet("testnet", "deployer", "privateKey");
-const localhostDeployerPK = getWallet("localhost", "deployer", "privateKey");
 
 const testnetAccounts = [testnetDeployerPK, testnetProxyDeployerPK];
 
@@ -50,24 +48,7 @@ const testingNetworks: Record<"localhost", ConceroLocalNetwork> &
 		chainId: Number(process.env.LOCALHOST_FORK_CHAIN_ID),
 		type: networkTypes.localhost,
 		saveDeployments: false,
-		accounts: [
-			{
-				privateKey: localhostProxyDeployerPK,
-				balance: "10000000000000000000000",
-			},
-			{
-				privateKey: localhostDeployerPK,
-				balance: "10000000000000000000000",
-			},
-			{
-				privateKey: getEnvVar("TESTNET_OPERATOR_PRIVATE_KEY"),
-				balance: "10000000000000000000000",
-			},
-			{
-				privateKey: getEnvVar("TESTNET_USER_PRIVATE_KEY"),
-				balance: "10000000000000000000000",
-			},
-		],
+		accounts: [],
 		chainSelector: BigInt(process.env.CL_CCIP_CHAIN_SELECTOR_LOCALHOST || "0"),
 		confirmations: 1,
 		viemChain: hardhatViemChain,
@@ -84,11 +65,7 @@ const testingNetworks: Record<"localhost", ConceroLocalNetwork> &
 		viemChain: localhostViemChain,
 		confirmations: 1,
 		chainSelector: BigInt(process.env.CL_CCIP_CHAIN_SELECTOR_LOCALHOST || "0"),
-		accounts: [
-			localhostDeployerPK,
-			localhostProxyDeployerPK,
-			getEnvVar("TESTNET_OPERATOR_PRIVATE_KEY"),
-		],
+		accounts: [],
 		saveDeployments: true,
 		url: process.env.LOCALHOST_RPC_URL || "http://localhost:8545",
 	},
@@ -99,11 +76,7 @@ const testingNetworks: Record<"localhost", ConceroLocalNetwork> &
 		viemChain: localhostViemChain,
 		confirmations: 1,
 		chainSelector: BigInt(process.env.CL_CCIP_CHAIN_SELECTOR_LOCALHOST || "0"),
-		accounts: [
-			localhostDeployerPK,
-			localhostProxyDeployerPK,
-			getEnvVar("TESTNET_OPERATOR_PRIVATE_KEY"),
-		],
+		accounts: [],
 		saveDeployments: true,
 		url: process.env.LOCALHOST_RPC_URL || "http://localhost:8545",
 	},

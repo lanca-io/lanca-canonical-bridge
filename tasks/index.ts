@@ -15,6 +15,7 @@ import { removeDstBridgeTask } from "./removeDstBridge.task";
 import { removeDstPoolTask } from "./removeDstPool.task";
 import { sendTokenTask } from "./sendToken.task";
 import { setRateLimitsTask } from "./setRateLimits.task";
+import transferUsdcTask from "./transferUsdc.task";
 import updateAllBridges from "./updateAllBridges.task";
 import updateAllPools from "./updateAllPools.task";
 
@@ -37,4 +38,5 @@ export default {
 	updateAllBridges,
 	fiatTokenTransferOwnership,
 	fiatTokenChangeAdmin,
+	transferUsdcTask,
 };

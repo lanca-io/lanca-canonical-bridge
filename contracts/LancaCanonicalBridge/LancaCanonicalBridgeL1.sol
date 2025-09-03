@@ -62,8 +62,7 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
             dstBridge
         );
 
-        emit TokenSent(messageId, msg.sender, tokenReceiver, tokenAmount);
-        emit SentToDestinationBridge(messageId, dstChainSelector, dstBridge);
+        emit TokenSent(messageId, msg.sender, tokenReceiver, dstChainSelector, tokenAmount);
     }
 
     function _conceroReceive(
@@ -107,7 +106,7 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
             );
         }
 
-        emit BridgeDelivered(messageId, srcChainSelector, tokenSender, tokenReceiver, tokenAmount);
+        emit BridgeDelivered(messageId, tokenAmount);
     }
 
     /* ------- Admin Functions ------- */

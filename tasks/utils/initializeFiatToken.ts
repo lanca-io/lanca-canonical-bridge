@@ -1,5 +1,4 @@
 import { getNetworkEnvKey } from "@concero/contract-utils";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { conceroNetworks, getViemReceiptConfig } from "../../constants";
 import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils";

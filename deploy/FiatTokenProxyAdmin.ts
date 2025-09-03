@@ -1,28 +1,37 @@
 import { getNetworkEnvKey } from "@concero/contract-utils";
+import { hardhatDeployWrapper } from "@concero/contract-utils";
 import { Deployment } from "hardhat-deploy/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { conceroNetworks } from "../constants";
-import { getEnvVar, log, updateEnvVariable } from "../utils";
+import { DEPLOY_CONFIG_TESTNET } from "../constants/deployConfigTestnet";
+import { getEnvVar, getFallbackClients, getViemAccount, log, updateEnvVariable } from "../utils";
 
 const deployFiatTokenProxyAdmin = async function (
 	hre: HardhatRuntimeEnvironment,
 ): Promise<Deployment> {
-	const { proxyDeployer } = await hre.getNamedAccounts();
-	const { deploy } = hre.deployments;
 	const { name: srcChainName } = hre.network;
 	const srcChain = conceroNetworks[srcChainName as keyof typeof conceroNetworks];
 	const { type: networkType } = srcChain;
 
-	log("Deploying FiatTokenProxyAdmin...", "deployFiatTokenProxyAdmin", srcChainName);
-
 	const implementation = getEnvVar(`USDC_${getNetworkEnvKey(srcChainName)}`);
 
-	const deployment = await deploy("AdminUpgradeabilityProxy", {
-		from: proxyDeployer,
+	const viemAccount = getViemAccount(networkType, "proxyDeployer");
+	const { publicClient } = getFallbackClients(srcChain, viemAccount);
+
+	let gasLimit = 0;
+	const config = DEPLOY_CONFIG_TESTNET[srcChainName];
+	if (config) {
+		gasLimit = config.proxyAdmin?.gasLimit || 0;
+	}
+
+	const deployment = await hardhatDeployWrapper("AdminUpgradeabilityProxy", {
+		hre,
 		args: [implementation],
+		publicClient,
+		proxy: true,
+		gasLimit,
 		log: true,
-		autoMine: true,
 	});
 
 	log(

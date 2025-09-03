@@ -9,10 +9,11 @@ interface SendTokenParams {
 	srcChain: string;
 	dstChain: string;
 	amount: string;
+	receiver?: string;
 }
 
 export async function sendToken(params: SendTokenParams): Promise<void> {
-	const { srcChain, dstChain, amount } = params;
+	const { srcChain, dstChain, amount, receiver } = params;
 
 	const srcNetwork = conceroNetworks[srcChain as keyof typeof conceroNetworks];
 	const { viemChain, type, chainSelector: srcChainSelector } = srcNetwork;
@@ -138,11 +139,13 @@ export async function sendToken(params: SendTokenParams): Promise<void> {
 			srcChain,
 		);
 
+		const tokenReceiver = receiver ? receiver : viemAccount.address;
+
 		let sendTokenArgs: any[];
 		if (isEthereumChain) {
 			// L1 contract: sendToken(tokenReceiver, tokenAmount, dstChainSelector, isTokenReceiverContract, dstGasLimit, dstCallData)
 			sendTokenArgs = [
-				viemAccount.address as `0x${string}`, // tokenReceiver
+				tokenReceiver, // tokenReceiver
 				amountInWei, // tokenAmount
 				dstChainSelector, // dstChainSelector
 				BigInt(0), // dstGasLimit (not needed for simple transfer)
@@ -151,7 +154,7 @@ export async function sendToken(params: SendTokenParams): Promise<void> {
 		} else {
 			// L2 contract: sendToken(tokenReceiver, tokenAmount)
 			sendTokenArgs = [
-				viemAccount.address as `0x${string}`, // tokenReceiver
+				tokenReceiver, // tokenReceiver
 				amountInWei, // tokenAmount
 				BigInt(0), // dstGasLimit (not needed for simple transfer)
 				"0x", // dstCallData (empty for simple transfer)

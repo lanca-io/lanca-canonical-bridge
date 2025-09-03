@@ -30,7 +30,6 @@ const deployFiatToken = async function (hre: HardhatRuntimeEnvironment): Promise
 		args: [],
 		publicClient,
 		gasLimit,
-		log: true,
 	});
 
 	const deployment = await hardhatDeployWrapper("FiatTokenV2_2", {

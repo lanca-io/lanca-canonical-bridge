@@ -31,7 +31,6 @@ const deployFiatTokenProxyAdmin = async function (
 		publicClient,
 		proxy: true,
 		gasLimit,
-		log: true,
 	});
 
 	log(

@@ -1,6 +1,6 @@
 type DeployConfigTestnet = {
 	[key: string]: {
-		priceFeed?: {
+		pool?: {
 			gasLimit: number;
 		};
 		usdc?: {
@@ -17,7 +17,7 @@ type DeployConfigTestnet = {
 
 export const DEPLOY_CONFIG_TESTNET: DeployConfigTestnet = {
 	inkSepolia: {
-		priceFeed: {
+		pool: {
 			gasLimit: 1000000,
 		},
 		usdc: {
@@ -31,7 +31,7 @@ export const DEPLOY_CONFIG_TESTNET: DeployConfigTestnet = {
 		},
 	},
 	b2Testnet: {
-		priceFeed: {
+		pool: {
 			gasLimit: 1000000,
 		},
 		usdc: {
@@ -45,7 +45,7 @@ export const DEPLOY_CONFIG_TESTNET: DeployConfigTestnet = {
 		},
 	},
 	seismicDevnet: {
-		priceFeed: {
+		pool: {
 			gasLimit: 500000,
 		},
 		usdc: {

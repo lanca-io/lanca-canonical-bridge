@@ -1,9 +1,18 @@
 import { getNetworkEnvKey } from "@concero/contract-utils";
+import { hardhatDeployWrapper } from "@concero/contract-utils";
 import { Deployment } from "hardhat-deploy/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { conceroNetworks } from "../constants";
-import { err, getEnvVar, log, updateEnvVariable } from "../utils/";
+import { DEPLOY_CONFIG_TESTNET } from "../constants/deployConfigTestnet";
+import {
+	err,
+	getEnvVar,
+	getFallbackClients,
+	getViemAccount,
+	log,
+	updateEnvVariable,
+} from "../utils/";
 
 type DeployArgs = {
 	usdcAddress: string;
@@ -22,8 +31,6 @@ const deployLancaCanonicalBridgePool: DeploymentFunction = async function (
 	dstChainName: string,
 	overrideArgs?: Partial<DeployArgs>,
 ): Promise<Deployment> {
-	const { deployer } = await hre.getNamedAccounts();
-	const { deploy } = hre.deployments;
 	const { name: srcChainName } = hre.network;
 
 	const srcChain = conceroNetworks[srcChainName as keyof typeof conceroNetworks];
@@ -75,28 +82,21 @@ const deployLancaCanonicalBridgePool: DeploymentFunction = async function (
 		...overrideArgs,
 	};
 
-	log(
-		`Deploying LancaCanonicalBridgePool with args:`,
-		"deployLancaCanonicalBridgePool",
-		srcChainName,
-	);
-	log(`  usdcAddress: ${args.usdcAddress}`, "deployLancaCanonicalBridgePool", srcChainName);
-	log(
-		`  lancaCanonicalBridgeAddress: ${args.lancaCanonicalBridgeAddress}`,
-		"deployLancaCanonicalBridgePool",
-		srcChainName,
-	);
-	log(
-		`  dstChainSelector: ${args.dstChainSelector}`,
-		"deployLancaCanonicalBridgePool",
-		srcChainName,
-	);
+	const viemAccount = getViemAccount(networkType, "deployer");
+	const { publicClient } = getFallbackClients(srcChain, viemAccount);
 
-	const deployment = await deploy("LancaCanonicalBridgePool", {
-		from: deployer,
+	let gasLimit = 0;
+	const config = DEPLOY_CONFIG_TESTNET[srcChainName];
+	if (config) {
+		gasLimit = config.pool?.gasLimit || 0;
+	}
+
+	const deployment = await hardhatDeployWrapper("LancaCanonicalBridgePool", {
+		hre,
 		args: [args.usdcAddress, args.lancaCanonicalBridgeAddress, args.dstChainSelector],
+		publicClient,
+		gasLimit,
 		log: true,
-		autoMine: true,
 	});
 
 	log(`Deployed at: ${deployment.address}`, "deployLancaCanonicalBridgePool", srcChainName);

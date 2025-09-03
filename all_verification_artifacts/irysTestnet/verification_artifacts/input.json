@@ -1,0 +1,18 @@
+{
+  "SignatureChecker": {
+    "contractAddress": "0x6634C37b0E1D855744dbC0a8f72FDE5DaD825B6C",
+    "contractCreationTxHash": "0xd84929763604725705f311ad7b6f3fe6309ceae95288eabef62ee493807c1b42",
+    "verificationType": "partial"
+  },
+  "FiatTokenV2_2": {
+    "contractAddress": "0xf606425cC0f8D065Af0C4b92110159fbe54ECF61",
+    "contractCreationTxHash": "0x692ca15f43bf5ac30850554b8600db7e35b2f14faa83aa5a920df4f8890bd591",
+    "verificationType": "partial"
+  },
+  "FiatTokenProxy": {
+    "contractAddress": "0x9B7550D337bB449b89C6f9C926C3b976b6f4095b",
+    "contractCreationTxHash": "0x65421ed17be6a9c5a78b47d47e9d4b7535c47f32e5e230cfaf0393016895415e",
+    "verificationType": "partial"
+  },
+  "rpcUrl": "https://testnet-rpc.irys.xyz/v1/execution-rpc"
+}

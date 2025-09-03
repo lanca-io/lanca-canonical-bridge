@@ -1,0 +1,18 @@
+{
+  "SignatureChecker": {
+    "contractAddress": "0x01353B6CC9eF96497E69e813943B234158faEc14",
+    "contractCreationTxHash": "0x98f9facaf49acff805f263841418542354ae51f0bfa98d6e60a36f3488c334fc",
+    "verificationType": "partial"
+  },
+  "FiatTokenV2_2": {
+    "contractAddress": "0x0C7Dd992Ac6C3779Ef94A519673a15ca168F4174",
+    "contractCreationTxHash": "0xf273f7da9a68502bde95476ccc06d257519934eca9fe7ede68d59f502626b464",
+    "verificationType": "partial"
+  },
+  "FiatTokenProxy": {
+    "contractAddress": "0x1FebEDF687afD4F6A52c944Ff9f6bE662D07242b",
+    "contractCreationTxHash": "0x3fcdb46060ed4b603e873613494ba6bc3bc2337615bf27db23b1e045c143cf28",
+    "verificationType": "partial"
+  },
+  "rpcUrl": "https://rpc.test2.btcs.network"
+}

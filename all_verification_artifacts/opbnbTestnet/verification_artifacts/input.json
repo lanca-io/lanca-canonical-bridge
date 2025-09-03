@@ -1,0 +1,18 @@
+{
+  "SignatureChecker": {
+    "contractAddress": "0xf606425cC0f8D065Af0C4b92110159fbe54ECF61",
+    "contractCreationTxHash": "0xe2bef4b77fac7b027310e3099631a76f1626d48231d63790bfd221bb83e6b82a",
+    "verificationType": "partial"
+  },
+  "FiatTokenV2_2": {
+    "contractAddress": "0x5Dc3Bd8108Ed3e12A439d9832a573bfE62368c4C",
+    "contractCreationTxHash": "0x7aac1e84bffb33a377c4dd15347759c9675d6bf1e7513571697908f228f8f231",
+    "verificationType": "partial"
+  },
+  "FiatTokenProxy": {
+    "contractAddress": "0x9B7550D337bB449b89C6f9C926C3b976b6f4095b",
+    "contractCreationTxHash": "0x6325cc893bf947222fd5bb8dfbe8c2b35063c3d37a424158fa576eec2248c1b3",
+    "verificationType": "partial"
+  },
+  "rpcUrl": "https://opbnb-testnet-rpc.publicnode.com"
+}

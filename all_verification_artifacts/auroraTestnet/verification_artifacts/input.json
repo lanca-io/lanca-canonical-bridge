@@ -1,0 +1,18 @@
+{
+  "SignatureChecker": {
+    "contractAddress": "0x6634C37b0E1D855744dbC0a8f72FDE5DaD825B6C",
+    "contractCreationTxHash": "0x1df3cfb36cb935d1e50060718f1da02d66c50ac093ddb5d3aac3ea1718c7bc88",
+    "verificationType": "partial"
+  },
+  "FiatTokenV2_2": {
+    "contractAddress": "0xf606425cC0f8D065Af0C4b92110159fbe54ECF61",
+    "contractCreationTxHash": "0x27ec372208c21734a944acf38d648c03c22bb3944241712b45999ae5d01850bd",
+    "verificationType": "partial"
+  },
+  "FiatTokenProxy": {
+    "contractAddress": "0x9B7550D337bB449b89C6f9C926C3b976b6f4095b",
+    "contractCreationTxHash": "0xfaa22e285038cdf7d7ee8fe29ec2859434d3f44c3ff7a15351f43a6176969dfb",
+    "verificationType": "partial"
+  },
+  "rpcUrl": "https://aurora-testnet.drpc.org"
+}

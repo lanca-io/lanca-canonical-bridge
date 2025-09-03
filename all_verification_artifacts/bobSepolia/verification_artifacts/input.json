@@ -1,0 +1,18 @@
+{
+  "SignatureChecker": {
+    "contractAddress": "0x6634C37b0E1D855744dbC0a8f72FDE5DaD825B6C",
+    "contractCreationTxHash": "0xf92fa3e96425998d89eac72f7a0a8e7ad5e09066d34f4eea22ffcb6d37ad2cfb",
+    "verificationType": "partial"
+  },
+  "FiatTokenV2_2": {
+    "contractAddress": "0xf606425cC0f8D065Af0C4b92110159fbe54ECF61",
+    "contractCreationTxHash": "0x2bcff1f3a988065a4b274181afdecd24f310e1391bd088e48f7d6129bd1e047b",
+    "verificationType": "partial"
+  },
+  "FiatTokenProxy": {
+    "contractAddress": "0x9B7550D337bB449b89C6f9C926C3b976b6f4095b",
+    "contractCreationTxHash": "0x162b62a6f71a34e474db72bcb6fc30a243d4e19820ab4b7e08f34a11e1509e96",
+    "verificationType": "partial"
+  },
+  "rpcUrl": "https://bob-testnet.drpc.org"
+}

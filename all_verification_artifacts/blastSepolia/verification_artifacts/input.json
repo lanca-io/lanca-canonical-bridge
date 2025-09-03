@@ -1,0 +1,18 @@
+{
+  "SignatureChecker": {
+    "contractAddress": "0x6634C37b0E1D855744dbC0a8f72FDE5DaD825B6C",
+    "contractCreationTxHash": "0x3ce30f86d0e8db04ce18e2835d8af4e73b73938029a0289af8a48354a596ab9f",
+    "verificationType": "partial"
+  },
+  "FiatTokenV2_2": {
+    "contractAddress": "0xf606425cC0f8D065Af0C4b92110159fbe54ECF61",
+    "contractCreationTxHash": "0x024983f3c05b5f1fe6428a4a12f123605de1f8093ad87b5ce13c700ac608ac40",
+    "verificationType": "partial"
+  },
+  "FiatTokenProxy": {
+    "contractAddress": "0x9B7550D337bB449b89C6f9C926C3b976b6f4095b",
+    "contractCreationTxHash": "0xaea672fe0a2cc71ef482d03fac5ec3746d475db59f76cc94aacd41af44ddb7e9",
+    "verificationType": "partial"
+  },
+  "rpcUrl": "https://rpc.ankr.com/blast_testnet_sepolia"
+}

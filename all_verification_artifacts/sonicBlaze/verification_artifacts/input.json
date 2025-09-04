@@ -1,0 +1,18 @@
+{
+  "SignatureChecker": {
+    "contractAddress": "0xF801443047998ecDE573d294b29b82fD765310e2",
+    "contractCreationTxHash": "0x4c7b8a8d83936da10a41652d335fe53bbd3a8f9f1495403a2e09722ca68df2de",
+    "verificationType": "partial"
+  },
+  "FiatTokenV2_2": {
+    "contractAddress": "0x40e2478A106A46B27fF8EF0E76dB198B0b593894",
+    "contractCreationTxHash": "0xc460cebde476dc043d92fa24ecac9b049fc9345c4b871e6a2b0b8eddec70e793",
+    "verificationType": "partial"
+  },
+  "FiatTokenProxy": {
+    "contractAddress": "0x1FebEDF687afD4F6A52c944Ff9f6bE662D07242b",
+    "contractCreationTxHash": "0xa750abee2c26b1d230807edeb562ccab2e20a323720eaf9cd0432ab544031073",
+    "verificationType": "partial"
+  },
+  "rpcUrl": "https://sonic-blaze-rpc.publicnode.com"
+}

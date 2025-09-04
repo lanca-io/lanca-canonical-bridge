@@ -1,0 +1,18 @@
+{
+  "SignatureChecker": {
+    "contractAddress": "0xC44F50A1d596DE85F591EB23D7936C5BA3Af37F3",
+    "contractCreationTxHash": "0x7e4d3992fb54cc983fe8fadc4c204f723b3706ca7a168184351eb7810ff4df77",
+    "verificationType": "partial"
+  },
+  "FiatTokenV2_2": {
+    "contractAddress": "0xF801443047998ecDE573d294b29b82fD765310e2",
+    "contractCreationTxHash": "0xc28db75bf4d816e467f9f2efb7c049a68f6155ba9af3db5863e9b52e864d6c4d",
+    "verificationType": "partial"
+  },
+  "FiatTokenProxy": {
+    "contractAddress": "0x855F39BAAcAF30D7dE448542316A889ee4db4DDb",
+    "contractCreationTxHash": "0x29d0c66a90473f0a720138173710662fb8403bf2d4412d7d144eb0e224e8999e",
+    "verificationType": "partial"
+  },
+  "rpcUrl": "https://api.avax-test.network/ext/bc/C/rpc"
+}

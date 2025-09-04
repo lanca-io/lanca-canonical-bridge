@@ -1,0 +1,18 @@
+{
+  "SignatureChecker": {
+    "contractAddress": "0x6634C37b0E1D855744dbC0a8f72FDE5DaD825B6C",
+    "contractCreationTxHash": "0x0bc51fd8ea47c60d56e0b9902f2a2ac69fcf81567ad0330aae3f1b81d5df7f92",
+    "verificationType": "partial"
+  },
+  "FiatTokenV2_2": {
+    "contractAddress": "0xf606425cC0f8D065Af0C4b92110159fbe54ECF61",
+    "contractCreationTxHash": "0x5c4e52588c2483f83d95da454fde1dd2d41b2e2010cbda2b014e709cb60dd273",
+    "verificationType": "partial"
+  },
+  "FiatTokenProxy": {
+    "contractAddress": "0x9B7550D337bB449b89C6f9C926C3b976b6f4095b",
+    "contractCreationTxHash": "0xe090fad5a62b36f5c7853febd3b3230ae077c1d0304d8d3953d37600b7739aa2",
+    "verificationType": "partial"
+  },
+  "rpcUrl": "https://sei-testnet.drpc.org"
+}

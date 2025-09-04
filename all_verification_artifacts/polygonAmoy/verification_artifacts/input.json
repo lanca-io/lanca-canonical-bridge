@@ -1,0 +1,18 @@
+{
+  "SignatureChecker": {
+    "contractAddress": "0xf606425cC0f8D065Af0C4b92110159fbe54ECF61",
+    "contractCreationTxHash": "0x91a8527fda29d74193600abd5889d92fcf8b350f30cd96f8951556eca817b242",
+    "verificationType": "partial"
+  },
+  "FiatTokenV2_2": {
+    "contractAddress": "0x5Dc3Bd8108Ed3e12A439d9832a573bfE62368c4C",
+    "contractCreationTxHash": "0xcdd5c8c24870676aed6ea1a719783f6d22fd3e2413cfcad2ad32312530f1e302",
+    "verificationType": "partial"
+  },
+  "FiatTokenProxy": {
+    "contractAddress": "0x9B7550D337bB449b89C6f9C926C3b976b6f4095b",
+    "contractCreationTxHash": "0x26773844ca7e9c297fc642b24d3b1567d2467abdccd84fb1d28dad90bf105356",
+    "verificationType": "partial"
+  },
+  "rpcUrl": "https://rpc-amoy.polygon.technology"
+}

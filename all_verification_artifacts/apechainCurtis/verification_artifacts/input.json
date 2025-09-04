@@ -1,0 +1,18 @@
+{
+  "SignatureChecker": {
+    "contractAddress": "0x5Dc3Bd8108Ed3e12A439d9832a573bfE62368c4C",
+    "contractCreationTxHash": "0xa876d4fc9651b485859e0522425e3e0848c821364ac949591e0bcb4b109aa4c5",
+    "verificationType": "partial"
+  },
+  "FiatTokenV2_2": {
+    "contractAddress": "0xFb725236Fd4EeC016338D3518be1D1200471Bafa",
+    "contractCreationTxHash": "0xbaa49a35bc8009be407231eb568c8fc505235e39c80df684bf95d63da14075de",
+    "verificationType": "partial"
+  },
+  "FiatTokenProxy": {
+    "contractAddress": "0x9B7550D337bB449b89C6f9C926C3b976b6f4095b",
+    "contractCreationTxHash": "0xf214792bccbb65e895cbfec00c8687556eda564bb65de03f2117aa0a8279078f",
+    "verificationType": "partial"
+  },
+  "rpcUrl": "https://apechain-curtis.drpc.org"
+}

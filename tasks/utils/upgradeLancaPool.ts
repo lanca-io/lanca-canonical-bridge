@@ -64,12 +64,6 @@ export async function upgradeLancaPoolProxyImplementation(
 		return;
 	}
 
-	log(
-		`Upgrading pool proxy to ${implementationDescription} ${newImplementation}`,
-		"upgradeLancaPoolProxy",
-		srcChainName,
-	);
-
 	const txHash = await walletClient.writeContract({
 		address: proxyAdmin,
 		abi: proxyAdminAbi,

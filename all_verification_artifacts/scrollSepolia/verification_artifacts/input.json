@@ -1,0 +1,18 @@
+{
+  "SignatureChecker": {
+    "contractAddress": "0xf606425cC0f8D065Af0C4b92110159fbe54ECF61",
+    "contractCreationTxHash": "0x20f170a192106a10b2fe43f5e81d361e69d3b11c229e44fcd2710c978afc7de9",
+    "verificationType": "partial"
+  },
+  "FiatTokenV2_2": {
+    "contractAddress": "0x5Dc3Bd8108Ed3e12A439d9832a573bfE62368c4C",
+    "contractCreationTxHash": "0x86d363d967e12b1ec326fe295b5c48dc1766fed70e54946efb8c8a4cd8f6872f",
+    "verificationType": "partial"
+  },
+  "FiatTokenProxy": {
+    "contractAddress": "0x9B7550D337bB449b89C6f9C926C3b976b6f4095b",
+    "contractCreationTxHash": "0x4b587333f2a889eefac47f41d364dd9e7bdb0ce3a53bb363f5bb0469d457c0e3",
+    "verificationType": "partial"
+  },
+  "rpcUrl": "https://scroll-sepolia-rpc.publicnode.com"
+}

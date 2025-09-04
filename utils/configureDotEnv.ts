@@ -13,6 +13,7 @@ const ENV_FILES = [
 	".env.deployments.localhost",
 	".env.wallets",
 	".env.usdc",
+	"node_modules/@concero/v2-contracts/.env.deployments.testnet",
 ];
 
 /**

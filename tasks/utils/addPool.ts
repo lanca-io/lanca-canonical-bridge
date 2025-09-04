@@ -49,12 +49,12 @@ export async function addPool(dstChainName: string): Promise<void> {
 		address: l1BridgeAddress as `0x${string}`,
 		abi: l1BridgeAbi,
 		functionName: "getPool",
-		args: [BigInt(dstChain.chainId)],
+		args: [BigInt(dstChain.chainSelector)],
 	});
 
 	if (currentPool && currentPool.toString() !== ADDRESS_ZERO) {
 		err(
-			`Pool already exists for chain ${dstChainName} (${dstChain.chainId})`,
+			`Pool already exists for chain ${dstChainName} (${dstChain.chainSelector})`,
 			"addPool",
 			srcChainName,
 		);
@@ -63,7 +63,7 @@ export async function addPool(dstChainName: string): Promise<void> {
 
 	try {
 		log(
-			`Adding pool ${poolAddress} to L1 Bridge for chain ${dstChainName} (${dstChain.chainId})`,
+			`Adding pool ${poolAddress} to L1 Bridge for chain ${dstChainName} (${dstChain.chainSelector})`,
 			"addPool",
 			srcChainName,
 		);
@@ -73,7 +73,7 @@ export async function addPool(dstChainName: string): Promise<void> {
 			abi: l1BridgeAbi,
 			functionName: "addPools",
 			account: viemAccount,
-			args: [[BigInt(dstChain.chainId)], [poolAddress]],
+			args: [[BigInt(dstChain.chainSelector)], [poolAddress]],
 			chain: viemChain,
 		});
 

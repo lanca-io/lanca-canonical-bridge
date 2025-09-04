@@ -74,7 +74,7 @@ const deployLancaCanonicalBridgePool: DeploymentFunction = async function (
 	const defaultArgs: DeployArgs = {
 		usdcAddress: usdcAddress,
 		lancaCanonicalBridgeAddress: lancaCanonicalBridgeAddress,
-		dstChainSelector: BigInt(dstChain.chainId),
+		dstChainSelector: BigInt(dstChain.chainSelector),
 	};
 
 	const args: DeployArgs = {
@@ -96,7 +96,6 @@ const deployLancaCanonicalBridgePool: DeploymentFunction = async function (
 		args: [args.usdcAddress, args.lancaCanonicalBridgeAddress, args.dstChainSelector],
 		publicClient,
 		gasLimit,
-		log: true,
 	});
 
 	log(`Deployed at: ${deployment.address}`, "deployLancaCanonicalBridgePool", srcChainName);

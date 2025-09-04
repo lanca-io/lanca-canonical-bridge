@@ -41,7 +41,6 @@ const deployProxyAdmin: DeploymentFunction = async function (
 		publicClient,
 		proxy: true,
 		gasLimit,
-		log: true,
 	});
 
 	log(`Deployed at: ${deployment.address}`, "deployProxyAdmin", name);

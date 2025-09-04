@@ -864,7 +864,7 @@
 
 "@concero/contract-utils@github:concero/contract-utils#feature/deploy-wrapper":
   version "1.0.0"
-  resolved "https://codeload.github.com/concero/contract-utils/tar.gz/bac20ca75724de81a749c8d37603b1a8b699d0f2"
+  resolved "https://codeload.github.com/concero/contract-utils/tar.gz/f1f800b4c7a40fcc5e51008be5aafdb61e0677a7"
 
 "@concero/rpcs@github:concero/rpcs":
   version "1.0.0"

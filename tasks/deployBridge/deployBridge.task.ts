@@ -28,7 +28,7 @@ async function deployBridgeTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 		await upgradeLancaProxyImplementation(hre.network.name, ProxyEnum.lcBridgeProxy, false);
 	}
 
-	if (!isL1Deployment && !taskArgs.pause) {
+	if (taskArgs.proxy && !isL1Deployment && !taskArgs.pause) {
 		await setRateLimits(hre.network.name);
 		await configureMinter(hre.network.name);
 	}

@@ -202,7 +202,7 @@ export async function sendToken(params: SendTokenParams): Promise<void> {
 				log(`📡 MessageId: ${messageId}`, "sendToken", srcChain);
 				log(`🔄 Starting cross-chain monitoring...`, "sendToken", srcChain);
 
-				await monitorBridgeDelivered(messageId, srcChain, dstChain, amount);
+				await monitorBridgeDelivered(messageId, dstChain);
 			} else {
 				log(`⚠️ TokenSent event not found in transaction receipt`, "sendToken", srcChain);
 			}

@@ -118,19 +118,10 @@ const deployLancaCanonicalBridge: DeploymentFunction = async function (
 			args.l1BridgeAddress,
 			args.rateLimitAdmin,
 		];
-
-		log(`Deploying LancaCanonicalBridge with args:`, "deployLancaCanonicalBridge", name);
-		log(`  l1ChainSelector: ${args.l1ChainSelector}`, "deployLancaCanonicalBridge", name);
-		log(`  l1BridgeAddress: ${args.l1BridgeAddress}`, "deployLancaCanonicalBridge", name);
 	} else {
 		constructorName = "LancaCanonicalBridgeL1";
 		constructorArgs = [args.conceroRouter, args.usdcAddress, args.rateLimitAdmin];
-
-		log(`Deploying LancaCanonicalBridgeL1 with args:`, "deployLancaCanonicalBridge", name);
 	}
-	log(`  conceroRouter: ${args.conceroRouter}`, "deployLancaCanonicalBridge", name);
-	log(`  usdcAddress: ${args.usdcAddress}`, "deployLancaCanonicalBridge", name);
-	log(`  rateLimitAdmin: ${args.rateLimitAdmin}`, "deployLancaCanonicalBridge", name);
 
 	const viemAccount = getViemAccount(networkType, "deployer");
 	const { publicClient } = getFallbackClients(srcChain, viemAccount);

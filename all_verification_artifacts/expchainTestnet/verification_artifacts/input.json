@@ -1,0 +1,18 @@
+{
+  "SignatureChecker": {
+    "contractAddress": "0x6634C37b0E1D855744dbC0a8f72FDE5DaD825B6C",
+    "contractCreationTxHash": "0x81568eff99ed70099db049bc2971ffd953dca3432b82c7f6de7e6e44564d8491",
+    "verificationType": "partial"
+  },
+  "FiatTokenV2_2": {
+    "contractAddress": "0xf606425cC0f8D065Af0C4b92110159fbe54ECF61",
+    "contractCreationTxHash": "0x8045973b6d121f1df9a2089f219fc3afc44aaed20edc68f7cac1156ba9720c89",
+    "verificationType": "partial"
+  },
+  "FiatTokenProxy": {
+    "contractAddress": "0x9B7550D337bB449b89C6f9C926C3b976b6f4095b",
+    "contractCreationTxHash": "0x8d3d46701a4ed4b6f4004f083226723e879bbdbb1b84ae33884eae1670944a72",
+    "verificationType": "partial"
+  },
+  "rpcUrl": "https://rpc1-testnet.expchain.ai"
+}

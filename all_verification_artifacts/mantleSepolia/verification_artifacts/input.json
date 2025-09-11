@@ -1,0 +1,18 @@
+{
+  "SignatureChecker": {
+    "contractAddress": "0x6634C37b0E1D855744dbC0a8f72FDE5DaD825B6C",
+    "contractCreationTxHash": "0xa9692e04783d76ec68b2019db837b0a2533cbbb8eed2b466ad1c4c81b12937d3",
+    "verificationType": "partial"
+  },
+  "FiatTokenV2_2": {
+    "contractAddress": "0xf606425cC0f8D065Af0C4b92110159fbe54ECF61",
+    "contractCreationTxHash": "0x02aeacd9a3abb04762fdca9be1008646e82e11c6903b5d302019e990d849acb8",
+    "verificationType": "partial"
+  },
+  "FiatTokenProxy": {
+    "contractAddress": "0x9B7550D337bB449b89C6f9C926C3b976b6f4095b",
+    "contractCreationTxHash": "0xb4d70ea0fef434c660e53d07769c6051ea67a4683f94118390e6259a6faa9687",
+    "verificationType": "partial"
+  },
+  "rpcUrl": "https://mantle-sepolia.drpc.org"
+}

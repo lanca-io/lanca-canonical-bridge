@@ -1,0 +1,18 @@
+{
+  "SignatureChecker": {
+    "contractAddress": "0x6634C37b0E1D855744dbC0a8f72FDE5DaD825B6C",
+    "contractCreationTxHash": "0xc736c3b650d6094d8f88b4ed44910d51405753a49d9278ab6b76a9fc4a544b2b",
+    "verificationType": "partial"
+  },
+  "FiatTokenV2_2": {
+    "contractAddress": "0xf606425cC0f8D065Af0C4b92110159fbe54ECF61",
+    "contractCreationTxHash": "0x50b6db78c5821b5266a920661bf5b6fe605440f3c9c6c8f4628f9a3578a313ca",
+    "verificationType": "partial"
+  },
+  "FiatTokenProxy": {
+    "contractAddress": "0x9B7550D337bB449b89C6f9C926C3b976b6f4095b",
+    "contractCreationTxHash": "0xce655988d8405f70c5de7968185b2b127bc35e02a58a9f002c2fde12afc4d200",
+    "verificationType": "partial"
+  },
+  "rpcUrl": "https://zenchain-testnet.api.onfinality.io/public"
+}

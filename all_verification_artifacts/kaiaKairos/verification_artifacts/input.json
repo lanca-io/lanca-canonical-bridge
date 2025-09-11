@@ -1,0 +1,18 @@
+{
+  "SignatureChecker": {
+    "contractAddress": "0x6634C37b0E1D855744dbC0a8f72FDE5DaD825B6C",
+    "contractCreationTxHash": "0x86e5f4c2def2e0f27137215354d237b6cc59ad624ea76c13c5188fe59095c407",
+    "verificationType": "partial"
+  },
+  "FiatTokenV2_2": {
+    "contractAddress": "0xf606425cC0f8D065Af0C4b92110159fbe54ECF61",
+    "contractCreationTxHash": "0xabe65c281f34add57f86146bbb19c2580914051fea37571d21920f4c5048a24f",
+    "verificationType": "partial"
+  },
+  "FiatTokenProxy": {
+    "contractAddress": "0x9B7550D337bB449b89C6f9C926C3b976b6f4095b",
+    "contractCreationTxHash": "0xee9a666796060df8896bfa7b5af5aff37dc162c4873de6088ed59d56443bd8e3",
+    "verificationType": "partial"
+  },
+  "rpcUrl": "https://rpc.ankr.com/kaia_testnet"
+}

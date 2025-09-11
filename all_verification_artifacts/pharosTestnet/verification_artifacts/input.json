@@ -1,0 +1,18 @@
+{
+  "SignatureChecker": {
+    "contractAddress": "0x6634C37b0E1D855744dbC0a8f72FDE5DaD825B6C",
+    "contractCreationTxHash": "0x420e2991a606341181efb1b73b552a34de23d897b70c8c95a0f1e025087ef3c0",
+    "verificationType": "partial"
+  },
+  "FiatTokenV2_2": {
+    "contractAddress": "0xf606425cC0f8D065Af0C4b92110159fbe54ECF61",
+    "contractCreationTxHash": "0x0017457cdb99bfb18b8a8673e4f40461ca22a6d163048a215f1c49fe6263732f",
+    "verificationType": "partial"
+  },
+  "FiatTokenProxy": {
+    "contractAddress": "0x9B7550D337bB449b89C6f9C926C3b976b6f4095b",
+    "contractCreationTxHash": "0x42225a9a6e65c6e4aa958459f2483e97e91902c873b6df7588d59d954663696d",
+    "verificationType": "partial"
+  },
+  "rpcUrl": "https://testnet.dplabs-internal.com"
+}

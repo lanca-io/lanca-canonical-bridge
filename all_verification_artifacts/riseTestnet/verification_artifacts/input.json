@@ -1,0 +1,18 @@
+{
+  "SignatureChecker": {
+    "contractAddress": "0x6634C37b0E1D855744dbC0a8f72FDE5DaD825B6C",
+    "contractCreationTxHash": "0x78fd961db70c65d2adea5855845ef32bef94d17b3c31628de632f7b7d1cd9b6d",
+    "verificationType": "partial"
+  },
+  "FiatTokenV2_2": {
+    "contractAddress": "0xf606425cC0f8D065Af0C4b92110159fbe54ECF61",
+    "contractCreationTxHash": "0x9fee6401ccaa3af21a12c9143186b4712f667a003cc040f169f26029e2f5ba95",
+    "verificationType": "partial"
+  },
+  "FiatTokenProxy": {
+    "contractAddress": "0x9B7550D337bB449b89C6f9C926C3b976b6f4095b",
+    "contractCreationTxHash": "0xe2cd9370068d4380119617701fcf02f2e545d84d03e17996299fa4411c3231ee",
+    "verificationType": "partial"
+  },
+  "rpcUrl": "https://testnet.riselabs.xyz"
+}

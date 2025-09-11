@@ -1,10 +1,18 @@
 import { getNetworkEnvKey } from "@concero/contract-utils";
+import { hardhatDeployWrapper } from "@concero/contract-utils";
 import { Deployment } from "hardhat-deploy/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { conceroNetworks } from "../constants";
 import { ConceroNetwork } from "../types/ConceroNetwork";
-import { err, getEnvVar, log, updateEnvVariable } from "../utils/";
+import {
+	err,
+	getEnvVar,
+	getFallbackClients,
+	getViemAccount,
+	log,
+	updateEnvVariable,
+} from "../utils/";
 
 type DeployArgs = {
 	l1ChainSelector?: bigint;
@@ -23,8 +31,6 @@ const deployLancaCanonicalBridge: DeploymentFunction = async function (
 	hre: HardhatRuntimeEnvironment,
 	overrideArgs?: Partial<DeployArgs>,
 ): Promise<Deployment> {
-	const { deployer } = await hre.getNamedAccounts();
-	const { deploy } = hre.deployments;
 	const { name } = hre.network;
 
 	const srcChain = conceroNetworks[name as keyof typeof conceroNetworks];
@@ -112,25 +118,19 @@ const deployLancaCanonicalBridge: DeploymentFunction = async function (
 			args.l1BridgeAddress,
 			args.rateLimitAdmin,
 		];
-
-		log(`Deploying LancaCanonicalBridge with args:`, "deployLancaCanonicalBridge", name);
-		log(`  l1ChainSelector: ${args.l1ChainSelector}`, "deployLancaCanonicalBridge", name);
-		log(`  l1BridgeAddress: ${args.l1BridgeAddress}`, "deployLancaCanonicalBridge", name);
 	} else {
 		constructorName = "LancaCanonicalBridgeL1";
 		constructorArgs = [args.conceroRouter, args.usdcAddress, args.rateLimitAdmin];
-
-		log(`Deploying LancaCanonicalBridgeL1 with args:`, "deployLancaCanonicalBridge", name);
 	}
-	log(`  conceroRouter: ${args.conceroRouter}`, "deployLancaCanonicalBridge", name);
-	log(`  usdcAddress: ${args.usdcAddress}`, "deployLancaCanonicalBridge", name);
-	log(`  rateLimitAdmin: ${args.rateLimitAdmin}`, "deployLancaCanonicalBridge", name);
 
-	const deployment = await deploy(constructorName, {
-		from: deployer,
+	const viemAccount = getViemAccount(networkType, "deployer");
+	const { publicClient } = getFallbackClients(srcChain, viemAccount);
+
+	const deployment = await hardhatDeployWrapper(constructorName, {
+		hre,
 		args: constructorArgs,
+		publicClient,
 		log: true,
-		autoMine: true,
 	});
 
 	log(`Deployed at: ${deployment.address}`, "deployLancaCanonicalBridge", name);

@@ -1,0 +1,17 @@
+{
+  "SignatureChecker": {
+    "contractAddress": "0x01353B6CC9eF96497E69e813943B234158faEc14",
+    "contractCreationTxHash": "0xf5e5484c359a5c91861c1c812dc9ff9c474557597e8fad9edbec9ded7c5aedbc",
+    "verificationType": "partial"
+  },
+  "FiatTokenV2_2": {
+    "contractAddress": "0x0C7Dd992Ac6C3779Ef94A519673a15ca168F4174",
+    "contractCreationTxHash": "0x2b11e87e3e427d1ed35cf9c7fdb650ee69cfd14e97c1d40feccfd82987b626f6",
+    "verificationType": "partial"
+  },
+  "FiatTokenProxy": {
+    "contractAddress": "",
+    "contractCreationTxHash": ""
+  },
+  "rpcUrl": "https://rpc-gel-sepolia.inkonchain.com"
+}

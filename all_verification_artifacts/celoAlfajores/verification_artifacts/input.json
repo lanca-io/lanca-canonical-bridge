@@ -1,0 +1,18 @@
+{
+  "SignatureChecker": {
+    "contractAddress": "0x506B273722D365e455DCef79aaeee4bd237d35e5",
+    "contractCreationTxHash": "0x49559d8a84d66cdce0f411e503d51c04f68f2f94c5e2a4a24cc0591df8f44259",
+    "verificationType": "partial"
+  },
+  "FiatTokenV2_2": {
+    "contractAddress": "0x5FC1B3D9F9E07fae0985AcbDF65D3e8A7E8d37f3",
+    "contractCreationTxHash": "0x5d62a9aa8c7b07dcb1b97c896f70b3a118718f96ecef47ed8bb6d836cd4ed688",
+    "verificationType": "partial"
+  },
+  "FiatTokenProxy": {
+    "contractAddress": "0x87f378d9A0Db9815fF49421a8bf022ce342CA640",
+    "contractCreationTxHash": "0x689ccdff4ff6e3b43d82229de2d2fe373d3c418e8669097c768e3c08a39a7d56",
+    "verificationType": "partial"
+  },
+  "rpcUrl": "https://celo-alfajores.drpc.org"
+}

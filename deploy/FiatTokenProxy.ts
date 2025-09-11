@@ -1,8 +1,10 @@
 import { getNetworkEnvKey } from "@concero/contract-utils";
+import { hardhatDeployWrapper } from "@concero/contract-utils";
 import { Deployment } from "hardhat-deploy/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { conceroNetworks, getViemReceiptConfig } from "../constants";
+import { DEPLOY_CONFIG_TESTNET } from "../constants/deployConfigTestnet";
 import { copyMetadataForVerification, saveVerificationData } from "../tasks/utils";
 import {
 	err,
@@ -14,21 +16,27 @@ import {
 } from "../utils";
 
 const deployFiatTokenProxy = async function (hre: HardhatRuntimeEnvironment): Promise<Deployment> {
-	const { proxyDeployer } = await hre.getNamedAccounts();
-	const { deploy } = hre.deployments;
 	const { name: srcChainName } = hre.network;
 	const srcChain = conceroNetworks[srcChainName as keyof typeof conceroNetworks];
 	const { type: networkType } = srcChain;
 
 	const implementation = getEnvVar(`USDC_${getNetworkEnvKey(srcChainName)}`);
 
-	log("Deploying FiatTokenProxy...", "deployFiatTokenProxy", srcChainName);
+	const viemAccount = getViemAccount(networkType, "proxyDeployer");
+	const { walletClient, publicClient } = getFallbackClients(srcChain, viemAccount);
 
-	const deployment = await deploy("FiatTokenProxy", {
-		from: proxyDeployer,
+	let gasLimit = 0;
+	const config = DEPLOY_CONFIG_TESTNET[srcChainName];
+	if (config) {
+		gasLimit = config.proxy?.gasLimit || 0;
+	}
+
+	const deployment = await hardhatDeployWrapper("FiatTokenProxy", {
+		hre,
 		args: [implementation],
-		log: true,
-		autoMine: true,
+		publicClient,
+		proxy: true,
+		gasLimit,
 	});
 
 	log(`Deployment completed: ${deployment.address} \n`, "deployFiatTokenProxy", srcChainName);
@@ -46,9 +54,6 @@ const deployFiatTokenProxy = async function (hre: HardhatRuntimeEnvironment): Pr
 	const { abi: fiatTokenProxyAbi } = await import(
 		"../artifacts/contracts/usdc/v1/FiatTokenProxy.sol/FiatTokenProxy.json"
 	);
-
-	const viemAccount = getViemAccount(networkType, "proxyDeployer");
-	const { walletClient, publicClient } = getFallbackClients(srcChain, viemAccount);
 
 	try {
 		const changeAdminTxHash = await walletClient.writeContract({

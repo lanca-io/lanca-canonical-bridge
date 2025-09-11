@@ -1,0 +1,18 @@
+{
+  "SignatureChecker": {
+    "contractAddress": "0x6634C37b0E1D855744dbC0a8f72FDE5DaD825B6C",
+    "contractCreationTxHash": "0x1647dc2223daf4b0a0cdaa0524789fc5731d8f0d3f61e03bb92190213cf8b66b",
+    "verificationType": "partial"
+  },
+  "FiatTokenV2_2": {
+    "contractAddress": "0xf606425cC0f8D065Af0C4b92110159fbe54ECF61",
+    "contractCreationTxHash": "0xbaf73d888ccd4c4f44d0d08a9c92545a9a34ff58e1720d2226f0daf7a7f394d1",
+    "verificationType": "partial"
+  },
+  "FiatTokenProxy": {
+    "contractAddress": "0x9B7550D337bB449b89C6f9C926C3b976b6f4095b",
+    "contractCreationTxHash": "0x058cadd75ade2aa79f8cae87d1365de7a2057a998ddc03504c88dc6c581b369c",
+    "verificationType": "partial"
+  },
+  "rpcUrl": "https://api.test.wemix.com"
+}

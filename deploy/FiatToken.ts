@@ -1,14 +1,14 @@
 import { getNetworkEnvKey } from "@concero/contract-utils";
+import { hardhatDeployWrapper } from "@concero/contract-utils";
 import { Deployment } from "hardhat-deploy/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { conceroNetworks } from "../constants";
+import { DEPLOY_CONFIG_TESTNET } from "../constants/deployConfigTestnet";
 import { copyMetadataForVerification, saveVerificationData } from "../tasks/utils";
-import { log, updateEnvVariable } from "../utils";
+import { getFallbackClients, getViemAccount, log, updateEnvVariable } from "../utils";
 
 const deployFiatToken = async function (hre: HardhatRuntimeEnvironment): Promise<Deployment> {
-	const { deployer } = await hre.getNamedAccounts();
-	const { deploy } = hre.deployments;
 	const { name } = hre.network;
 
 	const chain = conceroNetworks[name as keyof typeof conceroNetworks];
@@ -16,21 +16,30 @@ const deployFiatToken = async function (hre: HardhatRuntimeEnvironment): Promise
 
 	log(`Deploying FiatToken implementation:`, "deployFiatToken", name);
 
-	const signatureCheckerDeployment = await deploy("SignatureChecker", {
-		from: deployer,
+	const viemAccount = getViemAccount(networkType, "proxyDeployer");
+	const { publicClient } = getFallbackClients(chain, viemAccount);
+
+	let gasLimit = 0;
+	const config = DEPLOY_CONFIG_TESTNET[name];
+	if (config) {
+		gasLimit = config.usdc?.gasLimit || 0;
+	}
+
+	const signatureCheckerDeployment = await hardhatDeployWrapper("SignatureChecker", {
+		hre,
 		args: [],
-		log: true,
-		autoMine: true,
+		publicClient,
+		gasLimit,
 	});
 
-	const deployment = await deploy("FiatTokenV2_2", {
-		from: deployer,
+	const deployment = await hardhatDeployWrapper("FiatTokenV2_2", {
+		hre,
+		args: [],
+		publicClient,
+		gasLimit,
 		libraries: {
 			SignatureChecker: signatureCheckerDeployment.address,
 		},
-		args: [],
-		log: true,
-		autoMine: true,
 	});
 
 	log(`Deployed at: ${deployment.address} \n`, "deployFiatToken", name);

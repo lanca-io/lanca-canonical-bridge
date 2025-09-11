@@ -35,12 +35,6 @@ export async function upgradeLancaProxyImplementation(
 		srcChainName,
 	);
 
-	log(
-		`Upgrading ${lcBridgeProxyAlias} to implementation ${newImplementationAlias}`,
-		"upgradeLancaProxy",
-		srcChainName,
-	);
-
 	const txHash = await walletClient.writeContract({
 		address: proxyAdmin,
 		abi: proxyAdminAbi,

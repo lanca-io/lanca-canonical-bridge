@@ -27,7 +27,7 @@
     "devDependencies": {
         "@chainlink/env-enc": "1.0.5",
         "@chainlink/solhint-plugin-chainlink-solidity": "1.0.1",
-        "@concero/contract-utils": "github:concero/contract-utils",
+        "@concero/contract-utils": "github:concero/contract-utils#feature/deploy-wrapper",
         "@concero/rpcs": "github:concero/rpcs",
         "@concero/v2-contracts": "github:concero/messaging-contracts-v2",
         "@concero/v2-networks": "github:concero/v2-networks",

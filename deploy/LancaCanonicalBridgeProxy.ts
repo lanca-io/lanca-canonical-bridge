@@ -1,9 +1,11 @@
+import { hardhatDeployWrapper } from "@concero/contract-utils";
 import { Deployment } from "hardhat-deploy/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { conceroNetworks } from "../constants";
+import { DEPLOY_CONFIG_TESTNET } from "../constants/deployConfigTestnet";
 import { IProxyType } from "../types/deploymentVariables";
-import { getEnvAddress, log, updateEnvAddress } from "../utils";
+import { getEnvAddress, getFallbackClients, getViemAccount, log, updateEnvAddress } from "../utils";
 
 type DeploymentFunction = (
 	hre: HardhatRuntimeEnvironment,
@@ -14,8 +16,6 @@ const deployLancaCanonicalBridgeProxy: DeploymentFunction = async function (
 	hre: HardhatRuntimeEnvironment,
 	proxyType: IProxyType,
 ): Promise<Deployment> {
-	const { proxyDeployer } = await hre.getNamedAccounts();
-	const { deploy } = hre.deployments;
 	const { name } = hre.network;
 	const chain = conceroNetworks[name];
 	const { type } = chain;
@@ -23,13 +23,22 @@ const deployLancaCanonicalBridgeProxy: DeploymentFunction = async function (
 	const [initialImplementation, initialImplementationAlias] = getEnvAddress("lcBridge", name);
 	const [proxyAdmin, proxyAdminAlias] = getEnvAddress(`${proxyType}Admin`, name);
 
-	log("Deploying...", `deployLancaCanonicalBridgeProxy:${proxyType}`, name);
-	const lancaProxyDeployment = (await deploy("LCBTransparentUpgradeableProxy", {
-		from: proxyDeployer,
+	const viemAccount = getViemAccount(type, "proxyDeployer");
+	const { publicClient } = getFallbackClients(chain, viemAccount);
+
+	let gasLimit = 0;
+	const config = DEPLOY_CONFIG_TESTNET[name];
+	if (config) {
+		gasLimit = config.proxy?.gasLimit || 0;
+	}
+
+	const lancaProxyDeployment = await hardhatDeployWrapper("LCBTransparentUpgradeableProxy", {
+		hre,
 		args: [initialImplementation, proxyAdmin, "0x"],
-		log: true,
-		autoMine: true,
-	})) as Deployment;
+		publicClient,
+		proxy: true,
+		gasLimit,
+	});
 
 	log(
 		`Deployed at: ${lancaProxyDeployment.address}. Initial impl: ${initialImplementationAlias}, Proxy admin: ${proxyAdminAlias}`,

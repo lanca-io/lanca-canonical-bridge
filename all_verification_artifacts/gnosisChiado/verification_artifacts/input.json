@@ -1,0 +1,18 @@
+{
+  "SignatureChecker": {
+    "contractAddress": "0x6634C37b0E1D855744dbC0a8f72FDE5DaD825B6C",
+    "contractCreationTxHash": "0x78423057a87bd24a20206cc5672b4e3c90fe902878bd9d2f49384bdf402fae75",
+    "verificationType": "partial"
+  },
+  "FiatTokenV2_2": {
+    "contractAddress": "0xf606425cC0f8D065Af0C4b92110159fbe54ECF61",
+    "contractCreationTxHash": "0xf83cec1dabcaeb5de9d0e0ecd42387cec5b8324149334dc4f82c78b26a888994",
+    "verificationType": "partial"
+  },
+  "FiatTokenProxy": {
+    "contractAddress": "0x9B7550D337bB449b89C6f9C926C3b976b6f4095b",
+    "contractCreationTxHash": "0x849af48eaeb322e57b9a4263a4e219213049410ab9668fdc0f5923ec1673b98c",
+    "verificationType": "partial"
+  },
+  "rpcUrl": "https://rpc.chiado.gnosis.gateway.fm"
+}

@@ -1,0 +1,18 @@
+{
+  "SignatureChecker": {
+    "contractAddress": "0x6634C37b0E1D855744dbC0a8f72FDE5DaD825B6C",
+    "contractCreationTxHash": "0xf44da4314f8c97394f921c1c27348db4d91ec68c6006b51aa7064ae625c45333",
+    "verificationType": "partial"
+  },
+  "FiatTokenV2_2": {
+    "contractAddress": "0xf606425cC0f8D065Af0C4b92110159fbe54ECF61",
+    "contractCreationTxHash": "0xd3ddf9606347e833ddc26cbda07d3fb531697135870c46edb9b3177cd9258b92",
+    "verificationType": "partial"
+  },
+  "FiatTokenProxy": {
+    "contractAddress": "0x9B7550D337bB449b89C6f9C926C3b976b6f4095b",
+    "contractCreationTxHash": "0xe2264443808bcceca2bfeac6a47dd01a066c427000fb0b656fbc80ceafc29ac3",
+    "verificationType": "partial"
+  },
+  "rpcUrl": "https://bepolia.rpc.berachain.com"
+}

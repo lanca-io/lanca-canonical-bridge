@@ -1,0 +1,18 @@
+{
+  "SignatureChecker": {
+    "contractAddress": "0x6634C37b0E1D855744dbC0a8f72FDE5DaD825B6C",
+    "contractCreationTxHash": "0xeb517377f05bb4ef4bf69a1c3612404bb424f7e569f2bd79e083ce282d72c238",
+    "verificationType": "partial"
+  },
+  "FiatTokenV2_2": {
+    "contractAddress": "0xf606425cC0f8D065Af0C4b92110159fbe54ECF61",
+    "contractCreationTxHash": "0x4df9ad79812efd671dcdb86d0ec10e1f3fc9f8d14e5305b49559e7b07511234a",
+    "verificationType": "partial"
+  },
+  "FiatTokenProxy": {
+    "contractAddress": "0x9B7550D337bB449b89C6f9C926C3b976b6f4095b",
+    "contractCreationTxHash": "0xcd4b73070358926d2b708b091377f35e701596d6020215f96ebd3b3615494d19",
+    "verificationType": "partial"
+  },
+  "rpcUrl": "https://rpc.ankr.com/monad_testnet"
+}

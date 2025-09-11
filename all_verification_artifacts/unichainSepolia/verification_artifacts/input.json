@@ -1,0 +1,18 @@
+{
+  "SignatureChecker": {
+    "contractAddress": "0x6634C37b0E1D855744dbC0a8f72FDE5DaD825B6C",
+    "contractCreationTxHash": "0xdadb867f891a2a6014cbc8d67c57e8ff5e49a54d5bd61ba2e615267af72b0141",
+    "verificationType": "partial"
+  },
+  "FiatTokenV2_2": {
+    "contractAddress": "0xf606425cC0f8D065Af0C4b92110159fbe54ECF61",
+    "contractCreationTxHash": "0xb0866fcdbcd6239d255d00e26e907662fb2257287a962c0dcd2ef6b2ef9781c4",
+    "verificationType": "partial"
+  },
+  "FiatTokenProxy": {
+    "contractAddress": "0x9B7550D337bB449b89C6f9C926C3b976b6f4095b",
+    "contractCreationTxHash": "0x6b779577d6a3ed0bfebf54b221821981c7a85a86613d18d0a82ed8a8ee0327b5",
+    "verificationType": "partial"
+  },
+  "rpcUrl": "https://unichain-sepolia-rpc.publicnode.com"
+}

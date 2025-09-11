@@ -1,0 +1,18 @@
+{
+  "SignatureChecker": {
+    "contractAddress": "0xf606425cC0f8D065Af0C4b92110159fbe54ECF61",
+    "contractCreationTxHash": "0xf85b77a41ff5637498859fc3e24531d4ab462c2a78d4a9bcc08c736fa14a1ce3",
+    "verificationType": "partial"
+  },
+  "FiatTokenV2_2": {
+    "contractAddress": "0x5Dc3Bd8108Ed3e12A439d9832a573bfE62368c4C",
+    "contractCreationTxHash": "0xcec1dec30c1369f40561eb408958daaa62b00e4512d29f30562229bee77b445d",
+    "verificationType": "partial"
+  },
+  "FiatTokenProxy": {
+    "contractAddress": "0x9B7550D337bB449b89C6f9C926C3b976b6f4095b",
+    "contractCreationTxHash": "0x153919e1c282255275dae8c374f7a685c54f26b243da2832865a3411ea154394",
+    "verificationType": "partial"
+  },
+  "rpcUrl": "https://linea-sepolia-rpc.publicnode.com"
+}

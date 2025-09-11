@@ -1,0 +1,18 @@
+{
+  "SignatureChecker": {
+    "contractAddress": "0x01353B6CC9eF96497E69e813943B234158faEc14",
+    "contractCreationTxHash": "0xf7663110cc79d074b33ad50e9b4ad471b30321b9cf63bf5587aaf409c73a2167",
+    "verificationType": "partial"
+  },
+  "FiatTokenV2_2": {
+    "contractAddress": "0x0C7Dd992Ac6C3779Ef94A519673a15ca168F4174",
+    "contractCreationTxHash": "0xc6e43c942735bedec888d295e63e2d7c85b59d95dca3fb3b0d170e66643fc45a",
+    "verificationType": "partial"
+  },
+  "FiatTokenProxy": {
+    "contractAddress": "0x87f378d9A0Db9815fF49421a8bf022ce342CA640",
+    "contractCreationTxHash": "0xbc4b33cb806568458abf14645ead10a24259c45c8112eca6d215dab743bbc598",
+    "verificationType": "partial"
+  },
+  "rpcUrl": "https://evm-t3.cronos.org"
+}

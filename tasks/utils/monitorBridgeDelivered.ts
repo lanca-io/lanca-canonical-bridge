@@ -6,9 +6,7 @@ import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../u
 
 export async function monitorBridgeDelivered(
 	messageId: string,
-	srcChain: string,
 	dstChain: string,
-	expectedAmount: string,
 	timeoutMs: number = 300000, // 5 minutes default
 ): Promise<void> {
 	const dstNetwork = conceroNetworks[dstChain];
@@ -89,8 +87,6 @@ export async function monitorBridgeDelivered(
 						) {
 							const args = decoded.args as any;
 
-							const senderChainSelector = args.srcChainSelector;
-
 							log(
 								`✅ BridgeDelivered event found!`,
 								"monitorBridgeDelivered",
@@ -101,19 +97,8 @@ export async function monitorBridgeDelivered(
 								"monitorBridgeDelivered",
 								dstChain,
 							);
-							log(`   Sender: ${senderChainSelector}`, "monitorBridgeDelivered", dstChain);
 							log(
-								`   TokenSender: ${args.tokenSender}`,
-								"monitorBridgeDelivered",
-								dstChain,
-							);
-							log(
-								`   TokenReceiver: ${args.tokenReceiver}`,
-								"monitorBridgeDelivered",
-								dstChain,
-							);
-							log(
-								`   TokenAmount: ${args.tokenAmount} wei (${formatUnits(args.tokenAmount, 6)} USDC)`,
+								`   TokenAmount: ${args.tokenAmountWithFee} wei (${formatUnits(args.tokenAmountWithFee, 6)} USDC)`,
 								"monitorBridgeDelivered",
 								dstChain,
 							);

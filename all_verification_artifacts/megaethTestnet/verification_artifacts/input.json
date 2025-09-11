@@ -1,0 +1,18 @@
+{
+  "SignatureChecker": {
+    "contractAddress": "0x6634C37b0E1D855744dbC0a8f72FDE5DaD825B6C",
+    "contractCreationTxHash": "0x56af7c2fccf3126b8b10953dc58e0506bb046263e546c2624c9dc3a575c20e0a",
+    "verificationType": "partial"
+  },
+  "FiatTokenV2_2": {
+    "contractAddress": "0xf606425cC0f8D065Af0C4b92110159fbe54ECF61",
+    "contractCreationTxHash": "0xe429a1af460662d265614d35b9e8e74dff8564a70e83aaa8913801721819eff8",
+    "verificationType": "partial"
+  },
+  "FiatTokenProxy": {
+    "contractAddress": "0x9B7550D337bB449b89C6f9C926C3b976b6f4095b",
+    "contractCreationTxHash": "0x553c3ea1dbe44156da4529e3008c363dd56470bce9c70e67e9baa87286a9469e",
+    "verificationType": "partial"
+  },
+  "rpcUrl": "https://carrot.megaeth.com/rpc"
+}

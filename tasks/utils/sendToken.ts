@@ -10,10 +10,11 @@ interface SendTokenParams {
 	dstChain: string;
 	amount: string;
 	receiver?: string;
+	accountType?: "proxyDeployer" | "deployer" | "rateLimitAdmin" | "rebalancer";
 }
 
 export async function sendToken(params: SendTokenParams): Promise<void> {
-	const { srcChain, dstChain, amount, receiver } = params;
+	const { srcChain, dstChain, amount, receiver, accountType = "deployer" } = params;
 
 	const srcNetwork = conceroNetworks[srcChain as keyof typeof conceroNetworks];
 	const { viemChain, type, chainSelector: srcChainSelector } = srcNetwork;
@@ -88,7 +89,7 @@ export async function sendToken(params: SendTokenParams): Promise<void> {
 		"../../artifacts/contracts/usdc/v2/FiatTokenV2_2.sol/FiatTokenV2_2.json"
 	);
 
-	const viemAccount = getViemAccount(type, "deployer");
+	const viemAccount = getViemAccount(type, accountType);
 	const { walletClient, publicClient } = getFallbackClients(srcNetwork, viemAccount);
 
 	const amountInWei = parseUnits(amount, 6);

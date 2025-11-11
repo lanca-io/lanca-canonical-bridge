@@ -122,7 +122,7 @@ contract SendTokenL1Test is LCBridgeL1Test {
         bytes32 messageId = _getMessageId(DST_CHAIN_SELECTOR, false, address(0), message);
 
         vm.expectEmit(true, true, true, true);
-        emit LancaCanonicalBridgeBase.TokenSent(messageId, user, user, AMOUNT);
+        emit LancaCanonicalBridgeBase.TokenSent(messageId, user, user, DST_CHAIN_SELECTOR, AMOUNT);
 
         vm.prank(user);
         lancaCanonicalBridgeL1.sendToken{value: messageFee}(
@@ -146,11 +146,8 @@ contract SendTokenL1Test is LCBridgeL1Test {
         bytes32 messageId = _getMessageId(DST_CHAIN_SELECTOR, false, address(0), message);
 
         vm.expectEmit(true, true, true, true);
-        emit LancaCanonicalBridgeBase.SentToDestinationBridge(
-            messageId,
-            DST_CHAIN_SELECTOR,
-            lancaBridgeMock
-        );
+        emit LancaCanonicalBridgeBase.TokenSent(
+            messageId, user, user, DST_CHAIN_SELECTOR, AMOUNT);
 
         vm.prank(user);
         lancaCanonicalBridgeL1.sendToken{value: messageFee}(
@@ -221,7 +218,9 @@ contract SendTokenL1Test is LCBridgeL1Test {
 
         uint256 messageFee = _getMessageFee();
 
-        vm.expectRevert(abi.encodeWithSelector(ReentrancyGuard.ReentrancyGuardReentrantCall.selector));
+        vm.expectRevert(
+            abi.encodeWithSelector(ReentrancyGuard.ReentrancyGuardReentrantCall.selector)
+        );
 
         vm.prank(user);
         lancaCanonicalBridgeL1.sendToken{value: messageFee}(

@@ -66,7 +66,7 @@ contract SendTokenTest is LCBridgeTest {
         bytes32 messageId = _getMessageId(SRC_CHAIN_SELECTOR, false, address(0), message);
 
         vm.expectEmit(true, true, true, true);
-        emit LancaCanonicalBridgeBase.TokenSent(messageId, user, user, AMOUNT);
+        emit LancaCanonicalBridgeBase.TokenSent(messageId, user, user, SRC_CHAIN_SELECTOR, AMOUNT);
 
         vm.prank(user);
         lancaCanonicalBridge.sendToken{value: messageFee}(user, AMOUNT, ZERO_AMOUNT, ZERO_BYTES);

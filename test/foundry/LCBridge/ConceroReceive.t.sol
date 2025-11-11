@@ -72,9 +72,6 @@ contract ConceroReceiveTest is LCBridgeTest {
         vm.expectEmit(true, true, true, true);
         emit LancaCanonicalBridgeBase.BridgeDelivered(
             DEFAULT_MESSAGE_ID,
-            SRC_CHAIN_SELECTOR,
-            user,
-            user,
             AMOUNT
         );
 

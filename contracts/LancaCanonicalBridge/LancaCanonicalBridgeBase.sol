@@ -10,8 +10,10 @@ import {IERC165} from "@openzeppelin/contracts-v5/utils/introspection/IERC165.so
 
 import {ConceroClient} from "@concero/v2-contracts/contracts/ConceroClient/ConceroClient.sol";
 import {ConceroOwnable} from "@concero/v2-contracts/contracts/common/ConceroOwnable.sol";
-import {ConceroTypes} from "@concero/v2-contracts/contracts/ConceroClient/ConceroTypes.sol";
 import {IConceroRouter} from "@concero/v2-contracts/contracts/interfaces/IConceroRouter.sol";
+
+// TODO: import from concero-v2-contracts
+import {MessageCodec} from "contracts/common/libraries/MessageCodec.sol";
 
 import {RateLimiter} from "./RateLimiter.sol";
 import {IFiatTokenV1} from "../interfaces/IFiatTokenV1.sol";
@@ -49,7 +51,11 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, Concer
         uint24 dstChainSelector,
         uint256 dstGasLimit,
         bytes calldata dstCallData,
-        address dstBridge
+        address dstBridge,
+        address relayerLib,
+        bytes memory relayerConfig,
+        address[] memory validatorLibs,
+        bytes[] memory validatorConfigs
     ) internal returns (bytes32 messageId) {
         require(
             (dstGasLimit == 0 && dstCallData.length == 0) ||
@@ -65,16 +71,22 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, Concer
             dstCallData
         );
 
-        messageId = IConceroRouter(i_conceroRouter).conceroSend{value: msg.value}(
-            dstChainSelector,
-            false,
-            address(0),
-            ConceroTypes.EvmDstChainData({
-                receiver: dstBridge,
-                gasLimit: BRIDGE_GAS_OVERHEAD + dstGasLimit
-            }),
-            messageData
-        );
+        IConceroRouter.MessageRequest memory messageRequest = IConceroRouter.MessageRequest({
+            dstChainSelector: dstChainSelector,
+            srcBlockConfirmations: type(uint64).max,
+            feeToken: address(0),
+            dstChainData: MessageCodec.encodeEvmDstChainData(
+                dstBridge,
+                BRIDGE_GAS_OVERHEAD + dstGasLimit
+            ),
+            validatorLibs: validatorLibs,
+            relayerLib: relayerLib,
+            validatorConfigs: validatorConfigs,
+            relayerConfig: relayerConfig,
+            payload: messageData
+        });
+
+        messageId = IConceroRouter(i_conceroRouter).conceroSend{value: msg.value}(messageRequest);
     }
 
     function _isValidContractReceiver(address tokenReceiver) internal view returns (bool) {
@@ -88,22 +100,30 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, Concer
         return true;
     }
 
-    /* ------- View Functions ------- */
-
-    function getBridgeNativeFee(
+    function _getBridgeNativeFee(
         uint24 dstChainSelector,
         address dstPool,
-        uint256 dstGasLimit
-    ) public view returns (uint256) {
-        return
-            IConceroRouter(i_conceroRouter).getMessageFee(
-                dstChainSelector,
-                false, // shouldFinaliseSrc
-                address(0), // feeToken (native)
-                ConceroTypes.EvmDstChainData({
-                    receiver: dstPool,
-                    gasLimit: BRIDGE_GAS_OVERHEAD + dstGasLimit
-                })
-            );
+        uint256 dstGasLimit,
+        address relayerLib,
+        bytes memory relayerConfig,
+        address[] memory validatorLibs,
+        bytes[] memory validatorConfigs
+    ) internal view returns (uint256) {
+        IConceroRouter.MessageRequest memory messageRequest = IConceroRouter.MessageRequest({
+            dstChainSelector: dstChainSelector,
+            srcBlockConfirmations: type(uint64).max,
+            feeToken: address(0),
+            dstChainData: MessageCodec.encodeEvmDstChainData(
+                dstPool,
+                BRIDGE_GAS_OVERHEAD + dstGasLimit
+            ),
+            validatorLibs: validatorLibs,
+            relayerLib: relayerLib,
+            validatorConfigs: validatorConfigs,
+            relayerConfig: relayerConfig,
+            payload: new bytes(0)
+        });
+
+        return IConceroRouter(i_conceroRouter).getMessageFee(messageRequest);
     }
 }

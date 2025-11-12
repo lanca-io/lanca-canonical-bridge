@@ -14,6 +14,11 @@ library Namespaces {
             abi.encode(uint256(keccak256(abi.encodePacked("lancabridge.l1bridge.storage"))) - 1)
         ) & ~bytes32(uint256(0xff));
 
+    bytes32 internal constant BRIDGE =
+        keccak256(
+            abi.encode(uint256(keccak256(abi.encodePacked("lancabridge.bridge.storage"))) - 1)
+        ) & ~bytes32(uint256(0xff));
+
     bytes32 internal constant RATE_LIMITS =
         keccak256(
             abi.encode(uint256(keccak256(abi.encodePacked("lancabridge.ratelimits.storage"))) - 1)
@@ -26,6 +31,19 @@ library Storage {
         uint256[50] __array_gap;
         mapping(uint24 dstChainSelector => address pool) pools;
         mapping(uint24 dstChainSelector => address dstBridge) dstBridges;
+        mapping(uint24 dstChainSelector => address relayerLib) relayerLibs;
+        mapping(uint24 dstChainSelector => bytes relayerConfig) relayerConfigs;
+        mapping(uint24 dstChainSelector => address[] validatorLibs) validatorLibs;
+        mapping(uint24 dstChainSelector => bytes[] validatorConfigs) validatorConfigs;
+    }
+
+    struct Bridge {
+        address relayerLib;
+        bytes relayerConfig;
+        address[] validatorLibs;
+        bytes[] validatorConfigs;
+        uint256[50] __var_gap;
+        uint256[50] __array_gap;
     }
 
     struct RateLimits {
@@ -38,6 +56,13 @@ library Storage {
     /* SLOT-BASED STORAGE ACCESS */
     function l1Bridge() internal pure returns (L1Bridge storage s) {
         bytes32 slot = Namespaces.L1_BRIDGE;
+        assembly {
+            s.slot := slot
+        }
+    }
+
+    function bridge() internal pure returns (Bridge storage s) {
+        bytes32 slot = Namespaces.BRIDGE;
         assembly {
             s.slot := slot
         }

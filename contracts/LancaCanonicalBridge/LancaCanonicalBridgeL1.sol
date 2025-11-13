@@ -23,6 +23,7 @@ import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/Mes
 contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
     using s for s.L1Bridge;
     using MessageCodec for IConceroRouter.MessageRequest;
+    using MessageCodec for bytes;
 
     error InvalidDstBridge();
     error PoolNotFound(uint24 dstChainSelector);
@@ -57,23 +58,30 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
 
         ILancaCanonicalBridgePool(pool).deposit(msg.sender, tokenAmount);
 
-        messageId = _sendMessage(
-            tokenReceiver,
-            tokenAmount,
-            dstChainSelector,
-            dstGasLimit,
-            dstCallData,
-            dstBridge,
-            bridge.relayerLibs[dstChainSelector],
-            bridge.relayerConfigs[dstChainSelector],
-            bridge.validatorLibs[dstChainSelector],
-            bridge.validatorConfigs[dstChainSelector]
-        );
+        {
+            address relayerLib = bridge.relayerLibs[dstChainSelector];
+            bytes memory relayerConfig = bridge.relayerConfigs[dstChainSelector];
+            address[] memory validatorLibs = bridge.validatorLibs[dstChainSelector];
+            bytes[] memory validatorConfigs = bridge.validatorConfigs[dstChainSelector];
+
+            messageId = _sendMessage(
+                tokenReceiver,
+                tokenAmount,
+                dstChainSelector,
+                dstGasLimit,
+                dstCallData,
+                dstBridge,
+                relayerLib,
+                relayerConfig,
+                validatorLibs,
+                validatorConfigs
+            );
+        }
 
         emit TokenSent(messageId, msg.sender, tokenReceiver, dstChainSelector, tokenAmount);
     }
 
-    function _conceroReceive(bytes memory messageReceipt) internal override nonReentrant {
+    function _conceroReceive(bytes calldata messageReceipt) internal override nonReentrant {
         (address sender, ) = messageReceipt.evmSrcChainData();
         uint24 srcChainSelector = messageReceipt.srcChainSelector();
 
@@ -179,8 +187,8 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
 
     function setValidatorLibs(
         uint24[] calldata dstChainSelectors,
-        address[][] calldata validatorLibs,
-        bytes[][] calldata validatorConfigs
+        address[][] memory validatorLibs,
+        bytes[][] memory validatorConfigs
     ) external onlyOwner {
         s.L1Bridge storage l1BridgeStorage = s.l1Bridge();
 

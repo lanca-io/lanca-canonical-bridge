@@ -76,7 +76,7 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, Concer
             feeToken: address(0),
             dstChainData: MessageCodec.encodeEvmDstChainData(
                 dstBridge,
-                BRIDGE_GAS_OVERHEAD + dstGasLimit
+                uint32(BRIDGE_GAS_OVERHEAD + dstGasLimit)
             ),
             validatorLibs: validatorLibs,
             relayerLib: relayerLib,
@@ -114,7 +114,7 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, Concer
             feeToken: address(0),
             dstChainData: MessageCodec.encodeEvmDstChainData(
                 dstPool,
-                BRIDGE_GAS_OVERHEAD + dstGasLimit
+                uint32(BRIDGE_GAS_OVERHEAD + dstGasLimit)
             ),
             validatorLibs: validatorLibs,
             relayerLib: relayerLib,

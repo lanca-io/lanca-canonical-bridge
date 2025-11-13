@@ -10,6 +10,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts-v5/utils/ReentrancyGuard.
 import {SafeERC20} from "@openzeppelin/contracts-v5/token/ERC20/utils/SafeERC20.sol";
 
 import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
+import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
 import {Storage as s} from "./libraries/Storage.sol";
 
 import {
@@ -19,6 +20,7 @@ import {
 
 contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
     using s for s.Bridge;
+    using MessageCodec for bytes;
 
     uint24 internal immutable i_l1ChainSelector;
     address internal immutable i_lancaCanonicalBridgeL1;
@@ -67,7 +69,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         emit TokenSent(messageId, msg.sender, tokenReceiver, i_l1ChainSelector, tokenAmount);
     }
 
-    function _conceroReceive(bytes memory messageReceipt) internal override nonReentrant {
+    function _conceroReceive(bytes calldata messageReceipt) internal override nonReentrant {
         (address sender, ) = messageReceipt.evmSrcChainData();
         uint24 srcChainSelector = messageReceipt.srcChainSelector();
 
@@ -118,8 +120,8 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
     }
 
     function setValidatorLibs(
-        address[] calldata validatorLibs,
-        bytes[] calldata validatorConfigs
+        address[] memory validatorLibs,
+        bytes[] memory validatorConfigs
     ) external onlyOwner {
         s.Bridge storage bridge = s.bridge();
 

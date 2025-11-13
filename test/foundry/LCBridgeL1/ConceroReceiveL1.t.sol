@@ -120,35 +120,4 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
         assertEq(lcBridgeClient.tokenAmount(), AMOUNT);
         assertEq(lcBridgeClient.testString(), testString);
     }
-
-    // --- Helper functions ---
-
-    function _conceroReceive(
-        address tokenSender,
-        address tokenReceiver,
-        uint256 tokenAmount,
-        uint256 dstGasLimit,
-        bytes memory dstCallData
-    ) internal {
-        IConceroRouter.MessageRequest memory messageRequest = _buildMessageRequest(
-            tokenSender,
-            tokenReceiver,
-            tokenAmount,
-            dstGasLimit,
-            dstCallData
-        );
-
-        bool[] memory validationChecks = new bool[](1);
-        validationChecks[0] = true;
-        address[] memory validatorLibs = new address[](1);
-        validatorLibs[0] = validatorLib;
-
-        vm.prank(conceroRouter);
-        lancaCanonicalBridgeL1.conceroReceive(
-            messageRequest.toMessageReceiptBytes(DST_CHAIN_SELECTOR, lancaBridgeMock, NONCE),
-            validationChecks,
-            validatorLibs,
-            relayerLib
-        );
-    }
 }

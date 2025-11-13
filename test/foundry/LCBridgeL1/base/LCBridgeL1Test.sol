@@ -18,6 +18,9 @@ import {DeployLCBridgeL1} from "../../scripts/deploy/DeployLCBridgeL1.s.sol";
 import {BaseTest} from "../../utils/BaseTest.sol";
 
 abstract contract LCBridgeL1Test is BaseTest {
+    using MessageCodec for IConceroRouter.MessageRequest;
+    using MessageCodec for bytes;
+
     LancaCanonicalBridgeL1 internal lancaCanonicalBridgeL1;
     LancaCanonicalBridgePool internal lancaCanonicalBridgePool;
     LancaCanonicalBridgeClientExample internal lcBridgeClient;
@@ -87,7 +90,7 @@ abstract contract LCBridgeL1Test is BaseTest {
     function _addDefaultPool() internal {
         uint24[] memory dstChainSelectors = new uint24[](1);
         dstChainSelectors[0] = DST_CHAIN_SELECTOR;
-	address[] memory pools = new address[](1);
+        address[] memory pools = new address[](1);
         pools[0] = address(lancaCanonicalBridgePool);
 
         vm.prank(deployer);
@@ -164,5 +167,34 @@ abstract contract LCBridgeL1Test is BaseTest {
                 relayerConfig: new bytes(1),
                 payload: payload
             });
+    }
+
+    function _conceroReceive(
+        address tokenSender,
+        address tokenReceiver,
+        uint256 tokenAmount,
+        uint256 dstGasLimit,
+        bytes memory dstCallData
+    ) internal {
+        IConceroRouter.MessageRequest memory messageRequest = _buildMessageRequest(
+            tokenSender,
+            tokenReceiver,
+            tokenAmount,
+            dstGasLimit,
+            dstCallData
+        );
+
+        bool[] memory validationChecks = new bool[](1);
+        validationChecks[0] = true;
+        address[] memory validatorLibs = new address[](1);
+        validatorLibs[0] = validatorLib;
+
+        vm.prank(conceroRouter);
+        lancaCanonicalBridgeL1.conceroReceive(
+            messageRequest.toMessageReceiptBytes(DST_CHAIN_SELECTOR, lancaBridgeMock, NONCE),
+            validationChecks,
+            validatorLibs,
+            relayerLib
+        );
     }
 }

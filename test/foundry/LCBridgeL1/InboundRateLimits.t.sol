@@ -8,6 +8,8 @@
 pragma solidity 0.8.28;
 
 import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
+import {IConceroRouter} from "@concero/v2-contracts/contracts/interfaces/IConceroRouter.sol";
+import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
 
 import {RateLimiter} from "contracts/LancaCanonicalBridge/RateLimiter.sol";
 
@@ -15,6 +17,9 @@ import {LCBridgeL1Test} from "./base/LCBridgeL1Test.sol";
 import {MockUSDC} from "../mocks/MockUSDC.sol";
 
 contract InboundRateLimitsTest is LCBridgeL1Test {
+    using MessageCodec for IConceroRouter.MessageRequest;
+    using MessageCodec for bytes;
+
     function setUp() public override {
         super.setUp();
 
@@ -111,16 +116,7 @@ contract InboundRateLimitsTest is LCBridgeL1Test {
 
         // First transfers accumulate
         _performInboundTransfer(300 * 1e6); // 300 USDC
-
-        bytes memory messageWithFourHundred = _encodeBridgeParams(user, user, 400 * 1e6, 0, ""); // 400 USDC
-
-        vm.prank(conceroRouter);
-        lancaCanonicalBridgeL1.conceroReceive(
-            DEFAULT_MESSAGE_ID,
-            DST_CHAIN_SELECTOR,
-            abi.encode(lancaBridgeMock),
-            messageWithFourHundred
-        );
+        _conceroReceive(user, user, 400 * 1e6, 0, "");
 
         (uint128 availableVolume, , , , ) = lancaCanonicalBridgeL1.getRateInfo(
             DST_CHAIN_SELECTOR,
@@ -133,13 +129,7 @@ contract InboundRateLimitsTest is LCBridgeL1Test {
             abi.encodeWithSelector(RateLimiter.RateLimitExceeded.selector, 400 * 1e6, 300 * 1e6)
         );
 
-        vm.prank(conceroRouter);
-        lancaCanonicalBridgeL1.conceroReceive(
-            DEFAULT_MESSAGE_ID,
-            DST_CHAIN_SELECTOR,
-            abi.encode(lancaBridgeMock),
-            messageWithFourHundred
-        );
+        _conceroReceive(user, user, 400 * 1e6, 0, "");
     }
 
     function test_inboundRateLimit_RefillsOverTime() public {
@@ -168,15 +158,7 @@ contract InboundRateLimitsTest is LCBridgeL1Test {
         assertEq(availableVolume, 600 * 1e6); // Should refill 60 sec * 10 USDC/sec = 600 USDC
 
         // Check that we can use the refilled amount
-        bytes memory message = _encodeBridgeParams(user, user, 600 * 1e6, 0, ""); // Should pass successfully
-
-        vm.prank(conceroRouter);
-        lancaCanonicalBridgeL1.conceroReceive(
-            DEFAULT_MESSAGE_ID,
-            DST_CHAIN_SELECTOR,
-            abi.encode(lancaBridgeMock),
-            message
-        );
+        _conceroReceive(user, user, 600 * 1e6, 0, "");
 
         (uint128 finalAvailable, , , , ) = lancaCanonicalBridgeL1.getRateInfo(
             DST_CHAIN_SELECTOR,
@@ -210,20 +192,13 @@ contract InboundRateLimitsTest is LCBridgeL1Test {
         lancaCanonicalBridgeL1.setRateLimit(DST_CHAIN_SELECTOR, 0, 0, false);
 
         _addDefaultDstBridge();
-        bytes memory message = _encodeBridgeParams(user, user, 1000 * 1e6, 0, "");
 
         // Transfers should be blocked when maxAmount = 0 (soft pause)
         vm.expectRevert(
             abi.encodeWithSelector(RateLimiter.RateLimitExceeded.selector, 1000 * 1e6, 0)
         );
 
-        vm.prank(conceroRouter);
-        lancaCanonicalBridgeL1.conceroReceive(
-            DEFAULT_MESSAGE_ID,
-            DST_CHAIN_SELECTOR,
-            abi.encode(lancaBridgeMock),
-            message
-        );
+        _conceroReceive(user, user, 1000 * 1e6, 0, "");
 
         (, uint128 maxAmount, uint128 refillSpeed, , bool isActive) = lancaCanonicalBridgeL1
             .getRateInfo(DST_CHAIN_SELECTOR, false);
@@ -332,14 +307,7 @@ contract InboundRateLimitsTest is LCBridgeL1Test {
 
     function _performInboundTransfer(uint256 amount) internal {
         _addDefaultDstBridge();
-        bytes memory message = _encodeBridgeParams(user, user, amount, 0, "");
 
-        vm.prank(conceroRouter);
-        lancaCanonicalBridgeL1.conceroReceive(
-            DEFAULT_MESSAGE_ID,
-            DST_CHAIN_SELECTOR,
-            abi.encode(lancaBridgeMock),
-            message
-        );
+        _conceroReceive(user, user, amount, 0, "");
     }
 }

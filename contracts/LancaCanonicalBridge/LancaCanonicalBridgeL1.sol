@@ -18,11 +18,11 @@ import {Storage as s} from "./libraries/Storage.sol";
 import {ILancaCanonicalBridgePool} from "../interfaces/ILancaCanonicalBridgePool.sol";
 
 import {IConceroRouter} from "@concero/v2-contracts/contracts/interfaces/IConceroRouter.sol";
-import {MessageCodec} from "../common/libraries/MessageCodec.sol";
+import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
 
 contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
     using s for s.L1Bridge;
-    using MessageCodec for IConceroRouter.MessageReceipt;
+    using MessageCodec for IConceroRouter.MessageRequest;
 
     error InvalidDstBridge();
     error PoolNotFound(uint24 dstChainSelector);

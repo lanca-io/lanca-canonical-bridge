@@ -12,8 +12,7 @@ import {ConceroClient} from "@concero/v2-contracts/contracts/ConceroClient/Conce
 import {ConceroOwnable} from "@concero/v2-contracts/contracts/common/ConceroOwnable.sol";
 import {IConceroRouter} from "@concero/v2-contracts/contracts/interfaces/IConceroRouter.sol";
 
-// TODO: import from concero-v2-contracts
-import {MessageCodec} from "contracts/common/libraries/MessageCodec.sol";
+import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
 
 import {RateLimiter} from "./RateLimiter.sol";
 import {IFiatTokenV1} from "../interfaces/IFiatTokenV1.sol";

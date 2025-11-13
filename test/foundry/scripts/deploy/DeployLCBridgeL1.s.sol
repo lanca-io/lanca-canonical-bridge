@@ -6,66 +6,24 @@
  */
 pragma solidity 0.8.28;
 
+import {Script} from "forge-std/src/Script.sol";
+
 import {LancaCanonicalBridgeL1} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol";
-import {
-    LCBTransparentUpgradeableProxy,
-    ITransparentUpgradeableProxy
-} from "contracts/Proxy/LCBTransparentUpgradeableProxy.sol";
-import {LCBridgeL1BaseTest} from "test/foundry/LCBridgeL1/base/LCBridgeL1BaseTest.sol";
 
-contract DeployLCBridgeL1 is LCBridgeL1BaseTest {
-    LCBTransparentUpgradeableProxy internal lancaCanonicalBridgeL1Proxy;
-    LancaCanonicalBridgeL1 internal lancaCanonicalBridgeL1;
-
-    function setUp() public virtual override {
-        super.setUp();
-    }
-
-    function setProxyImplementation(address implementation) public {
-        vm.startPrank(proxyDeployer);
-        ITransparentUpgradeableProxy(address(lancaCanonicalBridgeL1Proxy)).upgradeToAndCall(
-            implementation,
-            bytes("")
-        );
-        vm.stopPrank();
-    }
-
-    function deploy() public returns (address) {
-        address implementation = _deployImplementation(conceroRouter, usdc, deployer);
-        _deployProxy(implementation);
-
-        return address(lancaCanonicalBridgeL1Proxy);
-    }
+contract DeployLCBridgeL1 is Script {
+    address public deployer = vm.envAddress("DEPLOYER_ADDRESS");
 
     function deploy(
-        address _conceroRouter,
-        address _usdc,
-        address _rateLimitAdmin
+        address conceroRouter,
+        address usdc,
+        address rateLimitAdmin
     ) public returns (address) {
-        address implementation = _deployImplementation(_conceroRouter, _usdc, _rateLimitAdmin);
-        _deployProxy(implementation);
-        return address(lancaCanonicalBridgeL1Proxy);
-    }
-
-    function _deployProxy(address implementation) internal {
-        vm.startPrank(proxyDeployer);
-        lancaCanonicalBridgeL1Proxy = new LCBTransparentUpgradeableProxy(
-            implementation,
-            proxyDeployer,
-            ""
+        vm.prank(deployer);
+        LancaCanonicalBridgeL1 lancaCanonicalBridgeL1 = new LancaCanonicalBridgeL1(
+            conceroRouter,
+            usdc,
+            rateLimitAdmin
         );
-        vm.stopPrank();
-    }
-
-    function _deployImplementation(
-        address _conceroRouter,
-        address _usdc,
-        address _rateLimitAdmin
-    ) internal returns (address) {
-        vm.startPrank(deployer);
-
-        lancaCanonicalBridgeL1 = new LancaCanonicalBridgeL1(_conceroRouter, _usdc, _rateLimitAdmin);
-        vm.stopPrank();
 
         return address(lancaCanonicalBridgeL1);
     }

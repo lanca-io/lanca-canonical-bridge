@@ -9,15 +9,17 @@ pragma solidity 0.8.28;
 import {LancaCanonicalBridgePool} from "contracts/LancaCanonicalBridgePool/LancaCanonicalBridgePool.sol";
 
 import {MockUSDC} from "../../mocks/MockUSDC.sol";
-import {BridgeTest} from "../../utils/BridgeTest.sol";
 import {DeployLCBridgePool} from "../../scripts/deploy/DeployLCBridgePool.s.sol";
+import {BaseTest} from "../../utils/BaseTest.sol";
 
-abstract contract LCBridgePoolTest is DeployLCBridgePool, BridgeTest {
-    function setUp() public virtual override(DeployLCBridgePool, BridgeTest) {
+abstract contract LCBridgePoolTest is BaseTest {
+    LancaCanonicalBridgePool internal lancaCanonicalBridgePool;
+
+    function setUp() public virtual override {
         super.setUp();
 
         lancaCanonicalBridgePool = LancaCanonicalBridgePool(
-            deploy(usdc, lancaBridgeL1Mock, DST_CHAIN_SELECTOR)
+            (new DeployLCBridgePool()).deploy(usdc, lancaBridgeL1Mock, DST_CHAIN_SELECTOR)
         );
     }
 

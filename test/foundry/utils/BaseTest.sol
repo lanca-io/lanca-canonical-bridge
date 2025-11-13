@@ -6,13 +6,13 @@
  */
 pragma solidity 0.8.28;
 
-import {Script} from "forge-std/src/Script.sol";
+import {Test} from "forge-std/src/Test.sol";
 
-import {DeployMockUSDC} from "./deploy/DeployMockUSDC.s.sol";
-import {DeployMockUSDCe} from "./deploy/DeployMockUSDCe.s.sol";
-import {DeployMockConceroRouter} from "./deploy/DeployMockConceroRouter.s.sol";
+import {DeployMockUSDC} from "../scripts/deploy/DeployMockUSDC.s.sol";
+import {DeployMockUSDCe} from "../scripts/deploy/DeployMockUSDCe.s.sol";
+// import {DeployMockConceroRouter} from "./deploy/DeployMockConceroRouter.s.sol";
 
-abstract contract BaseScript is Script {
+abstract contract BaseTest is Test {
     address public immutable deployer;
     address public immutable proxyDeployer;
 
@@ -45,6 +45,6 @@ abstract contract BaseScript is Script {
     function setUp() public virtual {
         usdc = address(new DeployMockUSDC().deployUSDC("USD Coin", "USDC", 6));
         usdcE = address(new DeployMockUSDCe().deployUSDCe("USD Coin", "USDCe", 6));
-        conceroRouter = address(new DeployMockConceroRouter().deployConceroRouter());
+        // conceroRouter = address(new DeployMockConceroRouter().deployConceroRouter());
     }
 }

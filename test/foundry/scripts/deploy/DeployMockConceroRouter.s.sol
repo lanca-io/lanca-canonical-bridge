@@ -11,7 +11,10 @@ import {Script} from "forge-std/src/Script.sol";
 import {ConceroRouterMock} from "../../mocks/ConceroRouterMock.sol";
 
 contract DeployMockConceroRouter is Script {
+    address public deployer = vm.envAddress("DEPLOYER_ADDRESS");
+
     function deployConceroRouter() public returns (ConceroRouterMock) {
+        vm.prank(deployer);
         ConceroRouterMock conceroRouter = new ConceroRouterMock();
 
         return conceroRouter;

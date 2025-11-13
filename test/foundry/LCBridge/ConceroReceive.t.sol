@@ -86,7 +86,7 @@ contract ConceroReceiveTest is LCBridgeTest {
         _conceroReceive(user, user, AMOUNT, 0, "");
     }
 
-    //     // --- Tests for conceroReceive with call ---
+    // --- Tests for conceroReceive with call ---
 
     function test_conceroReceive_WithCall_RevertsCallFiled() public {
         address invalidLCBridgeClient = makeAddr("InvalidLCBridgeClient");

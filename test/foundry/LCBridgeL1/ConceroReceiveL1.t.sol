@@ -7,12 +7,18 @@
  */
 pragma solidity 0.8.28;
 
+import {IConceroRouter} from "@concero/v2-contracts/contracts/interfaces/IConceroRouter.sol";
+import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
+
 import {LCBridgeL1Test} from "./base/LCBridgeL1Test.sol";
 import {MockUSDC} from "../mocks/MockUSDC.sol";
 import {LancaCanonicalBridgeBase} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
 import {LancaCanonicalBridgeL1} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol";
 
 contract ConceroReceiveL1Test is LCBridgeL1Test {
+    using MessageCodec for IConceroRouter.MessageRequest;
+    using MessageCodec for bytes;
+
     function setUp() public override {
         super.setUp();
     }
@@ -26,15 +32,7 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
         uint256 userBalanceBefore = MockUSDC(usdc).balanceOf(user);
         uint256 poolBalanceBefore = MockUSDC(usdc).balanceOf(address(lancaCanonicalBridgePool));
 
-        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, 0, "");
-
-        vm.prank(conceroRouter);
-        lancaCanonicalBridgeL1.conceroReceive(
-            DEFAULT_MESSAGE_ID,
-            DST_CHAIN_SELECTOR,
-            abi.encode(lancaBridgeMock),
-            message
-        );
+        _conceroReceive(user, user, AMOUNT, 0, "");
 
         uint256 userBalanceAfter = MockUSDC(usdc).balanceOf(user);
         uint256 poolBalanceAfter = MockUSDC(usdc).balanceOf(address(lancaCanonicalBridgePool));
@@ -44,7 +42,20 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
     }
 
     function test_conceroReceive_RevertsInvalidSenderBridge() public {
-        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, 0, "");
+        IConceroRouter.MessageRequest memory messageRequest = _buildMessageRequest(
+            user,
+            user,
+            AMOUNT,
+            0,
+            ""
+        );
+
+        address invalidBridgeL1 = address(999);
+
+        bool[] memory validationChecks = new bool[](1);
+        validationChecks[0] = true;
+        address[] memory validatorLibs = new address[](1);
+        validatorLibs[0] = validatorLib;
 
         vm.expectRevert(
             abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidBridgeSender.selector)
@@ -52,10 +63,10 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
 
         vm.prank(conceroRouter);
         lancaCanonicalBridgeL1.conceroReceive(
-            DEFAULT_MESSAGE_ID,
-            DST_CHAIN_SELECTOR,
-            abi.encode(lancaBridgeMock),
-            message
+            messageRequest.toMessageReceiptBytes(SRC_CHAIN_SELECTOR, invalidBridgeL1, NONCE),
+            validationChecks,
+            validatorLibs,
+            relayerLib
         );
     }
 
@@ -65,39 +76,20 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
 
         MockUSDC(usdc).mint(address(lancaCanonicalBridgePool), AMOUNT);
 
-        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, 0, "");
+        vm.expectEmit(false, false, false, true);
+        emit LancaCanonicalBridgeBase.BridgeDelivered(DEFAULT_MESSAGE_ID, AMOUNT);
 
-        vm.expectEmit(true, true, true, true);
-        emit LancaCanonicalBridgeBase.BridgeDelivered(
-            DEFAULT_MESSAGE_ID,
-            AMOUNT
-        );
-
-        vm.prank(conceroRouter);
-        lancaCanonicalBridgeL1.conceroReceive(
-            DEFAULT_MESSAGE_ID,
-            DST_CHAIN_SELECTOR,
-            abi.encode(lancaBridgeMock),
-            message
-        );
+        _conceroReceive(user, user, AMOUNT, 0, "");
     }
 
     function test_conceroReceive_RevertsPoolNotFound() public {
         _addDefaultDstBridge();
 
-        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, 0, "");
-
         vm.expectRevert(
             abi.encodeWithSelector(LancaCanonicalBridgeL1.PoolNotFound.selector, DST_CHAIN_SELECTOR)
         );
 
-        vm.prank(conceroRouter);
-        lancaCanonicalBridgeL1.conceroReceive(
-            DEFAULT_MESSAGE_ID,
-            DST_CHAIN_SELECTOR,
-            abi.encode(lancaBridgeMock),
-            message
-        );
+        _conceroReceive(user, user, AMOUNT, 0, "");
     }
 
     function test_conceroReceive_WithCall_RevertsIfInvalidConceroMessage() public {
@@ -106,25 +98,11 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
 
         address invalidLCBridgeClient = makeAddr("InvalidLCBridgeClient");
 
-        bytes memory message = _encodeBridgeParams(
-            user,
-            invalidLCBridgeClient,
-            AMOUNT,
-            GAS_LIMIT,
-            "0x01"
-        );
-
         vm.expectRevert(
             abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidConceroMessage.selector)
         );
 
-        vm.prank(conceroRouter);
-        lancaCanonicalBridgeL1.conceroReceive(
-            DEFAULT_MESSAGE_ID,
-            DST_CHAIN_SELECTOR,
-            abi.encode(lancaBridgeMock),
-            message
-        );
+        _conceroReceive(user, invalidLCBridgeClient, AMOUNT, GAS_LIMIT, "0x01");
     }
 
     function test_conceroReceive_WithCall() public {
@@ -135,26 +113,42 @@ contract ConceroReceiveL1Test is LCBridgeL1Test {
 
         string memory testString = "LancaCanonicalBridgeL1";
 
-        bytes memory message = _encodeBridgeParams(
-            user,
-            address(lcBridgeClient),
-            AMOUNT,
-            GAS_LIMIT,
-            abi.encode(testString)
-        );
+        _conceroReceive(user, address(lcBridgeClient), AMOUNT, GAS_LIMIT, abi.encode(testString));
 
-        vm.prank(conceroRouter);
-        lancaCanonicalBridgeL1.conceroReceive(
-            DEFAULT_MESSAGE_ID,
-            DST_CHAIN_SELECTOR,
-            abi.encode(lancaBridgeMock),
-            message
-        );
-
-        assertEq(lcBridgeClient.messageId(), DEFAULT_MESSAGE_ID);
         assertEq(lcBridgeClient.srcChainSelector(), DST_CHAIN_SELECTOR);
         assertEq(lcBridgeClient.tokenSender(), user);
         assertEq(lcBridgeClient.tokenAmount(), AMOUNT);
         assertEq(lcBridgeClient.testString(), testString);
+    }
+
+    // --- Helper functions ---
+
+    function _conceroReceive(
+        address tokenSender,
+        address tokenReceiver,
+        uint256 tokenAmount,
+        uint256 dstGasLimit,
+        bytes memory dstCallData
+    ) internal {
+        IConceroRouter.MessageRequest memory messageRequest = _buildMessageRequest(
+            tokenSender,
+            tokenReceiver,
+            tokenAmount,
+            dstGasLimit,
+            dstCallData
+        );
+
+        bool[] memory validationChecks = new bool[](1);
+        validationChecks[0] = true;
+        address[] memory validatorLibs = new address[](1);
+        validatorLibs[0] = validatorLib;
+
+        vm.prank(conceroRouter);
+        lancaCanonicalBridgeL1.conceroReceive(
+            messageRequest.toMessageReceiptBytes(DST_CHAIN_SELECTOR, lancaBridgeMock, NONCE),
+            validationChecks,
+            validatorLibs,
+            relayerLib
+        );
     }
 }

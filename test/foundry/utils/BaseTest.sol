@@ -10,11 +10,14 @@ import {Test} from "forge-std/src/Test.sol";
 
 import {DeployMockUSDC} from "../scripts/deploy/DeployMockUSDC.s.sol";
 import {DeployMockUSDCe} from "../scripts/deploy/DeployMockUSDCe.s.sol";
-// import {DeployMockConceroRouter} from "./deploy/DeployMockConceroRouter.s.sol";
+import {DeployMockConceroRouter} from "../scripts/deploy/DeployMockConceroRouter.s.sol";
 
 abstract contract BaseTest is Test {
     address public immutable deployer;
     address public immutable proxyDeployer;
+
+	address public relayerLib = makeAddr("relayerLib");
+	address public validatorLib = makeAddr("validatorLib");
 
     address public constant user = address(0x0101010101010101010101010101010101010101);
     address public usdc;
@@ -30,6 +33,7 @@ abstract contract BaseTest is Test {
 
     uint24 public constant SRC_CHAIN_SELECTOR = 1;
     uint24 public constant DST_CHAIN_SELECTOR = 8453;
+	uint256 public constant NONCE = 1;
 
     uint256 public constant AMOUNT = 1e6;
     uint256 public constant GAS_LIMIT = 150_000;
@@ -45,6 +49,6 @@ abstract contract BaseTest is Test {
     function setUp() public virtual {
         usdc = address(new DeployMockUSDC().deployUSDC("USD Coin", "USDC", 6));
         usdcE = address(new DeployMockUSDCe().deployUSDCe("USD Coin", "USDCe", 6));
-        // conceroRouter = address(new DeployMockConceroRouter().deployConceroRouter());
+        conceroRouter = address(new DeployMockConceroRouter().deployConceroRouter());
     }
 }

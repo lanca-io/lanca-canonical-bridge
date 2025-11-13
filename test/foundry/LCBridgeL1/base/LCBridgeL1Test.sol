@@ -10,25 +10,32 @@ import {LancaCanonicalBridgeL1} from "contracts/LancaCanonicalBridge/LancaCanoni
 import {LancaCanonicalBridgePool} from "contracts/LancaCanonicalBridgePool/LancaCanonicalBridgePool.sol";
 import {LancaCanonicalBridgeClientExample} from "contracts/LancaCanonicalBridgeClient/LancaCanonicalBridgeClientExample.sol";
 
-import {BridgeTest} from "../../utils/BridgeTest.sol";
 import {MockUSDC} from "../../mocks/MockUSDC.sol";
 import {DeployLCBridgeL1} from "../../scripts/deploy/DeployLCBridgeL1.s.sol";
+import {BaseTest} from "../../utils/BaseTest.sol";
 
-abstract contract LCBridgeL1Test is DeployLCBridgeL1, BridgeTest {
+abstract contract LCBridgeL1Test is BaseTest {
+    LancaCanonicalBridgeL1 internal lancaCanonicalBridgeL1;
     LancaCanonicalBridgePool internal lancaCanonicalBridgePool;
     LancaCanonicalBridgeClientExample internal lcBridgeClient;
 
-    function setUp() public virtual override(DeployLCBridgeL1, BridgeTest) {
+    function setUp() public virtual override {
         super.setUp();
 
-        lancaCanonicalBridgeL1 = LancaCanonicalBridgeL1(deploy());
+        lancaCanonicalBridgeL1 = LancaCanonicalBridgeL1(
+            (new DeployLCBridgeL1()).deploy(conceroRouter, usdc, deployer)
+        );
+
         lancaCanonicalBridgePool = new LancaCanonicalBridgePool(
             usdc,
             address(lancaCanonicalBridgeL1),
             DST_CHAIN_SELECTOR
         );
 
-        lcBridgeClient = new LancaCanonicalBridgeClientExample(address(lancaCanonicalBridgeL1), usdc);
+        lcBridgeClient = new LancaCanonicalBridgeClientExample(
+            address(lancaCanonicalBridgeL1),
+            usdc
+        );
 
         deal(address(usdc), user, AMOUNT);
         vm.deal(user, 1e18);
@@ -76,11 +83,6 @@ abstract contract LCBridgeL1Test is DeployLCBridgeL1, BridgeTest {
     }
 
     function _getMessageFee() internal view returns (uint256) {
-        return
-            lancaCanonicalBridgeL1.getBridgeNativeFee(
-                DST_CHAIN_SELECTOR,
-                address(lancaBridgeMock),
-                ZERO_AMOUNT
-            );
+        return lancaCanonicalBridgeL1.getBridgeNativeFee(DST_CHAIN_SELECTOR, GAS_LIMIT);
     }
 }

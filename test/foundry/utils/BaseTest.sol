@@ -16,15 +16,15 @@ abstract contract BaseTest is Test {
     address public immutable deployer;
     address public immutable proxyDeployer;
 
-	address public relayerLib = makeAddr("relayerLib");
-	address public validatorLib = makeAddr("validatorLib");
+    address public relayerLib = makeAddr("relayerLib");
+    address public validatorLib = makeAddr("validatorLib");
+    address public user = makeAddr("user");
+    address public lancaBridgeL1Mock = makeAddr("lancaBridgeL1Mock");
+    address public lancaBridgeMock = makeAddr("lancaBridgeMock");
 
-    address public constant user = address(0x0101010101010101010101010101010101010101);
     address public usdc;
     address public usdcE;
     address public conceroRouter;
-    address public lancaBridgeL1Mock = address(0x0202020202020202020202020202020202020202);
-    address public lancaBridgeMock = address(0x0303030303030303030303030303030303030303);
 
     bytes32 public constant DEFAULT_MESSAGE_ID = bytes32(uint256(1));
 
@@ -33,7 +33,7 @@ abstract contract BaseTest is Test {
 
     uint24 public constant SRC_CHAIN_SELECTOR = 1;
     uint24 public constant DST_CHAIN_SELECTOR = 8453;
-	uint256 public constant NONCE = 1;
+    uint256 public constant NONCE = 1;
 
     uint256 public constant AMOUNT = 1e6;
     uint256 public constant GAS_LIMIT = 150_000;

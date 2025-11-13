@@ -25,6 +25,13 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
     using MessageCodec for IConceroRouter.MessageRequest;
     using MessageCodec for bytes;
 
+    struct ValidatorLibs {
+        address[] validatorLibs;
+        bytes[] validatorConfigs;
+        bool[] isAllowed;
+        uint256 requiredValidatorsCount;
+    }
+
     error InvalidDstBridge();
     error PoolNotFound(uint24 dstChainSelector);
     error PoolAlreadyExists(uint24 dstChainSelector);
@@ -177,29 +184,37 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
     function setRelayerLib(
         uint24 dstChainSelector,
         address relayerLib,
-        bytes calldata relayerConfig
+        bytes calldata relayerConfig,
+        bool isAllowed
     ) external onlyOwner {
         s.L1Bridge storage l1BridgeStorage = s.l1Bridge();
 
         l1BridgeStorage.relayerLibs[dstChainSelector] = relayerLib;
         l1BridgeStorage.relayerConfigs[dstChainSelector] = relayerConfig;
+
+        _setIsRelayerAllowed(relayerLib, isAllowed);
     }
 
     function setValidatorLibs(
         uint24[] calldata dstChainSelectors,
-        address[][] memory validatorLibs,
-        bytes[][] memory validatorConfigs
+        ValidatorLibs[] memory validatorLibs
     ) external onlyOwner {
+        require(dstChainSelectors.length == validatorLibs.length, CommonErrors.LengthMismatch());
+
         s.L1Bridge storage l1BridgeStorage = s.l1Bridge();
 
         for (uint256 i = 0; i < dstChainSelectors.length; i++) {
-            l1BridgeStorage.validatorLibs[dstChainSelectors[i]] = validatorLibs[i];
-            l1BridgeStorage.validatorConfigs[dstChainSelectors[i]] = validatorConfigs[i];
+            l1BridgeStorage.validatorLibs[dstChainSelectors[i]] = validatorLibs[i].validatorLibs;
+            l1BridgeStorage.validatorConfigs[dstChainSelectors[i]] = validatorLibs[i]
+                .validatorConfigs;
 
-            _setRequiredValidatorsCount(validatorLibs[i].length);
+            _setRequiredValidatorsCount(validatorLibs[i].requiredValidatorsCount);
 
-            for (uint256 j = 0; j < validatorLibs[i].length; j++) {
-                _setIsValidatorAllowed(validatorLibs[i][j], true);
+            for (uint256 j = 0; j < validatorLibs[i].validatorLibs.length; j++) {
+                _setIsValidatorAllowed(
+                    validatorLibs[i].validatorLibs[j],
+                    validatorLibs[i].isAllowed[j]
+                );
             }
         }
     }

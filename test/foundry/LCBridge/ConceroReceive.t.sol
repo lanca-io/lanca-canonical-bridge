@@ -25,29 +25,10 @@ contract ConceroReceiveTest is LCBridgeTest {
     // --- Tests for conceroReceive with no call ---
 
     function test_conceroReceive_Success() public {
-        IConceroRouter.MessageRequest memory messageRequest = _buildMessageRequest(
-            user,
-            user,
-            AMOUNT,
-            0,
-            ""
-        );
-
-        bool[] memory validationChecks = new bool[](1);
-        validationChecks[0] = true;
-        address[] memory validatorLibs = new address[](1);
-        validatorLibs[0] = validatorLib;
-
         uint256 userBalanceBefore = MockUSDCe(usdcE).balanceOf(user);
         uint256 totalSupplyBefore = MockUSDCe(usdcE).totalSupply();
 
-        vm.prank(conceroRouter);
-        lancaCanonicalBridge.conceroReceive(
-            messageRequest.toMessageReceiptBytes(SRC_CHAIN_SELECTOR, lancaBridgeL1Mock, NONCE),
-            validationChecks,
-            validatorLibs,
-            relayerLib
-        );
+        _conceroReceive(user, user, AMOUNT, 0, "");
 
         uint256 userBalanceAfter = MockUSDCe(usdcE).balanceOf(user);
         uint256 totalSupplyAfter = MockUSDCe(usdcE).totalSupply();
@@ -99,29 +80,10 @@ contract ConceroReceiveTest is LCBridgeTest {
     }
 
     function test_conceroReceive_EmitsBridgeDelivered() public {
-        IConceroRouter.MessageRequest memory messageRequest = _buildMessageRequest(
-            user,
-            user,
-            AMOUNT,
-            0,
-            ""
-        );
-
-        bool[] memory validationChecks = new bool[](1);
-        validationChecks[0] = true;
-        address[] memory validatorLibs = new address[](1);
-        validatorLibs[0] = validatorLib;
-
         vm.expectEmit(false, false, false, true);
         emit LancaCanonicalBridgeBase.BridgeDelivered(DEFAULT_MESSAGE_ID, AMOUNT);
 
-        vm.prank(conceroRouter);
-        lancaCanonicalBridge.conceroReceive(
-            messageRequest.toMessageReceiptBytes(SRC_CHAIN_SELECTOR, lancaBridgeL1Mock, NONCE),
-            validationChecks,
-            validatorLibs,
-            relayerLib
-        );
+        _conceroReceive(user, user, AMOUNT, 0, "");
     }
 
     //     // --- Tests for conceroReceive with call ---
@@ -129,41 +91,39 @@ contract ConceroReceiveTest is LCBridgeTest {
     function test_conceroReceive_WithCall_RevertsCallFiled() public {
         address invalidLCBridgeClient = makeAddr("InvalidLCBridgeClient");
 
-        IConceroRouter.MessageRequest memory messageRequest = _buildMessageRequest(
-            user,
-            invalidLCBridgeClient,
-            AMOUNT,
-            GAS_LIMIT,
-            "0x01"
-        );
-
-        bool[] memory validationChecks = new bool[](1);
-        validationChecks[0] = true;
-        address[] memory validatorLibs = new address[](1);
-        validatorLibs[0] = validatorLib;
-
         vm.expectRevert(
             abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidConceroMessage.selector)
         );
 
-        vm.prank(conceroRouter);
-        lancaCanonicalBridge.conceroReceive(
-            messageRequest.toMessageReceiptBytes(SRC_CHAIN_SELECTOR, lancaBridgeL1Mock, NONCE),
-            validationChecks,
-            validatorLibs,
-            relayerLib
-        );
+        _conceroReceive(user, invalidLCBridgeClient, AMOUNT, GAS_LIMIT, "0x01");
     }
 
     function test_conceroReceive_WithCall() public {
         string memory testString = "LancaCanonicalBridge";
 
+        _conceroReceive(user, address(lcBridgeClient), AMOUNT, GAS_LIMIT, abi.encode(testString));
+
+        assertEq(lcBridgeClient.srcChainSelector(), SRC_CHAIN_SELECTOR);
+        assertEq(lcBridgeClient.tokenSender(), user);
+        assertEq(lcBridgeClient.tokenAmount(), AMOUNT);
+        assertEq(lcBridgeClient.testString(), testString);
+    }
+
+    // --- Helper functions ---
+
+    function _conceroReceive(
+        address tokenSender,
+        address tokenReceiver,
+        uint256 tokenAmount,
+        uint256 dstGasLimit,
+        bytes memory dstCallData
+    ) internal {
         IConceroRouter.MessageRequest memory messageRequest = _buildMessageRequest(
-            user,
-            address(lcBridgeClient),
-            AMOUNT,
-            GAS_LIMIT,
-            abi.encode(testString)
+            tokenSender,
+            tokenReceiver,
+            tokenAmount,
+            dstGasLimit,
+            dstCallData
         );
 
         bool[] memory validationChecks = new bool[](1);
@@ -178,10 +138,5 @@ contract ConceroReceiveTest is LCBridgeTest {
             validatorLibs,
             relayerLib
         );
-
-        assertEq(lcBridgeClient.srcChainSelector(), SRC_CHAIN_SELECTOR);
-        assertEq(lcBridgeClient.tokenSender(), user);
-        assertEq(lcBridgeClient.tokenAmount(), AMOUNT);
-        assertEq(lcBridgeClient.testString(), testString);
     }
 }

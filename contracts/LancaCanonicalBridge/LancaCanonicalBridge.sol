@@ -112,26 +112,40 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         emit BridgeDelivered(messageId, tokenAmount);
     }
 
-    function setRelayerLib(address relayerLib, bytes calldata relayerConfig) external onlyOwner {
+    function setRelayerLib(
+        address relayerLib,
+        bytes calldata relayerConfig,
+        bool isAllowed
+    ) external onlyOwner {
         s.Bridge storage bridge = s.bridge();
 
         bridge.relayerLib = relayerLib;
         bridge.relayerConfig = relayerConfig;
+
+        _setIsRelayerAllowed(relayerLib, isAllowed);
     }
 
     function setValidatorLibs(
         address[] memory validatorLibs,
-        bytes[] memory validatorConfigs
+        bytes[] memory validatorConfigs,
+        bool[] memory isAllowed,
+        uint256 requiredValidatorsCount
     ) external onlyOwner {
+        require(
+            validatorLibs.length == isAllowed.length &&
+                validatorLibs.length == validatorConfigs.length,
+            CommonErrors.LengthMismatch()
+        );
+
         s.Bridge storage bridge = s.bridge();
 
         bridge.validatorLibs = validatorLibs;
         bridge.validatorConfigs = validatorConfigs;
 
-        _setRequiredValidatorsCount(validatorLibs.length);
+        _setRequiredValidatorsCount(requiredValidatorsCount);
 
         for (uint256 i = 0; i < validatorLibs.length; i++) {
-            _setIsValidatorAllowed(validatorLibs[i], true);
+            _setIsValidatorAllowed(validatorLibs[i], isAllowed[i]);
         }
     }
 

@@ -6,6 +6,9 @@
  */
 pragma solidity 0.8.28;
 
+import {IConceroRouter} from "@concero/v2-contracts/contracts/interfaces/IConceroRouter.sol";
+import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
+
 import {LancaCanonicalBridge} from "contracts/LancaCanonicalBridge/LancaCanonicalBridge.sol";
 import {LancaCanonicalBridgeClientExample} from "contracts/LancaCanonicalBridgeClient/LancaCanonicalBridgeClientExample.sol";
 
@@ -29,6 +32,19 @@ abstract contract LCBridgeTest is BaseTest {
                 deployer
             )
         );
+
+        address[] memory validatorLibs = new address[](1);
+        validatorLibs[0] = validatorLib;
+        bytes[] memory validatorConfigs = new bytes[](1);
+        validatorConfigs[0] = new bytes(1);
+        bool[] memory isAllowed = new bool[](1);
+        isAllowed[0] = true;
+
+        vm.startPrank(deployer);
+        lancaCanonicalBridge.setValidatorLibs(validatorLibs, validatorConfigs, isAllowed, 1);
+        lancaCanonicalBridge.setRelayerLib(relayerLib, new bytes(1), true);
+        vm.stopPrank();
+
         lcBridgeClient = new LancaCanonicalBridgeClientExample(
             address(lancaCanonicalBridge),
             usdcE
@@ -40,14 +56,14 @@ abstract contract LCBridgeTest is BaseTest {
         vm.deal(user, 1e18);
 
         vm.startPrank(deployer);
-        LancaCanonicalBridge(address(lancaCanonicalBridge)).setRateLimit(
+        lancaCanonicalBridge.setRateLimit(
             SRC_CHAIN_SELECTOR,
             MAX_RATE_AMOUNT,
             REFILL_SPEED,
             true
         );
 
-        LancaCanonicalBridge(address(lancaCanonicalBridge)).setRateLimit(
+        lancaCanonicalBridge.setRateLimit(
             SRC_CHAIN_SELECTOR,
             MAX_RATE_AMOUNT,
             REFILL_SPEED,
@@ -75,15 +91,46 @@ abstract contract LCBridgeTest is BaseTest {
         return abi.encode(tokenSender, tokenReceiver, tokenAmount, dstGasLimit, dstCallData);
     }
 
-    function _getMessageId(
-        uint24 dstChainSelector,
-        bool shouldFinaliseSrc,
-        address feeToken,
-        bytes memory message
-    ) internal view returns (bytes32) {
+    function _buildMessageRequest(
+        address tokenSender,
+        address tokenReceiver,
+        uint256 tokenAmount,
+        uint256 dstGasLimit,
+        bytes memory dstCallData
+    ) internal view returns (IConceroRouter.MessageRequest memory) {
+        bytes memory payload = _encodeBridgeParams(
+            tokenSender,
+            tokenReceiver,
+            tokenAmount,
+            dstGasLimit,
+            dstCallData
+        );
+        return _buildMessageRequest(payload, 300_000, type(uint64).max, address(0));
+    }
+
+    function _buildMessageRequest(
+        bytes memory payload,
+        uint32 dstChainGasLimit,
+        uint64 srcBlockConfirmations,
+        address feeToken
+    ) internal view returns (IConceroRouter.MessageRequest memory) {
+        address[] memory validatorLibs = new address[](1);
+        validatorLibs[0] = validatorLib;
+
         return
-            keccak256(
-                abi.encode(block.number, dstChainSelector, shouldFinaliseSrc, feeToken, message)
-            );
+            IConceroRouter.MessageRequest({
+                dstChainSelector: DST_CHAIN_SELECTOR,
+                srcBlockConfirmations: srcBlockConfirmations,
+                feeToken: feeToken,
+                dstChainData: MessageCodec.encodeEvmDstChainData(
+                    address(lancaCanonicalBridge),
+                    dstChainGasLimit
+                ),
+                validatorLibs: validatorLibs,
+                relayerLib: relayerLib,
+                validatorConfigs: new bytes[](1),
+                relayerConfig: new bytes(1),
+                payload: payload
+            });
     }
 }

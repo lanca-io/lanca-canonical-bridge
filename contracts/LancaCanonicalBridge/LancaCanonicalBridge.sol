@@ -11,16 +11,19 @@ import {SafeERC20} from "@openzeppelin/contracts-v5/token/ERC20/utils/SafeERC20.
 
 import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
 import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
-import {Storage as s} from "./libraries/Storage.sol";
 
 import {
     LancaCanonicalBridgeBase,
     ILancaCanonicalBridgeClient
 } from "./LancaCanonicalBridgeBase.sol";
 
+import {BridgeCodec} from "../common/libraries/BridgeCodec.sol";
+
 contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
-    using s for s.Bridge;
     using MessageCodec for bytes;
+    using BridgeCodec for address;
+    using BridgeCodec for bytes32;
+    using BridgeCodec for bytes;
 
     uint24 internal immutable i_l1ChainSelector;
     address internal immutable i_lancaCanonicalBridgeL1;
@@ -39,14 +42,11 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
     /* ------- Main Functions ------- */
 
     function sendToken(
-        address tokenReceiver,
         uint256 tokenAmount,
-        uint256 dstGasLimit,
-        bytes calldata dstCallData
+        bytes calldata dstChainData,
+        bytes calldata payload
     ) external payable nonReentrant returns (bytes32 messageId) {
         require(tokenAmount > 0, CommonErrors.InvalidAmount());
-
-        s.Bridge storage bridge = s.bridge();
 
         _consumeRate(i_l1ChainSelector, tokenAmount, true);
 
@@ -54,19 +54,14 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         i_usdc.burn(tokenAmount);
 
         messageId = _sendMessage(
-            tokenReceiver,
             tokenAmount,
             i_l1ChainSelector,
-            dstGasLimit,
-            dstCallData,
-            i_lancaCanonicalBridgeL1,
-            bridge.relayerLib,
-            bridge.relayerConfig,
-            bridge.validatorLibs,
-            bridge.validatorConfigs
+            payload,
+            dstChainData,
+            i_lancaCanonicalBridgeL1.toBytes32()
         );
 
-        emit TokenSent(messageId, msg.sender, tokenReceiver, i_l1ChainSelector, tokenAmount);
+        emit TokenSent(messageId, i_l1ChainSelector, dstChainData, msg.sender, tokenAmount);
     }
 
     function _conceroReceive(bytes calldata messageReceipt) internal override nonReentrant {
@@ -78,26 +73,23 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
             InvalidBridgeSender()
         );
 
-        bytes memory message = messageReceipt.payload();
+        bytes calldata messageData = messageReceipt.calldataPayload();
+        bytes32 messageId = keccak256(messageReceipt);
 
         (
-            address tokenSender,
-            address tokenReceiver,
+            bytes32 tokenSender,
             uint256 tokenAmount,
-            uint256 dstGasLimit,
-            bytes memory dstCallData
-        ) = abi.decode(message, (address, address, uint256, uint256, bytes));
+            bytes calldata dstChainData,
+            bytes memory payload
+        ) = messageData.decodeBridgeData();
 
-        bool shouldCallHook = !(dstGasLimit == 0 && dstCallData.length == 0);
-
-        if (shouldCallHook && !_isValidContractReceiver(tokenReceiver)) {
-            revert InvalidConceroMessage();
-        }
+        (address tokenReceiver, uint32 dstGasLimit) = dstChainData.decodeEvmDstChainData();
 
         _consumeRate(srcChainSelector, tokenAmount, false);
-        i_usdc.mint(tokenReceiver, tokenAmount);
 
-        bytes32 messageId = keccak256(messageReceipt);
+        bool shouldCallHook = _validateBridgeParams(dstGasLimit, tokenReceiver, payload);
+
+        i_usdc.mint(tokenReceiver, tokenAmount);
 
         if (shouldCallHook) {
             ILancaCanonicalBridgeClient(tokenReceiver).lancaCanonicalBridgeReceive(
@@ -105,64 +97,27 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
                 srcChainSelector,
                 tokenSender,
                 tokenAmount,
-                dstCallData
+                payload
             );
         }
 
         emit BridgeDelivered(messageId, tokenAmount);
     }
 
-    function setRelayerLib(
-        address relayerLib,
-        bytes calldata relayerConfig,
-        bool isAllowed
-    ) external onlyOwner {
-        s.Bridge storage bridge = s.bridge();
-
-        bridge.relayerLib = relayerLib;
-        bridge.relayerConfig = relayerConfig;
-
-        _setIsRelayerAllowed(relayerLib, isAllowed);
-    }
-
-    function setValidatorLibs(
-        address[] memory validatorLibs,
-        bytes[] memory validatorConfigs,
-        bool[] memory isAllowed,
-        uint256 requiredValidatorsCount
-    ) external onlyOwner {
-        require(
-            validatorLibs.length == isAllowed.length &&
-                validatorLibs.length == validatorConfigs.length,
-            CommonErrors.LengthMismatch()
-        );
-
-        s.Bridge storage bridge = s.bridge();
-
-        bridge.validatorLibs = validatorLibs;
-        bridge.validatorConfigs = validatorConfigs;
-
-        _setRequiredValidatorsCount(requiredValidatorsCount);
-
-        for (uint256 i = 0; i < validatorLibs.length; i++) {
-            _setIsValidatorAllowed(validatorLibs[i], isAllowed[i]);
-        }
-    }
-
     /* ------- View Functions ------- */
 
-    function getBridgeNativeFee(uint256 dstGasLimit) external view returns (uint256) {
-        s.Bridge storage bridge = s.bridge();
-
+    function getBridgeNativeFee(
+        uint256 /* tokenAmount */,
+        uint24 dstChainSelector,
+        bytes calldata dstChainData,
+        bytes calldata payload
+    ) external view returns (uint256) {
         return
             _getBridgeNativeFee(
-                i_l1ChainSelector,
-                i_lancaCanonicalBridgeL1,
-                dstGasLimit,
-                bridge.relayerLib,
-                bridge.relayerConfig,
-                bridge.validatorLibs,
-                bridge.validatorConfigs
+                dstChainSelector,
+                dstChainData,
+                payload,
+                i_lancaCanonicalBridgeL1.toBytes32()
             );
     }
 }

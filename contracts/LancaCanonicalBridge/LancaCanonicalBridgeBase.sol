@@ -11,23 +11,28 @@ import {IERC165} from "@openzeppelin/contracts-v5/utils/introspection/IERC165.so
 import {ConceroClient} from "@concero/v2-contracts/contracts/ConceroClient/ConceroClient.sol";
 import {ConceroOwnable} from "@concero/v2-contracts/contracts/common/ConceroOwnable.sol";
 import {IConceroRouter} from "@concero/v2-contracts/contracts/interfaces/IConceroRouter.sol";
-
 import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
 
 import {RateLimiter} from "./RateLimiter.sol";
 import {IFiatTokenV1} from "../interfaces/IFiatTokenV1.sol";
 import {ILancaCanonicalBridgeClient} from "../LancaCanonicalBridgeClient/LancaCanonicalBridgeClient.sol";
 
+import {BridgeCodec} from "../common/libraries/BridgeCodec.sol";
+import {Storage as s} from "./libraries/Storage.sol";
+
 abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, ConceroOwnable {
-    uint256 internal constant BRIDGE_GAS_OVERHEAD = 150_000;
+    using s for s.Base;
+    using BridgeCodec for bytes32;
+
+    uint32 internal constant BRIDGE_GAS_OVERHEAD = 150_000;
 
     IFiatTokenV1 internal immutable i_usdc;
 
     event TokenSent(
         bytes32 indexed messageId,
-        address tokenSender,
-        address tokenReceiver,
         uint24 dstChainSelector,
+        bytes dstChainData,
+        address tokenSender,
         uint256 tokenAmount
     );
     event BridgeDelivered(bytes32 indexed messageId, uint256 tokenAmountWithFee);
@@ -35,6 +40,10 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, Concer
     error InvalidBridgeSender();
     error InvalidDstGasLimitOrCallData();
     error InvalidConceroMessage();
+    error RelayerLibAlreadySet(address relayerLib);
+    error RelayerIsNotSet();
+    error ValidatorAlreadySet(address validatorLib);
+    error ValidatorIsNotSet();
 
     constructor(
         address usdcAddress,
@@ -45,47 +54,69 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, Concer
     }
 
     function _sendMessage(
-        address tokenReceiver,
         uint256 tokenAmount,
         uint24 dstChainSelector,
-        uint256 dstGasLimit,
-        bytes calldata dstCallData,
-        address dstBridge,
-        address relayerLib,
-        bytes memory relayerConfig,
-        address[] memory validatorLibs,
-        bytes[] memory validatorConfigs
+        bytes calldata payload,
+        bytes calldata userDstChainData,
+        bytes32 dstBridge
     ) internal returns (bytes32 messageId) {
-        require(
-            (dstGasLimit == 0 && dstCallData.length == 0) ||
-                (dstGasLimit > 0 && dstCallData.length > 0),
-            InvalidDstGasLimitOrCallData()
-        );
+        s.Base storage s_base = s.base();
 
-        bytes memory messageData = abi.encode(
-            msg.sender,
-            tokenReceiver,
-            tokenAmount,
-            dstGasLimit,
-            dstCallData
-        );
+        address[] memory validatorLibs = new address[](1);
+        validatorLibs[0] = s_base.validatorLib;
 
         IConceroRouter.MessageRequest memory messageRequest = IConceroRouter.MessageRequest({
             dstChainSelector: dstChainSelector,
             srcBlockConfirmations: type(uint64).max,
             feeToken: address(0),
-            dstChainData: MessageCodec.encodeEvmDstChainData(
-                dstBridge,
-                uint32(BRIDGE_GAS_OVERHEAD + dstGasLimit)
-            ),
+            dstChainData: _buildDstChainData(userDstChainData, dstBridge, payload.length),
             validatorLibs: validatorLibs,
-            relayerLib: relayerLib,
-            validatorConfigs: validatorConfigs,
-            relayerConfig: relayerConfig,
-            payload: messageData
+            relayerLib: s_base.relayerLib,
+            validatorConfigs: new bytes[](1),
+            relayerConfig: new bytes(0),
+            payload: BridgeCodec.encodeBridgeData(
+                msg.sender,
+                tokenAmount,
+                userDstChainData,
+                payload
+            )
         });
 
-        messageId = IConceroRouter(i_conceroRouter).conceroSend{value: msg.value}(messageRequest);
+        return IConceroRouter(i_conceroRouter).conceroSend{value: msg.value}(messageRequest);
+    }
+
+    function _buildDstChainData(
+        bytes calldata userDstChainData,
+        bytes32 dstBridge,
+        uint256 payloadLength
+    ) internal pure returns (bytes memory) {
+        (, uint32 userDstChainGasLimit) = MessageCodec.decodeEvmDstChainData(userDstChainData);
+
+        require(
+            (userDstChainGasLimit == 0 && payloadLength == 0) ||
+                (userDstChainGasLimit > 0 && payloadLength > 0),
+            InvalidDstGasLimitOrCallData()
+        );
+
+        return
+            MessageCodec.encodeEvmDstChainData(
+                dstBridge.toAddress(),
+                BRIDGE_GAS_OVERHEAD + userDstChainGasLimit
+            );
+    }
+
+    function _validateBridgeParams(
+        uint32 dstGasLimit,
+        address receiver,
+        bytes memory payload
+    ) internal view returns (bool) {
+        bool shouldCallHook = !(dstGasLimit == 0 && payload.length == 0);
+
+        if (shouldCallHook && !_isValidContractReceiver(receiver)) {
+            revert InvalidConceroMessage();
+        }
+
+        return shouldCallHook;
     }
 
     function _isValidContractReceiver(address tokenReceiver) internal view returns (bool) {
@@ -101,28 +132,81 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, Concer
 
     function _getBridgeNativeFee(
         uint24 dstChainSelector,
-        address dstPool,
-        uint256 dstGasLimit,
-        address relayerLib,
-        bytes memory relayerConfig,
-        address[] memory validatorLibs,
-        bytes[] memory validatorConfigs
+        bytes calldata userDstChainData,
+        bytes calldata payload,
+        bytes32 dstBridge
     ) internal view returns (uint256) {
+        s.Base storage s_base = s.base();
+
+        address[] memory validatorLibs = new address[](1);
+        validatorLibs[0] = s_base.validatorLib;
+
         IConceroRouter.MessageRequest memory messageRequest = IConceroRouter.MessageRequest({
             dstChainSelector: dstChainSelector,
             srcBlockConfirmations: type(uint64).max,
             feeToken: address(0),
-            dstChainData: MessageCodec.encodeEvmDstChainData(
-                dstPool,
-                uint32(BRIDGE_GAS_OVERHEAD + dstGasLimit)
-            ),
+            dstChainData: _buildDstChainData(userDstChainData, dstBridge, payload.length),
             validatorLibs: validatorLibs,
-            relayerLib: relayerLib,
-            validatorConfigs: validatorConfigs,
-            relayerConfig: relayerConfig,
-            payload: new bytes(0)
+            relayerLib: s_base.relayerLib,
+            validatorConfigs: new bytes[](1),
+            relayerConfig: new bytes(0),
+            payload: BridgeCodec.encodeBridgeData(msg.sender, 1, userDstChainData, payload)
         });
 
         return IConceroRouter(i_conceroRouter).getMessageFee(messageRequest);
+    }
+
+    /* ------- Admin Functions ------- */
+
+    function setIsRelayerLibAllowed(address relayerLib, bool isAllowed) external onlyOwner {
+        s.base().relayerLib = relayerLib;
+
+        _setIsRelayerAllowed(relayerLib, isAllowed);
+    }
+
+    function setRelayerLib(address relayerLib) external onlyOwner {
+        s.Base storage s_base = s.base();
+
+        address currentRelayer = s_base.relayerLib;
+
+        require(currentRelayer != relayerLib, RelayerLibAlreadySet(currentRelayer));
+
+        s_base.relayerLib = relayerLib;
+
+        _setIsRelayerAllowed(relayerLib, true);
+    }
+
+    function removeRelayerLib() external onlyOwner {
+        s.Base storage s_base = s.base();
+
+        address currentRelayer = s_base.relayerLib;
+        require(currentRelayer != address(0), RelayerIsNotSet());
+
+        _setIsRelayerAllowed(currentRelayer, false);
+
+        s_base.relayerLib = address(0);
+    }
+
+    function setValidatorLib(address validatorLib) external onlyOwner {
+        s.Base storage s_base = s.base();
+
+        require(s_base.validatorLib != validatorLib, ValidatorAlreadySet(s_base.validatorLib));
+
+        s_base.validatorLib = validatorLib;
+
+        _setRequiredValidatorsCount(1);
+        _setIsValidatorAllowed(validatorLib, true);
+    }
+
+    function removeValidatorLib() external onlyOwner {
+        s.Base storage s_base = s.base();
+
+        address currentValidator = s_base.validatorLib;
+        require(currentValidator != address(0), ValidatorIsNotSet());
+
+        _setRequiredValidatorsCount(0);
+        _setIsValidatorAllowed(currentValidator, false);
+
+        s_base.validatorLib = address(0);
     }
 }

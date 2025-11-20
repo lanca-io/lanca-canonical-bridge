@@ -30,9 +30,9 @@ abstract contract LancaCanonicalBridgeClient is ILancaCanonicalBridgeClient, ERC
     }
 
     function lancaCanonicalBridgeReceive(
-		bytes32 messageId,
-		uint24 srcChainSelector,
-        address from,
+        bytes32 messageId,
+        uint24 srcChainSelector,
+        bytes32 from,
         uint256 value,
         bytes memory data
     ) external {
@@ -41,9 +41,9 @@ abstract contract LancaCanonicalBridgeClient is ILancaCanonicalBridgeClient, ERC
     }
 
     function _lancaCanonicalBridgeReceive(
-		bytes32 messageId,
-		uint24 srcChainSelector,
-        address from,
+        bytes32 messageId,
+        uint24 srcChainSelector,
+        bytes32 from,
         uint256 value,
         bytes memory data
     ) internal virtual;

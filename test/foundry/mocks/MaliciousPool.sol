@@ -6,6 +6,8 @@
  */
 pragma solidity 0.8.28;
 
+import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
+
 import {LancaCanonicalBridgeL1} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol";
 import {ILancaCanonicalBridgePool} from "contracts/interfaces/ILancaCanonicalBridgePool.sol";
 
@@ -21,13 +23,9 @@ contract MaliciousPool is ILancaCanonicalBridgePool {
         if (shouldAttack) {
             shouldAttack = false;
 
-            LancaCanonicalBridgeL1(target).sendToken(
-                address(0),
-                amount,
-                8453, // DST_CHAIN_SELECTOR
-                0,
-                ""
-            );
+            bytes memory dstChainData = MessageCodec.encodeEvmDstChainData(address(this), 0);
+
+            LancaCanonicalBridgeL1(target).sendToken(amount, 8453, dstChainData, "");
         }
     }
 

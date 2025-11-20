@@ -21,17 +21,18 @@ abstract contract BaseTest is Test {
     using BridgeCodec for bytes32;
     using BridgeCodec for bytes;
 
-    bytes public constant ZERO_BYTES = "";
-    uint256 public constant ZERO_AMOUNT = 0;
+    uint8 internal constant USDC_TOKEN_DECIMALS = 6;
     uint24 public constant SRC_CHAIN_SELECTOR = 1;
     uint24 public constant DST_CHAIN_SELECTOR = 8453;
-    uint256 public constant NONCE = 1;
-    uint256 public constant AMOUNT = 1e6;
-    uint256 public constant GAS_LIMIT = 150_000;
+    uint32 public constant GAS_LIMIT = 150_000;
     uint128 public constant MAX_RATE_AMOUNT = 1000e6; // 1000 USDC max available volume
     uint128 public constant REFILL_SPEED = 10e6; // 10 USDC/sec refill speed
+    uint256 public constant ZERO_AMOUNT = 0;
+    uint256 public constant NONCE = 1;
+    uint256 public constant AMOUNT = 1e6;
+    uint256 public constant INITIAL_SUPPLY = 1_000_000e6;
     bytes32 public constant DEFAULT_MESSAGE_ID = bytes32(uint256(1));
-    uint8 internal constant USDC_TOKEN_DECIMALS = 6;
+    bytes public constant ZERO_BYTES = "";
 
     address public s_deployer = vm.envAddress("DEPLOYER_ADDRESS");
     address public s_proxyDeployer = vm.envAddress("PROXY_DEPLOYER_ADDRESS");

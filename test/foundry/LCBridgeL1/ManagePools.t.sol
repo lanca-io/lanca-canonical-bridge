@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+ // SPDX-License-Identifier: UNLICENSED
 /* solhint-disable func-name-mixedcase */
 /**
  * @title Security Reporting
@@ -9,10 +9,10 @@ pragma solidity 0.8.28;
 
 import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
 
-import {LCBridgeL1Test} from "./base/LCBridgeL1Test.sol";
+import {LCBridgeL1Base} from "./LCBridgeL1Base.sol";
 import {LancaCanonicalBridgeL1} from "../../../contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol";
 
-contract ManagePoolsTest is LCBridgeL1Test {
+contract ManagePoolsTest is LCBridgeL1Base {
     function setUp() public override {
         super.setUp();
     }
@@ -33,7 +33,7 @@ contract ManagePoolsTest is LCBridgeL1Test {
 
         vm.expectRevert(CommonErrors.LengthMismatch.selector);
 
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridgeL1.addPools(dstChainSelectors, pools);
     }
 
@@ -43,7 +43,7 @@ contract ManagePoolsTest is LCBridgeL1Test {
         address[] memory pools = new address[](1);
         pools[0] = makeAddr("pool");
 
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridgeL1.addPools(dstChainSelectors, pools);
 
         vm.expectRevert(
@@ -53,7 +53,7 @@ contract ManagePoolsTest is LCBridgeL1Test {
             )
         );
 
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridgeL1.addPools(dstChainSelectors, pools);
     }
 
@@ -63,7 +63,7 @@ contract ManagePoolsTest is LCBridgeL1Test {
         address[] memory pools = new address[](1);
         pools[0] = makeAddr("pool");
 
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridgeL1.addPools(dstChainSelectors, pools);
 
         assertEq(lancaCanonicalBridgeL1.getPool(DST_CHAIN_SELECTOR), pools[0]);
@@ -80,7 +80,7 @@ contract ManagePoolsTest is LCBridgeL1Test {
         pools[1] = makeAddr("pool2");
         pools[2] = makeAddr("pool3");
 
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridgeL1.addPools(dstChainSelectors, pools);
 
         assertEq(lancaCanonicalBridgeL1.getPool(1), pools[0]);
@@ -106,7 +106,7 @@ contract ManagePoolsTest is LCBridgeL1Test {
         uint24[] memory dstChainSelectors = new uint24[](1);
         dstChainSelectors[0] = DST_CHAIN_SELECTOR;
 
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridgeL1.removePools(dstChainSelectors);
 
         assertEq(lancaCanonicalBridgeL1.getPool(DST_CHAIN_SELECTOR), address(0));
@@ -123,14 +123,14 @@ contract ManagePoolsTest is LCBridgeL1Test {
         pools[1] = makeAddr("pool2");
         pools[2] = makeAddr("pool3");
 
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridgeL1.addPools(dstChainSelectors, pools);
 
         assertEq(lancaCanonicalBridgeL1.getPool(1), pools[0]);
         assertEq(lancaCanonicalBridgeL1.getPool(2), pools[1]);
         assertEq(lancaCanonicalBridgeL1.getPool(3), pools[2]);
 
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridgeL1.removePools(dstChainSelectors);
 
         assertEq(lancaCanonicalBridgeL1.getPool(1), address(0));

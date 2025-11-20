@@ -7,18 +7,19 @@
  */
 pragma solidity 0.8.28;
 
+import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
 import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
 
 import {RateLimiter} from "contracts/LancaCanonicalBridge/RateLimiter.sol";
 import {LancaCanonicalBridge} from "contracts/LancaCanonicalBridge/LancaCanonicalBridge.sol";
 
-import {LCBridgeTest} from "./base/LCBridgeTest.sol";
 import {MockUSDCe} from "../mocks/MockUSDCe.sol";
+import {LCBridgeBase} from "./LCBridgeBase.sol";
 
-contract OutboundRateLimitsTest is LCBridgeTest {
+contract OutboundRateLimitsTest is LCBridgeBase {
     function setUp() public override {
         super.setUp();
-        deal(address(usdcE), user, 10_000 * 1e6); // 10K USDC
+        deal(address(s_usdcE), s_user, 10_000 * 1e6); // 10K USDC
     }
 
     function test_setOutboundRateLimit_RevertsUnauthorized() public {
@@ -30,7 +31,7 @@ contract OutboundRateLimitsTest is LCBridgeTest {
         vm.expectEmit(true, true, true, true);
         emit RateLimiter.RateLimitSet(SRC_CHAIN_SELECTOR, true, MAX_RATE_AMOUNT, REFILL_SPEED);
 
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridge.setRateLimit(SRC_CHAIN_SELECTOR, MAX_RATE_AMOUNT, REFILL_SPEED, true);
 
         (
@@ -49,7 +50,7 @@ contract OutboundRateLimitsTest is LCBridgeTest {
     }
 
     function test_setOutboundRateLimit_PreservesStateOnConfigurationUpdate() public {
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridge.setRateLimit(SRC_CHAIN_SELECTOR, MAX_RATE_AMOUNT, REFILL_SPEED, true);
 
         // Consume some rate
@@ -62,7 +63,7 @@ contract OutboundRateLimitsTest is LCBridgeTest {
         assertEq(availableBefore, MAX_RATE_AMOUNT - 100 * 1e6);
 
         // Update configuration
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridge.setRateLimit(SRC_CHAIN_SELECTOR, MAX_RATE_AMOUNT, REFILL_SPEED, true);
 
         // State should be preserved
@@ -74,7 +75,7 @@ contract OutboundRateLimitsTest is LCBridgeTest {
     }
 
     function test_outboundRateLimit_TransferWithinLimit() public {
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridge.setRateLimit(SRC_CHAIN_SELECTOR, MAX_RATE_AMOUNT, REFILL_SPEED, true);
 
         _performTransfer(500 * 1e6); // 500 USDC
@@ -87,7 +88,7 @@ contract OutboundRateLimitsTest is LCBridgeTest {
     }
 
     function test_outboundRateLimit_RevertsIfRateExceeded() public {
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridge.setRateLimit(SRC_CHAIN_SELECTOR, MAX_RATE_AMOUNT, REFILL_SPEED, true);
 
         _performTransfer(300 * 1e6); // 300 USDC
@@ -101,18 +102,22 @@ contract OutboundRateLimitsTest is LCBridgeTest {
 
         // Next transfer should fail
         uint256 messageFee = _getMessageFee();
-        vm.startPrank(user);
-        MockUSDCe(usdcE).approve(address(lancaCanonicalBridge), 400 * 1e6);
+        vm.startPrank(s_user);
+        s_usdcE.approve(address(lancaCanonicalBridge), 400 * 1e6);
 
         vm.expectRevert(
             abi.encodeWithSelector(RateLimiter.RateLimitExceeded.selector, 400 * 1e6, 300 * 1e6)
         );
-        lancaCanonicalBridge.sendToken{value: messageFee}(user, 400 * 1e6, 0, "");
+        lancaCanonicalBridge.sendToken{value: messageFee}(
+            400 * 1e6,
+            MessageCodec.encodeEvmDstChainData(s_user, 0),
+            ZERO_BYTES
+        );
         vm.stopPrank();
     }
 
     function test_outboundRateLimit_RefillOverTime() public {
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridge.setRateLimit(SRC_CHAIN_SELECTOR, MAX_RATE_AMOUNT, REFILL_SPEED, true);
 
         // Consume all available rate
@@ -135,7 +140,7 @@ contract OutboundRateLimitsTest is LCBridgeTest {
     }
 
     function test_outboundRateLimit_MaxAmountCapping() public {
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridge.setRateLimit(SRC_CHAIN_SELECTOR, MAX_RATE_AMOUNT, REFILL_SPEED, true);
 
         // Consume half the rate
@@ -152,18 +157,22 @@ contract OutboundRateLimitsTest is LCBridgeTest {
     }
 
     function test_outboundRateLimit_DisabledWithZeroMaxAmount() public {
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridge.setRateLimit(SRC_CHAIN_SELECTOR, 0, REFILL_SPEED, true);
 
         // Transfers should be blocked when maxAmount = 0 (soft pause)
         uint256 messageFee = _getMessageFee();
-        vm.startPrank(user);
-        MockUSDCe(usdcE).approve(address(lancaCanonicalBridge), 1000 * 1e6);
+        vm.startPrank(s_user);
+        s_usdcE.approve(address(lancaCanonicalBridge), 1000 * 1e6);
 
         vm.expectRevert(
             abi.encodeWithSelector(RateLimiter.RateLimitExceeded.selector, 1000 * 1e6, 0)
         );
-        lancaCanonicalBridge.sendToken{value: messageFee}(user, 1000 * 1e6, 0, "");
+        lancaCanonicalBridge.sendToken{value: messageFee}(
+            1000 * 1e6,
+            MessageCodec.encodeEvmDstChainData(s_user, 0),
+            ZERO_BYTES
+        );
         vm.stopPrank();
 
         (uint128 availableVolume, uint128 maxAmount, , , bool isActive) = lancaCanonicalBridge
@@ -178,7 +187,7 @@ contract OutboundRateLimitsTest is LCBridgeTest {
             abi.encodeWithSelector(RateLimiter.InvalidRateLimitConfig.selector, 50e6, 100e6)
         );
 
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridge.setRateLimit(
             SRC_CHAIN_SELECTOR,
             50e6, // maxAmount
@@ -187,7 +196,7 @@ contract OutboundRateLimitsTest is LCBridgeTest {
         );
 
         // But it should be allowed when maxAmount = 0 (disabled state)
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         LancaCanonicalBridge(address(lancaCanonicalBridge)).setRateLimit(
             SRC_CHAIN_SELECTOR,
             0, // maxAmount = 0 (disabled)
@@ -210,7 +219,7 @@ contract OutboundRateLimitsTest is LCBridgeTest {
     }
 
     function test_outboundRateLimit_PartialRefill() public {
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridge.setRateLimit(SRC_CHAIN_SELECTOR, MAX_RATE_AMOUNT, REFILL_SPEED, true);
 
         // Consume most of the rate
@@ -233,7 +242,7 @@ contract OutboundRateLimitsTest is LCBridgeTest {
     }
 
     function test_outboundRateLimit_ReducingMaxAmountCapsAvailable() public {
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridge.setRateLimit(
             SRC_CHAIN_SELECTOR,
             MAX_RATE_AMOUNT, // 1000 USDC
@@ -251,7 +260,7 @@ contract OutboundRateLimitsTest is LCBridgeTest {
         assertEq(availableBefore, 800 * 1e6);
 
         // Reduce max amount to 500 USDC (less than current available)
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridge.setRateLimit(
             SRC_CHAIN_SELECTOR,
             500e6, // 500 USDC (new limit)
@@ -280,9 +289,13 @@ contract OutboundRateLimitsTest is LCBridgeTest {
     // --- Helper functions ---
 
     function _performTransfer(uint256 amount) internal {
-        vm.startPrank(user);
-        MockUSDCe(usdcE).approve(address(lancaCanonicalBridge), amount);
-        lancaCanonicalBridge.sendToken{value: _getMessageFee()}(user, amount, 0, "");
+        vm.startPrank(s_user);
+        s_usdcE.approve(address(lancaCanonicalBridge), amount);
+        lancaCanonicalBridge.sendToken{value: _getMessageFee()}(
+            amount,
+            MessageCodec.encodeEvmDstChainData(s_user, 0),
+            ZERO_BYTES
+        );
         vm.stopPrank();
     }
 }

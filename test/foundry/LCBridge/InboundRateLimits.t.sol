@@ -13,18 +13,19 @@ import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/Mes
 
 import {RateLimiter} from "contracts/LancaCanonicalBridge/RateLimiter.sol";
 import {LancaCanonicalBridge} from "contracts/LancaCanonicalBridge/LancaCanonicalBridge.sol";
+import {BridgeCodec} from "contracts/common/libraries/BridgeCodec.sol";
 
-import {LCBridgeTest} from "./base/LCBridgeTest.sol";
+import {LCBridgeBase} from "./LCBridgeBase.sol";
 import {MockUSDCe} from "../mocks/MockUSDCe.sol";
 
-contract InboundRateLimitsTest is LCBridgeTest {
+contract InboundRateLimitsTest is LCBridgeBase {
     using MessageCodec for IConceroRouter.MessageRequest;
     using MessageCodec for bytes;
 
     function setUp() public override {
         super.setUp();
         // Add funds to bridge contract for minting
-        MockUSDCe(usdcE).setMinter(address(lancaCanonicalBridge));
+        MockUSDCe(address(s_usdcE)).setMinter(address(lancaCanonicalBridge));
     }
 
     function test_setInboundRateLimit_RevertsUnauthorized() public {
@@ -36,7 +37,7 @@ contract InboundRateLimitsTest is LCBridgeTest {
         vm.expectEmit(true, true, true, true);
         emit RateLimiter.RateLimitSet(SRC_CHAIN_SELECTOR, false, MAX_RATE_AMOUNT, REFILL_SPEED);
 
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridge.setRateLimit(SRC_CHAIN_SELECTOR, MAX_RATE_AMOUNT, REFILL_SPEED, false);
 
         (
@@ -55,7 +56,7 @@ contract InboundRateLimitsTest is LCBridgeTest {
     }
 
     function test_setInboundRateLimit_PreservesStateOnConfigurationUpdate() public {
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridge.setRateLimit(SRC_CHAIN_SELECTOR, MAX_RATE_AMOUNT, REFILL_SPEED, false);
 
         // Consume some rate
@@ -68,7 +69,7 @@ contract InboundRateLimitsTest is LCBridgeTest {
         assertEq(availableBefore, MAX_RATE_AMOUNT - 100 * 1e6);
 
         // Update configuration
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridge.setRateLimit(SRC_CHAIN_SELECTOR, MAX_RATE_AMOUNT, REFILL_SPEED, false);
 
         // State should be preserved
@@ -80,7 +81,7 @@ contract InboundRateLimitsTest is LCBridgeTest {
     }
 
     function test_inboundRateLimit_ReceiveWithinLimit() public {
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridge.setRateLimit(SRC_CHAIN_SELECTOR, MAX_RATE_AMOUNT, REFILL_SPEED, false);
 
         _performReceive(500 * 1e6); // 500 USDC
@@ -93,7 +94,7 @@ contract InboundRateLimitsTest is LCBridgeTest {
     }
 
     function test_inboundRateLimit_RevertsIfRateExceeded() public {
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridge.setRateLimit(SRC_CHAIN_SELECTOR, MAX_RATE_AMOUNT, REFILL_SPEED, false);
 
         // First receives accumulate
@@ -108,33 +109,31 @@ contract InboundRateLimitsTest is LCBridgeTest {
 
         // Next receive should fail
         IConceroRouter.MessageRequest memory messageRequest = _buildMessageRequest(
-            user,
-            user,
-            400 * 1e6,
-            0,
-            ""
+            BridgeCodec.encodeBridgeData(
+                s_user,
+                400 * 1e6,
+                MessageCodec.encodeEvmDstChainData(s_user, 0),
+                ""
+            ),
+            SRC_CHAIN_SELECTOR,
+            address(lancaCanonicalBridge)
         );
-
-        bool[] memory validationChecks = new bool[](1);
-        validationChecks[0] = true;
-        address[] memory validatorLibs = new address[](1);
-        validatorLibs[0] = validatorLib;
 
         vm.expectRevert(
             abi.encodeWithSelector(RateLimiter.RateLimitExceeded.selector, 400 * 1e6, 300 * 1e6)
         );
 
-        vm.prank(conceroRouter);
+        vm.prank(s_conceroRouter);
         lancaCanonicalBridge.conceroReceive(
-            messageRequest.toMessageReceiptBytes(SRC_CHAIN_SELECTOR, lancaBridgeL1Mock, NONCE),
-            validationChecks,
-            validatorLibs,
-            relayerLib
+            messageRequest.toMessageReceiptBytes(SRC_CHAIN_SELECTOR, s_lancaBridgeL1Mock, NONCE),
+            s_validationChecks,
+            s_validatorLibs,
+            s_relayerLib
         );
     }
 
     function test_inboundRateLimit_RefillOverTime() public {
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridge.setRateLimit(SRC_CHAIN_SELECTOR, MAX_RATE_AMOUNT, REFILL_SPEED, false);
 
         // Consume all available rate
@@ -157,7 +156,7 @@ contract InboundRateLimitsTest is LCBridgeTest {
     }
 
     function test_inboundRateLimit_MaxAmountCapping() public {
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridge.setRateLimit(SRC_CHAIN_SELECTOR, MAX_RATE_AMOUNT, REFILL_SPEED, false);
 
         // Consume half the rate
@@ -174,33 +173,31 @@ contract InboundRateLimitsTest is LCBridgeTest {
     }
 
     function test_inboundRateLimit_DisabledWithZeroMaxAmount() public {
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridge.setRateLimit(SRC_CHAIN_SELECTOR, 0, REFILL_SPEED, false);
 
         // Transfers should be blocked when maxAmount = 0 (soft pause)
         IConceroRouter.MessageRequest memory messageRequest = _buildMessageRequest(
-            user,
-            user,
-            1000 * 1e6,
-            0,
-            ""
+            BridgeCodec.encodeBridgeData(
+                s_user,
+                1000 * 1e6,
+                MessageCodec.encodeEvmDstChainData(s_user, 0),
+                ""
+            ),
+            SRC_CHAIN_SELECTOR,
+            address(lancaCanonicalBridge)
         );
-
-        bool[] memory validationChecks = new bool[](1);
-        validationChecks[0] = true;
-        address[] memory validatorLibs = new address[](1);
-        validatorLibs[0] = validatorLib;
 
         vm.expectRevert(
             abi.encodeWithSelector(RateLimiter.RateLimitExceeded.selector, 1000 * 1e6, 0)
         );
 
-        vm.prank(conceroRouter);
+        vm.prank(s_conceroRouter);
         lancaCanonicalBridge.conceroReceive(
-            messageRequest.toMessageReceiptBytes(SRC_CHAIN_SELECTOR, lancaBridgeL1Mock, NONCE),
-            validationChecks,
-            validatorLibs,
-            relayerLib
+            messageRequest.toMessageReceiptBytes(SRC_CHAIN_SELECTOR, s_lancaBridgeL1Mock, NONCE),
+            s_validationChecks,
+            s_validatorLibs,
+            s_relayerLib
         );
 
         (uint128 availableVolume, uint128 maxAmount, , , bool isActive) = LancaCanonicalBridge(
@@ -216,7 +213,7 @@ contract InboundRateLimitsTest is LCBridgeTest {
             abi.encodeWithSelector(RateLimiter.InvalidRateLimitConfig.selector, 50e6, 100e6)
         );
 
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridge.setRateLimit(
             SRC_CHAIN_SELECTOR,
             50e6, // maxAmount
@@ -225,7 +222,7 @@ contract InboundRateLimitsTest is LCBridgeTest {
         );
 
         // But it should be allowed when maxAmount = 0 (disabled state)
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridge.setRateLimit(
             SRC_CHAIN_SELECTOR,
             0, // maxAmount = 0 (disabled)
@@ -247,7 +244,7 @@ contract InboundRateLimitsTest is LCBridgeTest {
     }
 
     function test_inboundRateLimit_PartialRefill() public {
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridge.setRateLimit(SRC_CHAIN_SELECTOR, MAX_RATE_AMOUNT, REFILL_SPEED, false);
 
         // Consume most of the rate
@@ -271,7 +268,7 @@ contract InboundRateLimitsTest is LCBridgeTest {
     }
 
     function test_inboundRateLimit_ReducingMaxAmountCapsAvailable() public {
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridge.setRateLimit(
             SRC_CHAIN_SELECTOR,
             MAX_RATE_AMOUNT, // 1000 USDC
@@ -289,7 +286,7 @@ contract InboundRateLimitsTest is LCBridgeTest {
         assertEq(availableBefore, 800 * 1e6);
 
         // Reduce max amount to 500 USDC (less than current available)
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridge.setRateLimit(
             SRC_CHAIN_SELECTOR,
             500e6, // 500 USDC (new limit)
@@ -319,24 +316,22 @@ contract InboundRateLimitsTest is LCBridgeTest {
 
     function _performReceive(uint256 amount) internal {
         IConceroRouter.MessageRequest memory messageRequest = _buildMessageRequest(
-            user,
-            user,
-            amount,
-            0,
-            ""
+            BridgeCodec.encodeBridgeData(
+                s_user,
+                amount,
+                MessageCodec.encodeEvmDstChainData(s_user, 0),
+                ""
+            ),
+            SRC_CHAIN_SELECTOR,
+            address(lancaCanonicalBridge)
         );
 
-        bool[] memory validationChecks = new bool[](1);
-        validationChecks[0] = true;
-        address[] memory validatorLibs = new address[](1);
-        validatorLibs[0] = validatorLib;
-
-        vm.prank(conceroRouter);
+        vm.prank(s_conceroRouter);
         lancaCanonicalBridge.conceroReceive(
-            messageRequest.toMessageReceiptBytes(SRC_CHAIN_SELECTOR, lancaBridgeL1Mock, NONCE),
-            validationChecks,
-            validatorLibs,
-            relayerLib
+            messageRequest.toMessageReceiptBytes(SRC_CHAIN_SELECTOR, s_lancaBridgeL1Mock, NONCE),
+            s_validationChecks,
+            s_validatorLibs,
+            s_relayerLib
         );
     }
 }

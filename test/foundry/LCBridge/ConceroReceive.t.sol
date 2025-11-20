@@ -10,11 +10,13 @@ pragma solidity 0.8.28;
 import {IConceroRouter} from "@concero/v2-contracts/contracts/interfaces/IConceroRouter.sol";
 import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
 
-import {LCBridgeTest} from "./base/LCBridgeTest.sol";
-import {MockUSDCe} from "../mocks/MockUSDCe.sol";
 import {LancaCanonicalBridgeBase} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
+import {BridgeCodec} from "contracts/common/libraries/BridgeCodec.sol";
 
-contract ConceroReceiveTest is LCBridgeTest {
+import {MockUSDCe} from "../mocks/MockUSDCe.sol";
+import {LCBridgeBase} from "./LCBridgeBase.sol";
+
+contract ConceroReceiveTest is LCBridgeBase {
     using MessageCodec for IConceroRouter.MessageRequest;
     using MessageCodec for bytes;
 
@@ -25,13 +27,13 @@ contract ConceroReceiveTest is LCBridgeTest {
     // --- Tests for conceroReceive with no call ---
 
     function test_conceroReceive_Success() public {
-        uint256 userBalanceBefore = MockUSDCe(usdcE).balanceOf(user);
-        uint256 totalSupplyBefore = MockUSDCe(usdcE).totalSupply();
+        uint256 userBalanceBefore = s_usdcE.balanceOf(s_user);
+        uint256 totalSupplyBefore = s_usdcE.totalSupply();
 
-        _conceroReceive(user, user, AMOUNT, 0, "");
+        _conceroReceive(s_user, s_user, AMOUNT, 0, "");
 
-        uint256 userBalanceAfter = MockUSDCe(usdcE).balanceOf(user);
-        uint256 totalSupplyAfter = MockUSDCe(usdcE).totalSupply();
+        uint256 userBalanceAfter = s_usdcE.balanceOf(s_user);
+        uint256 totalSupplyAfter = s_usdcE.totalSupply();
 
         assertEq(userBalanceAfter, userBalanceBefore + AMOUNT);
         assertEq(totalSupplyAfter, totalSupplyBefore + AMOUNT);
@@ -39,43 +41,45 @@ contract ConceroReceiveTest is LCBridgeTest {
 
     function test_conceroReceive_RevertsInvalidSenderBridge() public {
         IConceroRouter.MessageRequest memory messageRequest = _buildMessageRequest(
-            user,
-            user,
-            AMOUNT,
-            0,
-            ""
+            BridgeCodec.encodeBridgeData(
+                s_user,
+                AMOUNT,
+                MessageCodec.encodeEvmDstChainData(s_user, 0),
+                ""
+            ),
+            SRC_CHAIN_SELECTOR,
+            address(lancaCanonicalBridge)
         );
 
         address invalidBridgeL1 = address(999);
         uint24 invalidSrcChainSelector = 999;
 
-        bool[] memory validationChecks = new bool[](1);
-        validationChecks[0] = true;
-        address[] memory validatorLibs = new address[](1);
-        validatorLibs[0] = validatorLib;
-
         vm.expectRevert(
             abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidBridgeSender.selector)
         );
 
-        vm.prank(conceroRouter);
+        vm.prank(s_conceroRouter);
         lancaCanonicalBridge.conceroReceive(
             messageRequest.toMessageReceiptBytes(SRC_CHAIN_SELECTOR, invalidBridgeL1, NONCE),
-            validationChecks,
-            validatorLibs,
-            relayerLib
+            s_validationChecks,
+            s_validatorLibs,
+            s_relayerLib
         );
 
         vm.expectRevert(
             abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidBridgeSender.selector)
         );
 
-        vm.prank(conceroRouter);
+        vm.prank(s_conceroRouter);
         lancaCanonicalBridge.conceroReceive(
-            messageRequest.toMessageReceiptBytes(invalidSrcChainSelector, lancaBridgeL1Mock, NONCE),
-            validationChecks,
-            validatorLibs,
-            relayerLib
+            messageRequest.toMessageReceiptBytes(
+                invalidSrcChainSelector,
+                s_lancaBridgeL1Mock,
+                NONCE
+            ),
+            s_validationChecks,
+            s_validatorLibs,
+            s_relayerLib
         );
     }
 
@@ -83,7 +87,7 @@ contract ConceroReceiveTest is LCBridgeTest {
         vm.expectEmit(false, false, false, true);
         emit LancaCanonicalBridgeBase.BridgeDelivered(DEFAULT_MESSAGE_ID, AMOUNT);
 
-        _conceroReceive(user, user, AMOUNT, 0, "");
+        _conceroReceive(s_user, s_user, AMOUNT, 0, "");
     }
 
     // --- Tests for conceroReceive with call ---
@@ -95,48 +99,17 @@ contract ConceroReceiveTest is LCBridgeTest {
             abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidConceroMessage.selector)
         );
 
-        _conceroReceive(user, invalidLCBridgeClient, AMOUNT, GAS_LIMIT, "0x01");
+        _conceroReceive(s_user, invalidLCBridgeClient, AMOUNT, GAS_LIMIT, "0x01");
     }
 
     function test_conceroReceive_WithCall() public {
         string memory testString = "LancaCanonicalBridge";
 
-        _conceroReceive(user, address(lcBridgeClient), AMOUNT, GAS_LIMIT, abi.encode(testString));
+        _conceroReceive(s_user, address(lcBridgeClient), AMOUNT, GAS_LIMIT, abi.encode(testString));
 
         assertEq(lcBridgeClient.srcChainSelector(), SRC_CHAIN_SELECTOR);
-        assertEq(lcBridgeClient.tokenSender(), user);
+        assertEq(BridgeCodec.toAddress(lcBridgeClient.tokenSender()), s_user);
         assertEq(lcBridgeClient.tokenAmount(), AMOUNT);
         assertEq(lcBridgeClient.testString(), testString);
-    }
-
-    // --- Helper functions ---
-
-    function _conceroReceive(
-        address tokenSender,
-        address tokenReceiver,
-        uint256 tokenAmount,
-        uint256 dstGasLimit,
-        bytes memory dstCallData
-    ) internal {
-        IConceroRouter.MessageRequest memory messageRequest = _buildMessageRequest(
-            tokenSender,
-            tokenReceiver,
-            tokenAmount,
-            dstGasLimit,
-            dstCallData
-        );
-
-        bool[] memory validationChecks = new bool[](1);
-        validationChecks[0] = true;
-        address[] memory validatorLibs = new address[](1);
-        validatorLibs[0] = validatorLib;
-
-        vm.prank(conceroRouter);
-        lancaCanonicalBridge.conceroReceive(
-            messageRequest.toMessageReceiptBytes(SRC_CHAIN_SELECTOR, lancaBridgeL1Mock, NONCE),
-            validationChecks,
-            validatorLibs,
-            relayerLib
-        );
     }
 }

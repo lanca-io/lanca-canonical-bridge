@@ -9,17 +9,19 @@ pragma solidity 0.8.28;
 
 import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
 
-import {LCBridgeL1Test} from "./base/LCBridgeL1Test.sol";
-import {LancaCanonicalBridgeL1} from "../../../contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol";
+import {LancaCanonicalBridgeL1} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol";
+import {BridgeCodec} from "contracts/common/libraries/BridgeCodec.sol";
 
-contract ManageDstBridgesTest is LCBridgeL1Test {
+import {LCBridgeL1Base} from "./LCBridgeL1Base.sol";
+
+contract ManageDstBridgesTest is LCBridgeL1Base {
     function setUp() public override {
         super.setUp();
     }
 
     function test_addDstBridges_Unauthorized() public {
         uint24[] memory dstChainSelectors = new uint24[](0);
-        address[] memory dstBridges = new address[](0);
+        bytes32[] memory dstBridges = new bytes32[](0);
 
         vm.expectRevert(CommonErrors.Unauthorized.selector);
 
@@ -28,21 +30,21 @@ contract ManageDstBridgesTest is LCBridgeL1Test {
 
     function test_addDstBridges_RevertLengthMismatch() public {
         uint24[] memory dstChainSelectors = new uint24[](1);
-        address[] memory dstBridges = new address[](2);
+        bytes32[] memory dstBridges = new bytes32[](2);
 
         vm.expectRevert(CommonErrors.LengthMismatch.selector);
 
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridgeL1.addDstBridges(dstChainSelectors, dstBridges);
     }
 
     function test_addDstBridges_RevertDstBridgeAlreadyExists() public {
         uint24[] memory dstChainSelectors = new uint24[](1);
         dstChainSelectors[0] = DST_CHAIN_SELECTOR;
-        address[] memory dstBridges = new address[](1);
-        dstBridges[0] = makeAddr("dstBridge");
+        bytes32[] memory dstBridges = new bytes32[](1);
+        dstBridges[0] = BridgeCodec.toBytes32(s_lancaBridgeMock);
 
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridgeL1.addDstBridges(dstChainSelectors, dstBridges);
 
         vm.expectRevert(
@@ -52,17 +54,17 @@ contract ManageDstBridgesTest is LCBridgeL1Test {
             )
         );
 
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridgeL1.addDstBridges(dstChainSelectors, dstBridges);
     }
 
     function test_addDstBridges_Success() public {
         uint24[] memory dstChainSelectors = new uint24[](1);
         dstChainSelectors[0] = DST_CHAIN_SELECTOR;
-        address[] memory dstBridges = new address[](1);
-        dstBridges[0] = makeAddr("dstBridge");
+        bytes32[] memory dstBridges = new bytes32[](1);
+        dstBridges[0] = BridgeCodec.toBytes32(s_lancaBridgeMock);
 
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridgeL1.addDstBridges(dstChainSelectors, dstBridges);
 
         assertEq(lancaCanonicalBridgeL1.getBridgeAddress(DST_CHAIN_SELECTOR), dstBridges[0]);
@@ -74,12 +76,12 @@ contract ManageDstBridgesTest is LCBridgeL1Test {
         dstChainSelectors[1] = 2;
         dstChainSelectors[2] = 3;
 
-        address[] memory dstBridges = new address[](3);
-        dstBridges[0] = makeAddr("dstBridge1");
-        dstBridges[1] = makeAddr("dstBridge2");
-        dstBridges[2] = makeAddr("dstBridge3");
+        bytes32[] memory dstBridges = new bytes32[](3);
+        dstBridges[0] = BridgeCodec.toBytes32(s_lancaBridgeMock);
+        dstBridges[1] = BridgeCodec.toBytes32(s_lancaBridgeMock);
+        dstBridges[2] = BridgeCodec.toBytes32(s_lancaBridgeMock);
 
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridgeL1.addDstBridges(dstChainSelectors, dstBridges);
 
         assertEq(lancaCanonicalBridgeL1.getBridgeAddress(1), dstBridges[0]);
@@ -97,15 +99,21 @@ contract ManageDstBridgesTest is LCBridgeL1Test {
 
     function test_removeDstBridges_Success() public {
         _addDefaultDstBridge();
-        assertEq(lancaCanonicalBridgeL1.getBridgeAddress(DST_CHAIN_SELECTOR), lancaBridgeMock);
+        assertEq(
+            BridgeCodec.toAddress(lancaCanonicalBridgeL1.getBridgeAddress(DST_CHAIN_SELECTOR)),
+            s_lancaBridgeMock
+        );
 
         uint24[] memory dstChainSelectors = new uint24[](1);
         dstChainSelectors[0] = DST_CHAIN_SELECTOR;
 
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridgeL1.removeDstBridges(dstChainSelectors);
 
-        assertEq(lancaCanonicalBridgeL1.getBridgeAddress(DST_CHAIN_SELECTOR), address(0));
+        assertEq(
+            BridgeCodec.toAddress(lancaCanonicalBridgeL1.getBridgeAddress(DST_CHAIN_SELECTOR)),
+            address(0)
+        );
     }
 
     function test_removeDstBridges_MultipleDstBridges() public {
@@ -114,23 +122,23 @@ contract ManageDstBridgesTest is LCBridgeL1Test {
         dstChainSelectors[1] = 2;
         dstChainSelectors[2] = 3;
 
-        address[] memory dstBridges = new address[](3);
-        dstBridges[0] = makeAddr("dstBridge1");
-        dstBridges[1] = makeAddr("dstBridge2");
-        dstBridges[2] = makeAddr("dstBridge3");
+        bytes32[] memory dstBridges = new bytes32[](3);
+        dstBridges[0] = BridgeCodec.toBytes32(s_lancaBridgeMock);
+        dstBridges[1] = BridgeCodec.toBytes32(s_lancaBridgeMock);
+        dstBridges[2] = BridgeCodec.toBytes32(s_lancaBridgeMock);
 
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridgeL1.addDstBridges(dstChainSelectors, dstBridges);
 
         assertEq(lancaCanonicalBridgeL1.getBridgeAddress(1), dstBridges[0]);
         assertEq(lancaCanonicalBridgeL1.getBridgeAddress(2), dstBridges[1]);
         assertEq(lancaCanonicalBridgeL1.getBridgeAddress(3), dstBridges[2]);
 
-        vm.prank(deployer);
+        vm.prank(s_deployer);
         lancaCanonicalBridgeL1.removeDstBridges(dstChainSelectors);
 
-        assertEq(lancaCanonicalBridgeL1.getBridgeAddress(1), address(0));
-        assertEq(lancaCanonicalBridgeL1.getBridgeAddress(2), address(0));
-        assertEq(lancaCanonicalBridgeL1.getBridgeAddress(3), address(0));
+        assertEq(BridgeCodec.toAddress(lancaCanonicalBridgeL1.getBridgeAddress(1)), address(0));
+        assertEq(BridgeCodec.toAddress(lancaCanonicalBridgeL1.getBridgeAddress(2)), address(0));
+        assertEq(BridgeCodec.toAddress(lancaCanonicalBridgeL1.getBridgeAddress(3)), address(0));
     }
 }

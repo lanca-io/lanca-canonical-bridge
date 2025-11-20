@@ -879,7 +879,7 @@
 
 "@concero/v2-contracts@github:concero/messaging-contracts-v2#feature/v3/dev":
   version "1.0.0"
-  resolved "https://codeload.github.com/concero/messaging-contracts-v2/tar.gz/1efc2bf9d36060db9633e57fcb0af6bbac3ab426"
+  resolved "https://codeload.github.com/concero/messaging-contracts-v2/tar.gz/5775884673a110ee2a6caa1cff01474c4b4dc512"
   dependencies:
     "@chainlink/contracts" "1.3.0"
     "@chainlink/functions-toolkit" "0.3.2"

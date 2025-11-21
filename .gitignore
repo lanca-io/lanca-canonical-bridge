@@ -12,6 +12,7 @@ node_modules
 # coverage
 coverage
 coverage.json
+/coverage_report
 
 # typechain
 typechain

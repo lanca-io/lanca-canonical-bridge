@@ -9,17 +9,16 @@ pragma solidity 0.8.28;
 import {IConceroRouter} from "@concero/v2-contracts/contracts/interfaces/IConceroRouter.sol";
 import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
 
+import {BridgeCodec} from "contracts/common/libraries/BridgeCodec.sol";
 import {LancaCanonicalBridgeL1} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol";
 import {LancaCanonicalBridgePool} from "contracts/LancaCanonicalBridgePool/LancaCanonicalBridgePool.sol";
 import {LancaCanonicalBridgeClientExample} from "contracts/LancaCanonicalBridgeClient/LancaCanonicalBridgeClientExample.sol";
-import {BridgeCodec} from "contracts/common/libraries/BridgeCodec.sol";
 
 import {MockUSDC} from "../mocks/MockUSDC.sol";
 import {LCBTest} from "../helpers/LCBTest.sol";
 
 abstract contract LCBridgeL1Base is LCBTest {
     using MessageCodec for IConceroRouter.MessageRequest;
-    using MessageCodec for bytes;
 
     LancaCanonicalBridgeL1 internal lancaCanonicalBridgeL1;
     LancaCanonicalBridgePool internal lancaCanonicalBridgePool;

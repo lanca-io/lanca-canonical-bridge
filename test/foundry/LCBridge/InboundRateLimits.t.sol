@@ -11,16 +11,15 @@ import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.
 import {IConceroRouter} from "@concero/v2-contracts/contracts/interfaces/IConceroRouter.sol";
 import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
 
-import {RateLimiter} from "contracts/LancaCanonicalBridge/RateLimiter.sol";
-import {LancaCanonicalBridge} from "contracts/LancaCanonicalBridge/LancaCanonicalBridge.sol";
 import {BridgeCodec} from "contracts/common/libraries/BridgeCodec.sol";
+import {LancaCanonicalBridge} from "contracts/LancaCanonicalBridge/LancaCanonicalBridge.sol";
+import {RateLimiter} from "contracts/LancaCanonicalBridge/RateLimiter.sol";
 
 import {LCBridgeBase} from "./LCBridgeBase.sol";
 import {MockUSDCe} from "../mocks/MockUSDCe.sol";
 
 contract InboundRateLimitsTest is LCBridgeBase {
     using MessageCodec for IConceroRouter.MessageRequest;
-    using MessageCodec for bytes;
 
     function setUp() public override {
         super.setUp();

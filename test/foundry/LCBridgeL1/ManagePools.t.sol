@@ -9,8 +9,9 @@ pragma solidity 0.8.28;
 
 import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
 
+import {LancaCanonicalBridgeL1} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol";
+
 import {LCBridgeL1Base} from "./LCBridgeL1Base.sol";
-import {LancaCanonicalBridgeL1} from "../../../contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol";
 
 contract ManagePoolsTest is LCBridgeL1Base {
     function setUp() public override {

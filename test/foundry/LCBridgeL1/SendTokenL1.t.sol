@@ -14,12 +14,12 @@ import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/Mes
 import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
 
 import {LancaCanonicalBridgeBase} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
-
 import {LancaCanonicalBridgeL1} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol";
 import {BridgeCodec} from "contracts/common/libraries/BridgeCodec.sol";
-import {LCBridgeL1Base} from "./LCBridgeL1Base.sol";
+
 import {MaliciousPool} from "../mocks/MaliciousPool.sol";
 import {MockUSDC} from "../mocks/MockUSDC.sol";
+import {LCBridgeL1Base} from "./LCBridgeL1Base.sol";
 
 contract SendTokenL1Test is LCBridgeL1Base {
     function setUp() public override {

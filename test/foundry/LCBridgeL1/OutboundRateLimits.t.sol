@@ -12,8 +12,8 @@ import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.
 
 import {RateLimiter} from "contracts/LancaCanonicalBridge/RateLimiter.sol";
 
-import {LCBridgeL1Base} from "./LCBridgeL1Base.sol";
 import {MockUSDC} from "../mocks/MockUSDC.sol";
+import {LCBridgeL1Base} from "./LCBridgeL1Base.sol";
 
 contract OutboundRateLimitsTest is LCBridgeL1Base {
     function setUp() public override {

@@ -10,16 +10,15 @@ pragma solidity 0.8.28;
 import {IConceroRouter} from "@concero/v2-contracts/contracts/interfaces/IConceroRouter.sol";
 import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
 
-import {MockUSDC} from "../mocks/MockUSDC.sol";
+import {BridgeCodec} from "contracts/common/libraries/BridgeCodec.sol";
 import {LancaCanonicalBridgeBase} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
 import {LancaCanonicalBridgeL1} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol";
-import {BridgeCodec} from "contracts/common/libraries/BridgeCodec.sol";
 
+import {MockUSDC} from "../mocks/MockUSDC.sol";
 import {LCBridgeL1Base} from "./LCBridgeL1Base.sol";
 
 contract ConceroReceiveL1Test is LCBridgeL1Base {
     using MessageCodec for IConceroRouter.MessageRequest;
-    using MessageCodec for bytes;
 
     function setUp() public override {
         super.setUp();

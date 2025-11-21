@@ -18,7 +18,6 @@ import {LCBridgeBase} from "./LCBridgeBase.sol";
 
 contract ConceroReceiveTest is LCBridgeBase {
     using MessageCodec for IConceroRouter.MessageRequest;
-    using MessageCodec for bytes;
 
     function setUp() public override {
         super.setUp();

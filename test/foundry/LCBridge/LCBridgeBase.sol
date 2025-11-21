@@ -18,7 +18,6 @@ import {LCBTest} from "../helpers/LCBTest.sol";
 
 abstract contract LCBridgeBase is LCBTest {
     using MessageCodec for IConceroRouter.MessageRequest;
-    using MessageCodec for bytes;
 
     LancaCanonicalBridge internal lancaCanonicalBridge;
     LancaCanonicalBridgeClientExample internal lcBridgeClient;

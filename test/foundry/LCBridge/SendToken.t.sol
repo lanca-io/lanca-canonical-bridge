@@ -12,11 +12,11 @@ import {ReentrancyGuard} from "@openzeppelin/contracts-v5/utils/ReentrancyGuard.
 import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
 import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
 
+import {LancaCanonicalBridge} from "contracts/LancaCanonicalBridge/LancaCanonicalBridge.sol";
+import {LancaCanonicalBridgeBase} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
+
 import {MaliciousToken} from "../mocks/MaliciousToken.sol";
 import {MockUSDCe} from "../mocks/MockUSDCe.sol";
-import {LancaCanonicalBridgeBase} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
-import {LancaCanonicalBridge} from "contracts/LancaCanonicalBridge/LancaCanonicalBridge.sol";
-
 import {LCBridgeBase} from "./LCBridgeBase.sol";
 
 contract SendTokenTest is LCBridgeBase {

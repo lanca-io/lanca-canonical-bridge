@@ -3,8 +3,9 @@ pragma solidity 0.8.28;
 
 import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
 
-import {MockUSDCe} from "./MockUSDCe.sol";
 import {LancaCanonicalBridge} from "contracts/LancaCanonicalBridge/LancaCanonicalBridge.sol";
+
+import {MockUSDCe} from "./MockUSDCe.sol";
 
 contract MaliciousToken is MockUSDCe {
     bool public shouldAttack;

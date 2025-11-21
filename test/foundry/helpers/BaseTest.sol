@@ -10,17 +10,11 @@ import {Test} from "forge-std/src/Test.sol";
 
 import {IERC20} from "@openzeppelin/contracts-v5/token/ERC20/IERC20.sol";
 
-import {BridgeCodec} from "contracts/common/libraries/BridgeCodec.sol";
-
+import {ConceroRouterMock} from "../mocks/ConceroRouterMock.sol";
 import {MockUSDC} from "../mocks/MockUSDC.sol";
 import {MockUSDCe} from "../mocks/MockUSDCe.sol";
-import {ConceroRouterMock} from "../mocks/ConceroRouterMock.sol";
 
 abstract contract BaseTest is Test {
-    using BridgeCodec for address;
-    using BridgeCodec for bytes32;
-    using BridgeCodec for bytes;
-
     uint8 internal constant USDC_TOKEN_DECIMALS = 6;
     uint24 public constant SRC_CHAIN_SELECTOR = 1;
     uint24 public constant DST_CHAIN_SELECTOR = 8453;

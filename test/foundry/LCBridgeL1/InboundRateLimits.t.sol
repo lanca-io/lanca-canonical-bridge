@@ -13,12 +13,11 @@ import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/Mes
 
 import {RateLimiter} from "contracts/LancaCanonicalBridge/RateLimiter.sol";
 
-import {LCBridgeL1Base} from "./LCBridgeL1Base.sol";
 import {MockUSDC} from "../mocks/MockUSDC.sol";
+import {LCBridgeL1Base} from "./LCBridgeL1Base.sol";
 
 contract InboundRateLimitsTest is LCBridgeL1Base {
     using MessageCodec for IConceroRouter.MessageRequest;
-    using MessageCodec for bytes;
 
     function setUp() public override {
         super.setUp();

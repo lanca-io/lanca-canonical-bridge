@@ -30,14 +30,6 @@ contract LancaCanonicalBridgeBaseWrapper is LancaCanonicalBridgeBase {
 
     function _conceroReceive(bytes calldata messageReceipt) internal override {}
 
-    function exposed_getRelayerLib() external view returns (address) {
-        return s.base().relayerLib;
-    }
-
-    function exposed_getValidatorLib() external view returns (address) {
-        return s.base().validatorLib;
-    }
-
     function exposed_relayerLibIsAllowed(address relayerLib) external view returns (bool) {
         return cbs.clientBase().isRelayerAllowed[relayerLib];
     }
@@ -62,28 +54,13 @@ contract ManageLibsTest is BaseTest {
         );
     }
 
-    /* ------- setIsRelayerLibAllowed ------- */
-
-    function test_setIsRelayerLibAllowed_Success() public {
-        vm.prank(s_deployer);
-        lancaCanonicalBridgeBase.setIsRelayerLibAllowed(s_relayerLib, true);
-
-        assertEq(lancaCanonicalBridgeBase.exposed_relayerLibIsAllowed(s_relayerLib), true);
-    }
-
-    function test_setIsRelayerLibAllowed_RevertsUnauthorized() public {
-        vm.expectRevert(CommonErrors.Unauthorized.selector);
-
-        lancaCanonicalBridgeBase.setIsRelayerLibAllowed(s_relayerLib, true);
-    }
-
     /* ------- setRelayerLib ------- */
 
     function test_setRelayerLib_Success() public {
         vm.prank(s_deployer);
         lancaCanonicalBridgeBase.setRelayerLib(s_relayerLib);
 
-        assertEq(lancaCanonicalBridgeBase.exposed_getRelayerLib(), s_relayerLib);
+        assertEq(lancaCanonicalBridgeBase.getRelayerLib(), s_relayerLib);
         assertEq(lancaCanonicalBridgeBase.exposed_relayerLibIsAllowed(s_relayerLib), true);
     }
 
@@ -91,6 +68,13 @@ contract ManageLibsTest is BaseTest {
         vm.expectRevert(CommonErrors.Unauthorized.selector);
 
         lancaCanonicalBridgeBase.setRelayerLib(s_relayerLib);
+    }
+
+    function test_setRelayerLib_RevertsInvalidAddress() public {
+        vm.expectRevert(CommonErrors.InvalidAddress.selector);
+
+        vm.prank(s_deployer);
+        lancaCanonicalBridgeBase.setRelayerLib(address(0));
     }
 
     function test_setRelayerLib_RevertsRelayerLibAlreadySet() public {
@@ -117,7 +101,7 @@ contract ManageLibsTest is BaseTest {
         vm.prank(s_deployer);
         lancaCanonicalBridgeBase.removeRelayerLib();
 
-        assertEq(lancaCanonicalBridgeBase.exposed_getRelayerLib(), address(0));
+        assertEq(lancaCanonicalBridgeBase.getRelayerLib(), address(0));
         assertEq(lancaCanonicalBridgeBase.exposed_relayerLibIsAllowed(s_relayerLib), false);
     }
 
@@ -140,7 +124,7 @@ contract ManageLibsTest is BaseTest {
         vm.prank(s_deployer);
         lancaCanonicalBridgeBase.setValidatorLib(s_validatorLib);
 
-        assertEq(lancaCanonicalBridgeBase.exposed_getValidatorLib(), s_validatorLib);
+        assertEq(lancaCanonicalBridgeBase.getValidatorLib(), s_validatorLib);
         assertEq(lancaCanonicalBridgeBase.exposed_validatorLibIsAllowed(s_validatorLib), true);
         assertEq(lancaCanonicalBridgeBase.exposed_getRequiredValidatorsCount(), 1);
     }
@@ -149,6 +133,13 @@ contract ManageLibsTest is BaseTest {
         vm.expectRevert(CommonErrors.Unauthorized.selector);
 
         lancaCanonicalBridgeBase.setValidatorLib(s_validatorLib);
+    }
+
+    function test_setValidatorLib_RevertsInvalidAddress() public {
+        vm.expectRevert(CommonErrors.InvalidAddress.selector);
+
+        vm.prank(s_deployer);
+        lancaCanonicalBridgeBase.setValidatorLib(address(0));
     }
 
     function test_setValidatorLib_RevertsValidatorAlreadySet() public {
@@ -175,7 +166,7 @@ contract ManageLibsTest is BaseTest {
         vm.prank(s_deployer);
         lancaCanonicalBridgeBase.removeValidatorLib();
 
-        assertEq(lancaCanonicalBridgeBase.exposed_getValidatorLib(), address(0));
+        assertEq(lancaCanonicalBridgeBase.getValidatorLib(), address(0));
         assertEq(lancaCanonicalBridgeBase.exposed_validatorLibIsAllowed(s_validatorLib), false);
         assertEq(lancaCanonicalBridgeBase.exposed_getRequiredValidatorsCount(), 0);
     }

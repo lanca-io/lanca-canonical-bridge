@@ -8,27 +8,23 @@ pragma solidity 0.8.28;
 
 import {ReentrancyGuard} from "@openzeppelin/contracts-v5/utils/ReentrancyGuard.sol";
 
+import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
 import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
+import {IConceroRouter} from "@concero/v2-contracts/contracts/interfaces/IConceroRouter.sol";
 
+import {ILancaCanonicalBridgePool} from "../interfaces/ILancaCanonicalBridgePool.sol";
+import {BridgeCodec} from "../common/libraries/BridgeCodec.sol";
+import {Storage as s} from "./libraries/Storage.sol";
 import {
     LancaCanonicalBridgeBase,
     ILancaCanonicalBridgeClient
 } from "./LancaCanonicalBridgeBase.sol";
-import {Storage as s} from "./libraries/Storage.sol";
-import {ILancaCanonicalBridgePool} from "../interfaces/ILancaCanonicalBridgePool.sol";
-
-import {IConceroRouter} from "@concero/v2-contracts/contracts/interfaces/IConceroRouter.sol";
-import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
-
-import {BridgeCodec} from "../common/libraries/BridgeCodec.sol";
 
 contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
-    using s for s.L1Bridge;
-    using MessageCodec for IConceroRouter.MessageRequest;
-    using MessageCodec for bytes;
     using BridgeCodec for bytes32;
-    using BridgeCodec for address;
     using BridgeCodec for bytes;
+    using MessageCodec for bytes;
+    using s for s.L1Bridge;
 
     error InvalidDstBridge();
     error PoolNotFound(uint24 dstChainSelector);
@@ -73,7 +69,7 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
 
         require(sender == getBridgeAddress(srcChainSelector).toAddress(), InvalidBridgeSender());
 
-        address pool = s.l1Bridge().pools[srcChainSelector];
+        address pool = getPool(srcChainSelector);
         require(pool != address(0), PoolNotFound(srcChainSelector));
 
         bytes calldata messageData = messageReceipt.calldataPayload();
@@ -173,10 +169,12 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         bytes calldata dstChainData,
         bytes calldata payload
     ) external view returns (uint256) {
-        s.L1Bridge storage s_bridge = s.l1Bridge();
-
-        bytes32 dstBridge = s_bridge.dstBridges[dstChainSelector];
-
-        return _getBridgeNativeFee(dstChainSelector, dstChainData, payload, dstBridge);
+        return
+            _getBridgeNativeFee(
+                dstChainSelector,
+                dstChainData,
+                payload,
+                s.l1Bridge().dstBridges[dstChainSelector]
+            );
     }
 }

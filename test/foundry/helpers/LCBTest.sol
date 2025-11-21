@@ -52,7 +52,7 @@ abstract contract LCBTest is BaseTest {
 
     function _setRelayerLib(address client) internal {
         vm.prank(s_deployer);
-        LancaCanonicalBridgeBase(client).setIsRelayerLibAllowed(s_relayerLib, true);
+        LancaCanonicalBridgeBase(client).setRelayerLib(s_relayerLib);
     }
 
     function _setValidatorLibs(address client) internal {

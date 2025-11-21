@@ -116,10 +116,7 @@ contract ConceroReceiveL1Test is LCBridgeL1Base {
         _conceroReceive(s_user, address(lcBridgeClient), AMOUNT, GAS_LIMIT, abi.encode(testString));
 
         assertEq(lcBridgeClient.srcChainSelector(), DST_CHAIN_SELECTOR);
-        assertEq(
-            BridgeCodec.toAddress(lcBridgeClient.tokenSender()),
-            s_user
-        );
+        assertEq(BridgeCodec.toAddress(lcBridgeClient.tokenSender()), s_user);
         assertEq(lcBridgeClient.tokenAmount(), AMOUNT);
         assertEq(lcBridgeClient.testString(), testString);
     }

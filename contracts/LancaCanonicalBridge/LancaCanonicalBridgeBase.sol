@@ -8,21 +8,22 @@ pragma solidity 0.8.28;
 
 import {IERC165} from "@openzeppelin/contracts-v5/utils/introspection/IERC165.sol";
 
-import {ConceroClient} from "@concero/v2-contracts/contracts/ConceroClient/ConceroClient.sol";
-import {ConceroOwnable} from "@concero/v2-contracts/contracts/common/ConceroOwnable.sol";
-import {IConceroRouter} from "@concero/v2-contracts/contracts/interfaces/IConceroRouter.sol";
 import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
+import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
+import {ConceroOwnable} from "@concero/v2-contracts/contracts/common/ConceroOwnable.sol";
+import {ConceroClient} from "@concero/v2-contracts/contracts/ConceroClient/ConceroClient.sol";
+import {IConceroRouter} from "@concero/v2-contracts/contracts/interfaces/IConceroRouter.sol";
 
-import {RateLimiter} from "./RateLimiter.sol";
-import {IFiatTokenV1} from "../interfaces/IFiatTokenV1.sol";
 import {ILancaCanonicalBridgeClient} from "../LancaCanonicalBridgeClient/LancaCanonicalBridgeClient.sol";
+import {IFiatTokenV1} from "../interfaces/IFiatTokenV1.sol";
+import {RateLimiter} from "./RateLimiter.sol";
 
 import {BridgeCodec} from "../common/libraries/BridgeCodec.sol";
 import {Storage as s} from "./libraries/Storage.sol";
 
 abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, ConceroOwnable {
-    using s for s.Base;
     using BridgeCodec for bytes32;
+    using s for s.Base;
 
     uint32 internal constant BRIDGE_GAS_OVERHEAD = 150_000;
 
@@ -156,23 +157,25 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, Concer
         return IConceroRouter(i_conceroRouter).getMessageFee(messageRequest);
     }
 
-    /* ------- Admin Functions ------- */
+    /* ------- Getters ------- */
 
-    function setIsRelayerLibAllowed(address relayerLib, bool isAllowed) external onlyOwner {
-        s.base().relayerLib = relayerLib;
-
-        _setIsRelayerAllowed(relayerLib, isAllowed);
+    function getRelayerLib() public view returns (address) {
+        return s.base().relayerLib;
     }
+
+    function getValidatorLib() public view returns (address) {
+        return s.base().validatorLib;
+    }
+
+    /* ------- Admin Functions ------- */
 
     function setRelayerLib(address relayerLib) external onlyOwner {
         s.Base storage s_base = s.base();
 
-        address currentRelayer = s_base.relayerLib;
-
-        require(currentRelayer != relayerLib, RelayerLibAlreadySet(currentRelayer));
+        require(relayerLib != address(0), CommonErrors.InvalidAddress());
+        require(s_base.relayerLib == address(0), RelayerLibAlreadySet(s_base.relayerLib));
 
         s_base.relayerLib = relayerLib;
-
         _setIsRelayerAllowed(relayerLib, true);
     }
 
@@ -190,7 +193,8 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, Concer
     function setValidatorLib(address validatorLib) external onlyOwner {
         s.Base storage s_base = s.base();
 
-        require(s_base.validatorLib != validatorLib, ValidatorAlreadySet(s_base.validatorLib));
+        require(validatorLib != address(0), CommonErrors.InvalidAddress());
+        require(s_base.validatorLib == address(0), ValidatorAlreadySet(s_base.validatorLib));
 
         s_base.validatorLib = validatorLib;
 

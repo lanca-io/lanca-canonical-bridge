@@ -9,21 +9,19 @@ pragma solidity 0.8.28;
 import {ReentrancyGuard} from "@openzeppelin/contracts-v5/utils/ReentrancyGuard.sol";
 import {SafeERC20} from "@openzeppelin/contracts-v5/token/ERC20/utils/SafeERC20.sol";
 
-import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
 import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
+import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
 
+import {BridgeCodec} from "../common/libraries/BridgeCodec.sol";
 import {
     LancaCanonicalBridgeBase,
     ILancaCanonicalBridgeClient
 } from "./LancaCanonicalBridgeBase.sol";
 
-import {BridgeCodec} from "../common/libraries/BridgeCodec.sol";
-
 contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
-    using MessageCodec for bytes;
     using BridgeCodec for address;
-    using BridgeCodec for bytes32;
     using BridgeCodec for bytes;
+    using MessageCodec for bytes;
 
     uint24 internal immutable i_l1ChainSelector;
     address internal immutable i_lancaCanonicalBridgeL1;

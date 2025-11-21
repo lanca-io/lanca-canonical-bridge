@@ -1,4 +1,4 @@
- // SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: UNLICENSED
 /* solhint-disable func-name-mixedcase */
 /**
  * @title Security Reporting

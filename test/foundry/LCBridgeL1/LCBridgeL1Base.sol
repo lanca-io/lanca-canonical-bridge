@@ -8,12 +8,10 @@ pragma solidity 0.8.28;
 
 import {IConceroRouter} from "@concero/v2-contracts/contracts/interfaces/IConceroRouter.sol";
 import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
-
 import {BridgeCodec} from "contracts/common/libraries/BridgeCodec.sol";
 import {LancaCanonicalBridgeL1} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol";
 import {LancaCanonicalBridgePool} from "contracts/LancaCanonicalBridgePool/LancaCanonicalBridgePool.sol";
 import {LancaCanonicalBridgeClientExample} from "contracts/LancaCanonicalBridgeClient/LancaCanonicalBridgeClientExample.sol";
-
 import {MockUSDC} from "../mocks/MockUSDC.sol";
 import {LCBTest} from "../helpers/LCBTest.sol";
 
@@ -26,11 +24,8 @@ abstract contract LCBridgeL1Base is LCBTest {
 
     function setUp() public virtual {
         vm.prank(s_deployer);
-        lancaCanonicalBridgeL1 = new LancaCanonicalBridgeL1(
-            s_conceroRouter,
-            address(s_usdc),
-            s_deployer
-        );
+        lancaCanonicalBridgeL1 = new LancaCanonicalBridgeL1(s_conceroRouter, address(s_usdc));
+        lancaCanonicalBridgeL1.initialize(s_deployer);
 
         uint24[] memory dstChainSelectors = new uint24[](1);
         dstChainSelectors[0] = SRC_CHAIN_SELECTOR;
@@ -53,6 +48,8 @@ abstract contract LCBridgeL1Base is LCBTest {
         vm.deal(s_user, 1e18);
 
         vm.startPrank(s_deployer);
+        lancaCanonicalBridgeL1.grantRole(lancaCanonicalBridgeL1.RATE_LIMIT_ADMIN(), s_deployer);
+
         lancaCanonicalBridgeL1.setRateLimit(
             DST_CHAIN_SELECTOR,
             MAX_RATE_AMOUNT,

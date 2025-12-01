@@ -28,9 +28,9 @@ abstract contract LCBridgeBase is LCBTest {
             SRC_CHAIN_SELECTOR,
             s_conceroRouter,
             address(s_usdcE),
-            s_lancaBridgeL1Mock,
-            s_deployer
+            s_lancaBridgeL1Mock
         );
+        lancaCanonicalBridge.initialize(s_deployer);
 
         _setValidatorLibs(address(lancaCanonicalBridge));
         _setRelayerLib(address(lancaCanonicalBridge));

@@ -3,9 +3,8 @@ pragma solidity 0.8.28;
 
 import {IConceroRouter} from "@concero/v2-contracts/contracts/interfaces/IConceroRouter.sol";
 import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
-
+import {StringsUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import {LancaCanonicalBridgeBase} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
-
 import {BaseTest} from "./BaseTest.sol";
 
 abstract contract LCBTest is BaseTest {
@@ -58,5 +57,18 @@ abstract contract LCBTest is BaseTest {
     function _setValidatorLibs(address client) internal {
         vm.prank(s_deployer);
         LancaCanonicalBridgeBase(client).setValidatorLib(s_validatorLib);
+    }
+
+    function _constructAccessControlError(
+        address account,
+        bytes32 role
+    ) internal pure returns (bytes memory) {
+        return
+            abi.encodePacked(
+                "AccessControl: account ",
+                StringsUpgradeable.toHexString(uint160(account), 20),
+                " is missing role ",
+                StringsUpgradeable.toHexString(uint256(role), 32)
+            );
     }
 }

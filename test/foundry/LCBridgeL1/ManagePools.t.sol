@@ -23,7 +23,9 @@ contract ManagePoolsTest is LCBridgeL1Base {
         address[] memory pools = new address[](1);
         pools[0] = address(0);
 
-        vm.expectRevert(CommonErrors.Unauthorized.selector);
+        vm.expectRevert(
+            _constructAccessControlError(address(this), lancaCanonicalBridgeL1.ADMIN())
+        );
 
         lancaCanonicalBridgeL1.addPools(dstChainSelectors, pools);
     }
@@ -92,7 +94,9 @@ contract ManagePoolsTest is LCBridgeL1Base {
     function test_removePools_Unauthorized() public {
         uint24[] memory dstChainSelectors = new uint24[](0);
 
-        vm.expectRevert(CommonErrors.Unauthorized.selector);
+        vm.expectRevert(
+            _constructAccessControlError(address(this), lancaCanonicalBridgeL1.ADMIN())
+        );
 
         lancaCanonicalBridgeL1.removePools(dstChainSelectors);
     }

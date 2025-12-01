@@ -21,8 +21,7 @@
         "clean": "npm run clean:hardhat && npm run clean:forge",
         "size-contracts": "hardhat size-contracts",
         "check-updates": "npx npm-check-updates",
-        "prepare": "husky",
-        "preinstall": "sh validatePackageManager.sh yarn"
+        "prepare": "husky"
     },
     "devDependencies": {
         "@chainlink/env-enc": "1.0.5",

@@ -14,11 +14,11 @@
 include ./.env
 include ./.env.deployments.mainnet
 include ./.env.deployments.testnet
-include ./.env.wallets
-include .env.foundry
+#include ./.env.wallets
+#include .env.foundry
 
-ENV_FILES := ./.env ./.env.tokens ./.env.deployments.mainnet ./.env.deployments.testnet ./.env.wallets .env.foundry
-export $(shell cat $(ENV_FILES) | sed 's/=.*//' | sort | uniq)
+#ENV_FILES := ./.env ./.env.tokens ./.env.deployments.mainnet ./.env.deployments.testnet ./.env.wallets .env.foundry
+#export $(shell cat $(ENV_FILES) | sed 's/=.*//' | sort | uniq)
 args =
 
 all: test

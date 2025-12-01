@@ -6,21 +6,26 @@
  */
 pragma solidity 0.8.28;
 
-import {ReentrancyGuard} from "@openzeppelin/contracts-v5/utils/ReentrancyGuard.sol";
-
-import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
-import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
-import {IConceroRouter} from "@concero/v2-contracts/contracts/interfaces/IConceroRouter.sol";
-
-import {ILancaCanonicalBridgePool} from "../interfaces/ILancaCanonicalBridgePool.sol";
-import {BridgeCodec} from "../common/libraries/BridgeCodec.sol";
-import {Storage as s} from "./libraries/Storage.sol";
+import {ILancaCanonicalBridgeL1} from "../interfaces/ILancaCanonicalBridgeL1.sol";
 import {
     LancaCanonicalBridgeBase,
     ILancaCanonicalBridgeClient
 } from "./LancaCanonicalBridgeBase.sol";
+import {BridgeCodec} from "../common/libraries/BridgeCodec.sol";
+import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
+import {IConceroRouter} from "@concero/v2-contracts/contracts/interfaces/IConceroRouter.sol";
+import {ILancaCanonicalBridgePool} from "../interfaces/ILancaCanonicalBridgePool.sol";
+import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts-v5/utils/ReentrancyGuard.sol";
+import {Storage as s} from "./libraries/Storage.sol";
 
-contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
+/// @title LancaCanonicalBridgeL1
+/// @notice L1-side canonical bridge for USDC that coordinates liquidity pools and remote L2 bridges.
+/// @dev
+/// - Uses per-chain pools to custody USDC for each destination chain.
+/// - Sends Concero messages to destination bridges and releases liquidity on inbound messages.
+/// - Enforces rate limits and uses ADMIN role for configuration.
+contract LancaCanonicalBridgeL1 is ILancaCanonicalBridgeL1, LancaCanonicalBridgeBase {
     using BridgeCodec for bytes32;
     using BridgeCodec for bytes;
     using MessageCodec for bytes;
@@ -33,18 +38,18 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
 
     constructor(
         address conceroRouter,
-        address usdcAddress,
-        address rateLimitAdmin
-    ) LancaCanonicalBridgeBase(usdcAddress, rateLimitAdmin, conceroRouter) {}
+        address usdcAddress
+    ) LancaCanonicalBridgeBase(usdcAddress, conceroRouter) {}
 
     /* ------- Main Functions ------- */
 
+    /// @inheritdoc ILancaCanonicalBridgeL1
     function sendToken(
         uint256 tokenAmount,
         uint24 dstChainSelector,
         bytes calldata dstChainData,
         bytes calldata payload
-    ) external payable nonReentrant returns (bytes32 messageId) {
+    ) external payable returns (bytes32 messageId) {
         require(tokenAmount > 0, CommonErrors.InvalidAmount());
 
         s.L1Bridge storage s_bridge = s.l1Bridge();
@@ -63,7 +68,7 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         emit TokenSent(messageId, dstChainSelector, dstChainData, msg.sender, tokenAmount);
     }
 
-    function _conceroReceive(bytes calldata messageReceipt) internal override nonReentrant {
+    function _conceroReceive(bytes calldata messageReceipt) internal override {
         (address sender, ) = messageReceipt.evmSrcChainData();
         uint24 srcChainSelector = messageReceipt.srcChainSelector();
 
@@ -108,7 +113,7 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
     function addPools(
         uint24[] calldata dstChainSelectors,
         address[] calldata pools
-    ) external onlyOwner {
+    ) external onlyRole(ADMIN) {
         require(dstChainSelectors.length == pools.length, CommonErrors.LengthMismatch());
 
         s.L1Bridge storage l1BridgeStorage = s.l1Bridge();
@@ -125,7 +130,7 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
     function addDstBridges(
         uint24[] calldata dstChainSelectors,
         bytes32[] calldata dstBridges
-    ) external onlyOwner {
+    ) external onlyRole(ADMIN) {
         require(dstChainSelectors.length == dstBridges.length, CommonErrors.LengthMismatch());
 
         s.L1Bridge storage s_l1BridgeStorage = s.l1Bridge();
@@ -139,14 +144,14 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         }
     }
 
-    function removePools(uint24[] calldata dstChainSelectors) external onlyOwner {
+    function removePools(uint24[] calldata dstChainSelectors) external onlyRole(ADMIN) {
         s.L1Bridge storage s_l1BridgeStorage = s.l1Bridge();
         for (uint256 i = 0; i < dstChainSelectors.length; i++) {
             delete s_l1BridgeStorage.pools[dstChainSelectors[i]];
         }
     }
 
-    function removeDstBridges(uint24[] calldata dstChainSelectors) external onlyOwner {
+    function removeDstBridges(uint24[] calldata dstChainSelectors) external onlyRole(ADMIN) {
         s.L1Bridge storage s_l1BridgeStorage = s.l1Bridge();
         for (uint256 i = 0; i < dstChainSelectors.length; i++) {
             delete s_l1BridgeStorage.dstBridges[dstChainSelectors[i]];
@@ -163,6 +168,7 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
         return s.l1Bridge().dstBridges[dstChainSelector];
     }
 
+    /// @inheritdoc ILancaCanonicalBridgeL1
     function getBridgeNativeFee(
         uint256 /* tokenAmount */,
         uint24 dstChainSelector,

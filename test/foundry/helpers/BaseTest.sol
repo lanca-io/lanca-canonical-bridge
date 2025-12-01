@@ -28,8 +28,8 @@ abstract contract BaseTest is Test {
     bytes32 public constant DEFAULT_MESSAGE_ID = bytes32(uint256(1));
     bytes public constant ZERO_BYTES = "";
 
-    address public s_deployer = vm.envAddress("DEPLOYER_ADDRESS");
-    address public s_proxyDeployer = vm.envAddress("PROXY_DEPLOYER_ADDRESS");
+    address public s_deployer = makeAddr("deployer");
+    address public s_proxyDeployer = makeAddr("proxy_deployer");
     address public s_relayerLib = makeAddr("relayerLib");
     address public s_validatorLib = makeAddr("validatorLib");
     address public s_user = makeAddr("user");

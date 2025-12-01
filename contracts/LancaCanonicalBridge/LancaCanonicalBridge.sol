@@ -6,44 +6,47 @@
  */
 pragma solidity 0.8.28;
 
-import {ReentrancyGuard} from "@openzeppelin/contracts-v5/utils/ReentrancyGuard.sol";
 import {SafeERC20} from "@openzeppelin/contracts-v5/token/ERC20/utils/SafeERC20.sol";
-
 import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
 import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
-
 import {BridgeCodec} from "../common/libraries/BridgeCodec.sol";
 import {
     LancaCanonicalBridgeBase,
     ILancaCanonicalBridgeClient
 } from "./LancaCanonicalBridgeBase.sol";
+import {ILancaCanonicalBridge} from "../interfaces/ILancaCanonicalBridge.sol";
 
-contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
+contract LancaCanonicalBridge is ILancaCanonicalBridge, LancaCanonicalBridgeBase {
     using BridgeCodec for address;
     using BridgeCodec for bytes;
     using MessageCodec for bytes;
 
+    /// @notice Chain selector that uniquely identifies the L1 chain where the canonical bridge resides.
+    /// @dev Used for both sending messages to L1 and validating messages coming from L1.
     uint24 internal immutable i_l1ChainSelector;
+
+    // @notice Address of the L1 LancaCanonicalBridge contract.
+    /// @dev Only messages originating from this address and chain selector are trusted.
     address internal immutable i_lancaCanonicalBridgeL1;
 
     constructor(
         uint24 l1ChainSelector,
         address conceroRouter,
         address usdcAddress,
-        address lancaCanonicalBridgeL1,
-        address rateLimitAdmin
-    ) LancaCanonicalBridgeBase(usdcAddress, rateLimitAdmin, conceroRouter) {
+        address lancaCanonicalBridgeL1
+    ) LancaCanonicalBridgeBase(usdcAddress, conceroRouter) {
         i_l1ChainSelector = l1ChainSelector;
         i_lancaCanonicalBridgeL1 = lancaCanonicalBridgeL1;
     }
 
     /* ------- Main Functions ------- */
 
+    /// @inheritdoc ILancaCanonicalBridge
     function sendToken(
         uint256 tokenAmount,
         bytes calldata dstChainData,
         bytes calldata payload
-    ) external payable nonReentrant returns (bytes32 messageId) {
+    ) external payable returns (bytes32 messageId) {
         require(tokenAmount > 0, CommonErrors.InvalidAmount());
 
         _consumeRate(i_l1ChainSelector, tokenAmount, true);
@@ -62,7 +65,12 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         emit TokenSent(messageId, i_l1ChainSelector, dstChainData, msg.sender, tokenAmount);
     }
 
-    function _conceroReceive(bytes calldata messageReceipt) internal override nonReentrant {
+    /// @dev
+    /// - Called by the Concero router when a message from L1 is delivered.
+    /// - Validates that the message originates from `i_lancaCanonicalBridgeL1` on `i_l1ChainSelector`.
+    /// - Decodes bridge data, consumes inbound rate, mints USDC to the recipient, and optionally
+    ///   invokes the `lancaCanonicalBridgeReceive` hook on the receiver contract.
+    function _conceroReceive(bytes calldata messageReceipt) internal override {
         (address sender, ) = messageReceipt.evmSrcChainData();
         uint24 srcChainSelector = messageReceipt.srcChainSelector();
 
@@ -104,6 +112,7 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
 
     /* ------- View Functions ------- */
 
+    /// @inheritdoc ILancaCanonicalBridge
     function getBridgeNativeFee(
         uint256 /* tokenAmount */,
         uint24 dstChainSelector,

@@ -14,6 +14,7 @@ import {ClientBaseStorage as cbs} from "@concero/v2-contracts/contracts/ConceroC
 
 import {LancaCanonicalBridgeBase} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
 import {Storage as s} from "contracts/LancaCanonicalBridge/libraries/Storage.sol";
+import {StringsUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 
 import {BaseTest} from "../helpers/BaseTest.sol";
 
@@ -24,9 +25,8 @@ contract LancaCanonicalBridgeBaseWrapper is LancaCanonicalBridgeBase {
 
     constructor(
         address usdcAddress,
-        address rateLimitAdmin,
         address conceroRouter
-    ) LancaCanonicalBridgeBase(usdcAddress, rateLimitAdmin, conceroRouter) {}
+    ) LancaCanonicalBridgeBase(usdcAddress, conceroRouter) {}
 
     function _conceroReceive(bytes calldata messageReceipt) internal override {}
 
@@ -49,9 +49,9 @@ contract ManageLibsTest is BaseTest {
         vm.prank(s_deployer);
         lancaCanonicalBridgeBase = new LancaCanonicalBridgeBaseWrapper(
             address(s_usdcE),
-            s_deployer,
             s_conceroRouter
         );
+        lancaCanonicalBridgeBase.initialize(s_deployer);
     }
 
     /* ------- setRelayerLib ------- */
@@ -65,8 +65,9 @@ contract ManageLibsTest is BaseTest {
     }
 
     function test_setRelayerLib_Unauthorized() public {
-        vm.expectRevert(CommonErrors.Unauthorized.selector);
-
+        vm.expectRevert(
+            _constructAccessControlError(address(this), lancaCanonicalBridgeBase.ADMIN())
+        );
         lancaCanonicalBridgeBase.setRelayerLib(s_relayerLib);
     }
 
@@ -106,8 +107,9 @@ contract ManageLibsTest is BaseTest {
     }
 
     function test_removerRelayerLib_RevertsUnauthorized() public {
-        vm.expectRevert(CommonErrors.Unauthorized.selector);
-
+        vm.expectRevert(
+            _constructAccessControlError(address(this), lancaCanonicalBridgeBase.ADMIN())
+        );
         lancaCanonicalBridgeBase.removeRelayerLib();
     }
 
@@ -130,8 +132,9 @@ contract ManageLibsTest is BaseTest {
     }
 
     function test_setValidatorLib_Unauthorized() public {
-        vm.expectRevert(CommonErrors.Unauthorized.selector);
-
+        vm.expectRevert(
+            _constructAccessControlError(address(this), lancaCanonicalBridgeBase.ADMIN())
+        );
         lancaCanonicalBridgeBase.setValidatorLib(s_validatorLib);
     }
 
@@ -172,7 +175,9 @@ contract ManageLibsTest is BaseTest {
     }
 
     function test_removeValidatorLib_RevertsUnauthorized() public {
-        vm.expectRevert(CommonErrors.Unauthorized.selector);
+        vm.expectRevert(
+            _constructAccessControlError(address(this), lancaCanonicalBridgeBase.ADMIN())
+        );
 
         lancaCanonicalBridgeBase.removeValidatorLib();
     }
@@ -182,5 +187,18 @@ contract ManageLibsTest is BaseTest {
 
         vm.prank(s_deployer);
         lancaCanonicalBridgeBase.removeValidatorLib();
+    }
+
+    function _constructAccessControlError(
+        address account,
+        bytes32 role
+    ) internal pure returns (bytes memory) {
+        return
+            abi.encodePacked(
+                "AccessControl: account ",
+                StringsUpgradeable.toHexString(uint160(account), 20),
+                " is missing role ",
+                StringsUpgradeable.toHexString(uint256(role), 32)
+            );
     }
 }

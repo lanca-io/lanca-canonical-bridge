@@ -23,7 +23,9 @@ contract ManageDstBridgesTest is LCBridgeL1Base {
         uint24[] memory dstChainSelectors = new uint24[](0);
         bytes32[] memory dstBridges = new bytes32[](0);
 
-        vm.expectRevert(CommonErrors.Unauthorized.selector);
+        vm.expectRevert(
+            _constructAccessControlError(address(this), lancaCanonicalBridgeL1.ADMIN())
+        );
 
         lancaCanonicalBridgeL1.addDstBridges(dstChainSelectors, dstBridges);
     }
@@ -92,7 +94,9 @@ contract ManageDstBridgesTest is LCBridgeL1Base {
     function test_removeDstBridges_Unauthorized() public {
         uint24[] memory dstChainSelectors = new uint24[](0);
 
-        vm.expectRevert(CommonErrors.Unauthorized.selector);
+        vm.expectRevert(
+            _constructAccessControlError(address(this), lancaCanonicalBridgeL1.ADMIN())
+        );
 
         lancaCanonicalBridgeL1.removeDstBridges(dstChainSelectors);
     }

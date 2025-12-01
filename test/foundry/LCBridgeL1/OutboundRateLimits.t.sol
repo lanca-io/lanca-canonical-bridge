@@ -26,7 +26,9 @@ contract OutboundRateLimitsTest is LCBridgeL1Base {
     }
 
     function test_setOutboundRateLimit_RevertsUnauthorized() public {
-        vm.expectRevert(CommonErrors.Unauthorized.selector);
+        vm.expectRevert(
+            _constructAccessControlError(address(this), lancaCanonicalBridgeL1.RATE_LIMIT_ADMIN())
+        );
         lancaCanonicalBridgeL1.setRateLimit(
             DST_CHAIN_SELECTOR,
             MAX_RATE_AMOUNT,

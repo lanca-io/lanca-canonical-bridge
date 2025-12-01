@@ -7,25 +7,29 @@
 pragma solidity 0.8.28;
 
 import {IERC165} from "@openzeppelin/contracts-v5/utils/introspection/IERC165.sol";
-
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
 import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
-import {ConceroOwnable} from "@concero/v2-contracts/contracts/common/ConceroOwnable.sol";
 import {ConceroClient} from "@concero/v2-contracts/contracts/ConceroClient/ConceroClient.sol";
 import {IConceroRouter} from "@concero/v2-contracts/contracts/interfaces/IConceroRouter.sol";
-
 import {ILancaCanonicalBridgeClient} from "../LancaCanonicalBridgeClient/LancaCanonicalBridgeClient.sol";
 import {IFiatTokenV1} from "../interfaces/IFiatTokenV1.sol";
 import {RateLimiter} from "./RateLimiter.sol";
-
 import {BridgeCodec} from "../common/libraries/BridgeCodec.sol";
 import {Storage as s} from "./libraries/Storage.sol";
 
-abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, ConceroOwnable {
+/// @title LancaCanonicalBridgeBase
+/// @notice Base contract for Lanca canonical bridge logic shared across L1 and L2.
+/// @dev
+/// - Handles Concero message construction and fee estimation.
+/// - Enforces rate limits via RateLimiter and access control via ConceroOwnable.
+/// - Manages validator and relayer libraries used by the Concero router.
+abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter {
     using BridgeCodec for bytes32;
     using s for s.Base;
 
     uint32 internal constant BRIDGE_GAS_OVERHEAD = 150_000;
+    bytes32 public constant ADMIN = keccak256("ADMIN");
 
     IFiatTokenV1 internal immutable i_usdc;
 
@@ -48,12 +52,31 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, Concer
 
     constructor(
         address usdcAddress,
-        address rateLimitAdmin,
         address conceroRouter
-    ) RateLimiter(rateLimitAdmin) ConceroClient(conceroRouter) {
+    ) RateLimiter() ConceroClient(conceroRouter) {
         i_usdc = IFiatTokenV1(usdcAddress);
     }
 
+    function initialize(address admin) external initializer {
+        _setRoleAdmin(ADMIN, DEFAULT_ADMIN_ROLE);
+        _setRoleAdmin(RATE_LIMIT_ADMIN, ADMIN);
+
+        _grantRole(DEFAULT_ADMIN_ROLE, admin);
+        _grantRole(ADMIN, admin);
+        _grantRole(RATE_LIMIT_ADMIN, admin);
+    }
+
+    /// @notice Builds and sends a Concero bridge message.
+    /// @dev
+    /// - Encodes bridge data including sender, token amount, destination chain data and payload.
+    /// - Uses the stored validator and relayer libraries for message validation and delivery.
+    /// - Forwards `msg.value` as the native fee to the Concero router.
+    /// @param tokenAmount Amount of tokens being bridged (in smallest units).
+    /// @param dstChainSelector Chain selector of the destination chain.
+    /// @param payload Additional payload to be forwarded to the destination hook (if any).
+    /// @param userDstChainData ABI-encoded destination chain data provided by the user.
+    /// @param dstBridge Address (as bytes32) of the destination bridge contract.
+    /// @return messageId Unique identifier of the created Concero message.
     function _sendMessage(
         uint256 tokenAmount,
         uint24 dstChainSelector,
@@ -106,6 +129,15 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, Concer
             );
     }
 
+    /// @notice Validates destination bridge parameters and determines whether a hook should be called.
+    /// @dev
+    /// - If `dstGasLimit` and `payload` indicate a hook call, the receiver must:
+    ///   * be a contract, and
+    ///   * support the `ILancaCanonicalBridgeClient` interface via ERC-165.
+    /// @param dstGasLimit Gas limit allocated for the destination hook call.
+    /// @param receiver Address of the intended token receiver / hook target.
+    /// @param payload Arbitrary payload that might be passed to the receiver.
+    /// @return shouldCallHook True if the bridge should invoke the receiver hook on destination.
     function _validateBridgeParams(
         uint32 dstGasLimit,
         address receiver,
@@ -169,7 +201,7 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, Concer
 
     /* ------- Admin Functions ------- */
 
-    function setRelayerLib(address relayerLib) external onlyOwner {
+    function setRelayerLib(address relayerLib) external onlyRole(ADMIN) {
         s.Base storage s_base = s.base();
 
         require(relayerLib != address(0), CommonErrors.InvalidAddress());
@@ -179,7 +211,7 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, Concer
         _setIsRelayerAllowed(relayerLib, true);
     }
 
-    function removeRelayerLib() external onlyOwner {
+    function removeRelayerLib() external onlyRole(ADMIN) {
         s.Base storage s_base = s.base();
 
         address currentRelayer = s_base.relayerLib;
@@ -190,7 +222,7 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, Concer
         s_base.relayerLib = address(0);
     }
 
-    function setValidatorLib(address validatorLib) external onlyOwner {
+    function setValidatorLib(address validatorLib) external onlyRole(ADMIN) {
         s.Base storage s_base = s.base();
 
         require(validatorLib != address(0), CommonErrors.InvalidAddress());
@@ -202,7 +234,7 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter, Concer
         _setIsValidatorAllowed(validatorLib, true);
     }
 
-    function removeValidatorLib() external onlyOwner {
+    function removeValidatorLib() external onlyRole(ADMIN) {
         s.Base storage s_base = s.base();
 
         address currentValidator = s_base.validatorLib;

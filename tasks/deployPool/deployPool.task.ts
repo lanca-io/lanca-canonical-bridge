@@ -10,6 +10,7 @@ import { compileContracts } from "../../utils";
 import {
 	addDstBridge,
 	addPool,
+	setLibs,
 	setRateLimits,
 	upgradeLancaPoolProxyImplementation,
 } from "../utils";
@@ -39,6 +40,7 @@ async function deployPoolTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 		await addPool(taskArgs.dstchain);
 		await addDstBridge(taskArgs.dstchain);
 		await setRateLimits(hre.network.name, taskArgs.dstchain);
+		await setLibs(hre.network.name);
 	}
 
 	if (taskArgs.pause) {

@@ -42,7 +42,7 @@ export async function addPool(dstChainName: string): Promise<void> {
 		"../../artifacts/contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol/LancaCanonicalBridgeL1.json"
 	);
 
-	const viemAccount = getViemAccount(networkType, "deployer");
+	const viemAccount = getViemAccount(networkType, "proxyDeployer");
 	const { walletClient, publicClient } = getFallbackClients(srcChain, viemAccount);
 
 	const currentPool = await publicClient.readContract({

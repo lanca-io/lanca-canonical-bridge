@@ -7,7 +7,7 @@ import { deployLancaCanonicalBridge } from "../../deploy/LancaCanonicalBridge";
 import { deployLancaCanonicalBridgeProxy } from "../../deploy/LancaCanonicalBridgeProxy";
 import { deployProxyAdmin } from "../../deploy/ProxyAdmin";
 import { compileContracts } from "../../utils";
-import { configureMinter, setRateLimits, upgradeLancaProxyImplementation } from "../utils";
+import { configureMinter, setRateLimits, upgradeLancaProxyImplementation, setLibs } from "../utils";
 
 async function deployBridgeTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	compileContracts({ quiet: true });
@@ -30,6 +30,7 @@ async function deployBridgeTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 
 	if (taskArgs.proxy && !isL1Deployment && !taskArgs.pause) {
 		await setRateLimits(hre.network.name);
+		await setLibs(hre.network.name);
 		await configureMinter(hre.network.name);
 	}
 

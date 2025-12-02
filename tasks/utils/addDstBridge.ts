@@ -1,6 +1,7 @@
 import { getNetworkEnvKey } from "@concero/contract-utils";
+import { pad } from "viem";
 
-import { ADDRESS_ZERO, conceroNetworks, getViemReceiptConfig } from "../../constants";
+import { EMPTY_BYTES, conceroNetworks, getViemReceiptConfig } from "../../constants";
 import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils";
 
 export async function addDstBridge(dstChainName: string): Promise<void> {
@@ -42,7 +43,7 @@ export async function addDstBridge(dstChainName: string): Promise<void> {
 		"../../artifacts/contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol/LancaCanonicalBridgeL1.json"
 	);
 
-	const viemAccount = getViemAccount(networkType, "deployer");
+	const viemAccount = getViemAccount(networkType, "proxyDeployer");
 	const { walletClient, publicClient } = getFallbackClients(srcChain, viemAccount);
 
 	const currentDstBridge = await publicClient.readContract({
@@ -52,7 +53,7 @@ export async function addDstBridge(dstChainName: string): Promise<void> {
 		args: [dstChain.chainSelector],
 	});
 
-	if (currentDstBridge && currentDstBridge.toString() !== ADDRESS_ZERO) {
+	if (currentDstBridge && currentDstBridge.toString() !== EMPTY_BYTES) {
 		err(
 			`Destination bridge already exists for chain ${dstChainName}`,
 			"addDstBridge",
@@ -68,12 +69,14 @@ export async function addDstBridge(dstChainName: string): Promise<void> {
 			srcChainName,
 		);
 
+		const dstBridgeBytes32 = pad(dstBridgeAddress as `0x${string}`, { size: 32 });
+
 		const txHash = await walletClient.writeContract({
 			address: bridgeAddress as `0x${string}`,
 			abi: bridgeAbi,
 			functionName: "addDstBridges",
 			account: viemAccount,
-			args: [[dstChain.chainSelector], [dstBridgeAddress]],
+			args: [[dstChain.chainSelector], [dstBridgeBytes32]],
 			chain: viemChain,
 		});
 

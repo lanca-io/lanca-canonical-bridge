@@ -208,7 +208,7 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter {
         require(s_base.relayerLib == address(0), RelayerLibAlreadySet(s_base.relayerLib));
 
         s_base.relayerLib = relayerLib;
-        _setIsRelayerAllowed(relayerLib, true);
+        _setIsRelayerLibAllowed(relayerLib, true);
     }
 
     function removeRelayerLib() external onlyRole(ADMIN) {
@@ -217,7 +217,7 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter {
         address currentRelayer = s_base.relayerLib;
         require(currentRelayer != address(0), RelayerIsNotSet());
 
-        _setIsRelayerAllowed(currentRelayer, false);
+        _setIsRelayerLibAllowed(currentRelayer, false);
 
         s_base.relayerLib = address(0);
     }

@@ -114,7 +114,10 @@ contract LancaCanonicalBridgeL1 is ILancaCanonicalBridgeL1, LancaCanonicalBridge
         uint24[] calldata dstChainSelectors,
         address[] calldata pools
     ) external onlyRole(ADMIN) {
-        require(dstChainSelectors.length == pools.length, CommonErrors.LengthMismatch());
+        require(
+            dstChainSelectors.length == pools.length,
+            CommonErrors.LengthMismatch(dstChainSelectors.length, pools.length)
+        );
 
         s.L1Bridge storage l1BridgeStorage = s.l1Bridge();
 
@@ -131,7 +134,10 @@ contract LancaCanonicalBridgeL1 is ILancaCanonicalBridgeL1, LancaCanonicalBridge
         uint24[] calldata dstChainSelectors,
         bytes32[] calldata dstBridges
     ) external onlyRole(ADMIN) {
-        require(dstChainSelectors.length == dstBridges.length, CommonErrors.LengthMismatch());
+        require(
+            dstChainSelectors.length == dstBridges.length,
+            CommonErrors.LengthMismatch(dstChainSelectors.length, dstBridges.length)
+        );
 
         s.L1Bridge storage s_l1BridgeStorage = s.l1Bridge();
 

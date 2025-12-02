@@ -21,7 +21,11 @@
         "clean": "npm run clean:hardhat && npm run clean:forge",
         "size-contracts": "hardhat size-contracts",
         "check-updates": "npx npm-check-updates",
-        "prepare": "husky"
+        "update:contract-utils": "yarn cache clean @concero/contract-utils && yarn upgrade @concero/contract-utils",
+        "update:rpcs": "yarn cache clean @concero/rpcs && yarn upgrade @concero/rpcs",
+        "update:v2-networks": "yarn cache clean @concero/v2-networks && yarn upgrade @concero/v2-networks",
+        "update:v2-contracts": "yarn cache clean @concero/v2-contracts && yarn upgrade @concero/v2-contracts",
+        "update:stablecoin": "yarn cache clean @lanca/stablecoin-evm && yarn upgrade @lanca/stablecoin-evm"
     },
     "devDependencies": {
         "@chainlink/env-enc": "1.0.5",

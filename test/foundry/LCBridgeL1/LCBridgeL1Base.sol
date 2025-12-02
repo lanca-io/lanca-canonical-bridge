@@ -121,7 +121,7 @@ abstract contract LCBridgeL1Base is LCBTest {
 
         vm.prank(s_conceroRouter);
         lancaCanonicalBridgeL1.conceroReceive(
-            messageRequest.toMessageReceiptBytes(DST_CHAIN_SELECTOR, s_lancaBridgeMock, NONCE),
+            messageRequest.toMessageReceiptBytes(DST_CHAIN_SELECTOR, s_lancaBridgeMock, NONCE, new bytes[](0)),
             s_validationChecks,
             s_validatorLibs,
             s_relayerLib

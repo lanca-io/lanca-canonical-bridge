@@ -6,7 +6,7 @@
  */
 pragma solidity 0.8.28;
 
-import {IERC165} from "@openzeppelin/contracts-v5/utils/introspection/IERC165.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
 import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";

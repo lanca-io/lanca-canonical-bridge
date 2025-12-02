@@ -126,7 +126,7 @@ contract InboundRateLimitsTest is LCBridgeBase {
 
         vm.prank(s_conceroRouter);
         lancaCanonicalBridge.conceroReceive(
-            messageRequest.toMessageReceiptBytes(SRC_CHAIN_SELECTOR, s_lancaBridgeL1Mock, NONCE),
+            messageRequest.toMessageReceiptBytes(SRC_CHAIN_SELECTOR, s_lancaBridgeL1Mock, NONCE, new bytes[](0)),
             s_validationChecks,
             s_validatorLibs,
             s_relayerLib
@@ -195,7 +195,7 @@ contract InboundRateLimitsTest is LCBridgeBase {
 
         vm.prank(s_conceroRouter);
         lancaCanonicalBridge.conceroReceive(
-            messageRequest.toMessageReceiptBytes(SRC_CHAIN_SELECTOR, s_lancaBridgeL1Mock, NONCE),
+            messageRequest.toMessageReceiptBytes(SRC_CHAIN_SELECTOR, s_lancaBridgeL1Mock, NONCE, new bytes[](0)),
             s_validationChecks,
             s_validatorLibs,
             s_relayerLib
@@ -329,7 +329,7 @@ contract InboundRateLimitsTest is LCBridgeBase {
 
         vm.prank(s_conceroRouter);
         lancaCanonicalBridge.conceroReceive(
-            messageRequest.toMessageReceiptBytes(SRC_CHAIN_SELECTOR, s_lancaBridgeL1Mock, NONCE),
+            messageRequest.toMessageReceiptBytes(SRC_CHAIN_SELECTOR, s_lancaBridgeL1Mock, NONCE, new bytes[](0)),
             s_validationChecks,
             s_validatorLibs,
             s_relayerLib

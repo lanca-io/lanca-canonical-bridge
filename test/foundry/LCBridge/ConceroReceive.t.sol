@@ -59,7 +59,7 @@ contract ConceroReceiveTest is LCBridgeBase {
 
         vm.prank(s_conceroRouter);
         lancaCanonicalBridge.conceroReceive(
-            messageRequest.toMessageReceiptBytes(SRC_CHAIN_SELECTOR, invalidBridgeL1, NONCE),
+            messageRequest.toMessageReceiptBytes(SRC_CHAIN_SELECTOR, invalidBridgeL1, NONCE, new bytes[](0)),
             s_validationChecks,
             s_validatorLibs,
             s_relayerLib
@@ -74,7 +74,8 @@ contract ConceroReceiveTest is LCBridgeBase {
             messageRequest.toMessageReceiptBytes(
                 invalidSrcChainSelector,
                 s_lancaBridgeL1Mock,
-                NONCE
+                NONCE,
+                new bytes[](0)
             ),
             s_validationChecks,
             s_validatorLibs,

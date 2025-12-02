@@ -10,7 +10,6 @@ pragma solidity 0.8.28;
 import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
 
 import {ClientStorage as cs} from "@concero/v2-contracts/contracts/ConceroClient/libraries/ClientStorage.sol";
-import {ClientBaseStorage as cbs} from "@concero/v2-contracts/contracts/ConceroClient/libraries/ClientBaseStorage.sol";
 
 import {LancaCanonicalBridgeBase} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
 import {Storage as s} from "contracts/LancaCanonicalBridge/libraries/Storage.sol";
@@ -21,7 +20,6 @@ import {BaseTest} from "../helpers/BaseTest.sol";
 contract LancaCanonicalBridgeBaseWrapper is LancaCanonicalBridgeBase {
     using s for s.Base;
     using cs for cs.ConceroClient;
-    using cbs for cbs.ConceroClientBase;
 
     constructor(
         address usdcAddress,
@@ -31,7 +29,7 @@ contract LancaCanonicalBridgeBaseWrapper is LancaCanonicalBridgeBase {
     function _conceroReceive(bytes calldata messageReceipt) internal override {}
 
     function exposed_relayerLibIsAllowed(address relayerLib) external view returns (bool) {
-        return cbs.clientBase().isRelayerAllowed[relayerLib];
+        return cs.client().isRelayerLibAllowed[relayerLib];
     }
 
     function exposed_validatorLibIsAllowed(address validatorLib) external view returns (bool) {

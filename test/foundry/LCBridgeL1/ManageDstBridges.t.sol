@@ -34,7 +34,7 @@ contract ManageDstBridgesTest is LCBridgeL1Base {
         uint24[] memory dstChainSelectors = new uint24[](1);
         bytes32[] memory dstBridges = new bytes32[](2);
 
-        vm.expectRevert(CommonErrors.LengthMismatch.selector);
+        vm.expectRevert(abi.encodeWithSelector(CommonErrors.LengthMismatch.selector, 1, 2));
 
         vm.prank(s_deployer);
         lancaCanonicalBridgeL1.addDstBridges(dstChainSelectors, dstBridges);

@@ -14,6 +14,7 @@ const ENV_FILES = [
 	".env.wallets",
 	".env.usdc",
 	"node_modules/@concero/v2-contracts/.env.deployments.testnet",
+	"node_modules/@lanca/stablecoin-evm/.env.deployments.testnet",
 ];
 
 /**

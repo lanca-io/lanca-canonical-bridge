@@ -6,8 +6,14 @@
 ## Add new chain process
 1. [ ] (L2) Deploy USDC.e to a new chain
 ```bash
+# separate folder 
+git clone https://github.com/lanca-io/lcb-stablecoin-evm.git
+cd lcb-stablecoin-evm
+yarn install
+yarn compile
 yarn hardhat deploy-fiat-token --implementation --proxy --network <network_name>
 ```
+
 2. [ ] (L2) Deploy LancaCanonicalBridge to a new network
 ```bash
 yarn hardhat deploy-bridge --implementation --proxy --network <network_name>
@@ -342,7 +348,3 @@ After deployment, addresses are saved to environment variables:
 - `LC_BRIDGE_POOL_<NETWORK_NAME>_<NETWORK_NAME>` - Pool implementation address
 - `LC_BRIDGE_POOL_PROXY_<NETWORK_NAME>_<NETWORK_NAME>` - Pool proxy address
 - `LC_BRIDGE_POOL_PROXY_ADMIN_<NETWORK_NAME>_<NETWORK_NAME>` - Pool proxy admin address
-
-- `USDC_<NETWORK_NAME>` - FiatToken implementation address
-- `USDC_PROXY_<NETWORK_NAME>` - FiatToken proxy address
-- `USDC_PROXY_ADMIN_<NETWORK_NAME>` - FiatToken proxy admin address 

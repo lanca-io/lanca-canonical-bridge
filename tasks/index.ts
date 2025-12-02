@@ -4,12 +4,9 @@ import { addDstBridgeTask } from "./addDstBridge.task";
 import { addDstPoolTask } from "./addDstPool.task";
 import { changeProxyAdminOwnerTask } from "./changeProxyAdminOwner.task";
 import { deployBridgeTask } from "./deployBridge/deployBridge.task";
-import { deployFiatTokenTask } from "./deployFiatToken/deployFiatToken.task";
 import deployConceroPauseToAllChains from "./deployPause/deployConceroPauseToAllChains.task";
 import deployPauseTask from "./deployPause/deployPause.task";
 import { deployPoolTask } from "./deployPool/deployPool.task";
-import fiatTokenChangeAdmin from "./fiatTokenChangeAdmin.task";
-import fiatTokenTransferOwnership from "./fiatTokenTransferOwnership.task";
 import { getRateInfoTask } from "./getRateInfo.task";
 import { removeDstBridgeTask } from "./removeDstBridge.task";
 import { removeDstPoolTask } from "./removeDstPool.task";
@@ -27,7 +24,6 @@ export default {
 	changeProxyAdminOwnerTask,
 	deployBridgeTask,
 	deployPoolTask,
-	deployFiatTokenTask,
 	configureMinterTask,
 	sendTokenTask,
 	setRateLimitsTask,
@@ -36,7 +32,5 @@ export default {
 	deployConceroPauseToAllChains,
 	updateAllPools,
 	updateAllBridges,
-	fiatTokenTransferOwnership,
-	fiatTokenChangeAdmin,
 	transferUsdcTask,
 };

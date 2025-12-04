@@ -107,6 +107,9 @@ abstract contract RateLimiter is AccessControlUpgradeable {
         RateLimit storage rate = isOutbound
             ? s.rateLimits().outboundRates[dstChainSelector]
             : s.rateLimits().inboundRates[dstChainSelector];
+        RateLimit storage oppositeRate = isOutbound
+            ? s.rateLimits().inboundRates[dstChainSelector]
+            : s.rateLimits().outboundRates[dstChainSelector];
 
         uint128 maxAmount = rate.maxAmount;
         uint32 lastUpdate = rate.lastUpdate;
@@ -131,6 +134,7 @@ abstract contract RateLimiter is AccessControlUpgradeable {
 
         // Consume the requested amount from available rate
         newAvailable -= uint128(amount);
+        oppositeRate.availableVolume += uint128(amount);
 
         // Write back only the changed values
         rate.availableVolume = newAvailable;

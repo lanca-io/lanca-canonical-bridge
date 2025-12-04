@@ -58,6 +58,9 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter {
     }
 
     function initialize(address admin) external initializer {
+        __AccessControl_init();
+        __AccessControl_init_unchained();
+
         _setRoleAdmin(ADMIN, DEFAULT_ADMIN_ROLE);
         _setRoleAdmin(RATE_LIMIT_ADMIN, ADMIN);
 

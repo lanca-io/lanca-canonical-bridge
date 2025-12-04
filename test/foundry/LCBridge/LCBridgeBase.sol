@@ -10,11 +10,13 @@ import {IConceroRouter} from "@concero/v2-contracts/contracts/interfaces/IConcer
 import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
 
 import {LancaCanonicalBridge} from "contracts/LancaCanonicalBridge/LancaCanonicalBridge.sol";
+import {LancaCanonicalBridgeBase} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
 import {LancaCanonicalBridgeClientExample} from "contracts/LancaCanonicalBridgeClient/LancaCanonicalBridgeClientExample.sol";
 import {BridgeCodec} from "contracts/common/libraries/BridgeCodec.sol";
 
 import {MockUSDCe} from "../mocks/MockUSDCe.sol";
 import {LCBTest} from "../helpers/LCBTest.sol";
+import {LCBTransparentUpgradeableProxy} from "../../../contracts/Proxy/LCBTransparentUpgradeableProxy.sol";
 
 abstract contract LCBridgeBase is LCBTest {
     using MessageCodec for IConceroRouter.MessageRequest;
@@ -23,14 +25,22 @@ abstract contract LCBridgeBase is LCBTest {
     LancaCanonicalBridgeClientExample internal lcBridgeClient;
 
     function setUp() public virtual {
-        vm.prank(s_deployer);
-        lancaCanonicalBridge = new LancaCanonicalBridge(
-            SRC_CHAIN_SELECTOR,
-            s_conceroRouter,
-            address(s_usdcE),
-            s_lancaBridgeL1Mock
+        lancaCanonicalBridge = LancaCanonicalBridge(
+            address(
+                new LCBTransparentUpgradeableProxy(
+                    address(
+                        new LancaCanonicalBridge(
+                            SRC_CHAIN_SELECTOR,
+                            s_conceroRouter,
+                            address(s_usdcE),
+                            s_lancaBridgeL1Mock
+                        )
+                    ),
+                    s_proxyDeployer,
+                    abi.encodeWithSelector(LancaCanonicalBridgeBase.initialize.selector, s_deployer)
+                )
+            )
         );
-        lancaCanonicalBridge.initialize(s_deployer);
 
         _setValidatorLibs(address(lancaCanonicalBridge));
         _setRelayerLib(address(lancaCanonicalBridge));
@@ -86,7 +96,12 @@ abstract contract LCBridgeBase is LCBTest {
 
         vm.prank(s_conceroRouter);
         lancaCanonicalBridge.conceroReceive(
-            messageRequest.toMessageReceiptBytes(SRC_CHAIN_SELECTOR, s_lancaBridgeL1Mock, NONCE, new bytes[](0)),
+            messageRequest.toMessageReceiptBytes(
+                SRC_CHAIN_SELECTOR,
+                s_lancaBridgeL1Mock,
+                NONCE,
+                new bytes[](0)
+            ),
             s_validationChecks,
             s_validatorLibs,
             s_relayerLib

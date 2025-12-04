@@ -15,10 +15,6 @@ import {LancaCanonicalBridgeL1} from "contracts/LancaCanonicalBridge/LancaCanoni
 import {LCBridgeL1Base} from "./LCBridgeL1Base.sol";
 
 contract ManageDstBridgesTest is LCBridgeL1Base {
-    function setUp() public override {
-        super.setUp();
-    }
-
     function test_addDstBridges_Unauthorized() public {
         uint24[] memory dstChainSelectors = new uint24[](0);
         bytes32[] memory dstBridges = new bytes32[](0);

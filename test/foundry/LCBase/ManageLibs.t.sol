@@ -7,15 +7,14 @@
  */
 pragma solidity 0.8.28;
 
-import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
-
+import {LancaCanonicalBridge} from "../../../contracts/LancaCanonicalBridge/LancaCanonicalBridge.sol";
+import {LCBTransparentUpgradeableProxy} from "../../../contracts/Proxy/LCBTransparentUpgradeableProxy.sol";
+import {BaseTest} from "../helpers/BaseTest.sol";
 import {ClientStorage as cs} from "@concero/v2-contracts/contracts/ConceroClient/libraries/ClientStorage.sol";
-
+import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
 import {LancaCanonicalBridgeBase} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
 import {Storage as s} from "contracts/LancaCanonicalBridge/libraries/Storage.sol";
 import {StringsUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
-
-import {BaseTest} from "../helpers/BaseTest.sol";
 
 contract LancaCanonicalBridgeBaseWrapper is LancaCanonicalBridgeBase {
     using s for s.Base;
@@ -44,12 +43,15 @@ contract LancaCanonicalBridgeBaseWrapper is LancaCanonicalBridgeBase {
 contract ManageLibsTest is BaseTest {
     LancaCanonicalBridgeBaseWrapper internal lancaCanonicalBridgeBase;
     function setUp() public {
-        vm.prank(s_deployer);
-        lancaCanonicalBridgeBase = new LancaCanonicalBridgeBaseWrapper(
-            address(s_usdcE),
-            s_conceroRouter
+        lancaCanonicalBridgeBase = LancaCanonicalBridgeBaseWrapper(
+            address(
+                new LCBTransparentUpgradeableProxy(
+                    address(new LancaCanonicalBridgeBaseWrapper(s_conceroRouter, address(s_usdcE))),
+                    s_proxyDeployer,
+                    abi.encodeWithSelector(LancaCanonicalBridgeBase.initialize.selector, s_deployer)
+                )
+            )
         );
-        lancaCanonicalBridgeBase.initialize(s_deployer);
     }
 
     /* ------- setRelayerLib ------- */

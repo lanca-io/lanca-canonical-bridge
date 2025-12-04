@@ -16,10 +16,6 @@ import {MockUSDCe} from "../mocks/MockUSDCe.sol";
 import {LCBridgeBase} from "./LCBridgeBase.sol";
 
 contract SendTokenTest is LCBridgeBase {
-    function setUp() public override {
-        super.setUp();
-    }
-
     function test_sendToken_RevertsInvalidAmount() public {
         uint256 invalidAmount = 0;
 

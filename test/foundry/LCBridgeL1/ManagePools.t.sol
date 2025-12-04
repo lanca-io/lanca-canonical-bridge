@@ -14,10 +14,6 @@ import {LancaCanonicalBridgeL1} from "contracts/LancaCanonicalBridge/LancaCanoni
 import {LCBridgeL1Base} from "./LCBridgeL1Base.sol";
 
 contract ManagePoolsTest is LCBridgeL1Base {
-    function setUp() public override {
-        super.setUp();
-    }
-
     function test_addPools_Unauthorized() public {
         uint24[] memory dstChainSelectors = new uint24[](1);
         address[] memory pools = new address[](1);

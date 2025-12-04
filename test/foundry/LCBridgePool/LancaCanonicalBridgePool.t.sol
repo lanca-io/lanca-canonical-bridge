@@ -13,10 +13,6 @@ import {MockUSDC} from "../mocks/MockUSDC.sol";
 import {LCBridgePoolBase} from "./LCBridgePoolBase.sol";
 
 contract LancaCanonicalBridgePoolTest is LCBridgePoolBase {
-    function setUp() public override {
-        super.setUp();
-    }
-
     function test_deposit_RevertsUnauthorized() public {
         vm.expectRevert(CommonErrors.Unauthorized.selector);
 

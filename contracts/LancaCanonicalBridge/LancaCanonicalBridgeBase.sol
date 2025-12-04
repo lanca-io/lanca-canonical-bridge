@@ -45,6 +45,7 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter {
     error InvalidBridgeSender();
     error InvalidDstGasLimitOrCallData();
     error InvalidConceroMessage();
+    error InvalidReceiver();
     error RelayerLibAlreadySet(address relayerLib);
     error RelayerIsNotSet();
     error ValidatorAlreadySet(address validatorLib);
@@ -117,7 +118,11 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter {
         bytes32 dstBridge,
         uint256 payloadLength
     ) internal pure returns (bytes memory) {
-        (, uint32 userDstChainGasLimit) = MessageCodec.decodeEvmDstChainData(userDstChainData);
+        (address receiver, uint32 userDstChainGasLimit) = MessageCodec.decodeEvmDstChainData(
+            userDstChainData
+        );
+
+        require(receiver != address(0), InvalidReceiver());
 
         require(
             (userDstChainGasLimit == 0 && payloadLength == 0) ||

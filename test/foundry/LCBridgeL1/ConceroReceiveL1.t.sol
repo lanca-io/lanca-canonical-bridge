@@ -14,6 +14,7 @@ import {BridgeCodec} from "contracts/common/libraries/BridgeCodec.sol";
 import {LancaCanonicalBridgeBase} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
 import {LancaCanonicalBridgeL1} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol";
 
+import {MockInvalidClient} from "../mocks/MockInvalidClient.sol";
 import {MockUSDC} from "../mocks/MockUSDC.sol";
 import {LCBridgeL1Base} from "./LCBridgeL1Base.sol";
 
@@ -25,10 +26,7 @@ contract ConceroReceiveL1Test is LCBridgeL1Base {
     }
 
     function test_conceroReceive_Success() public {
-        _addDefaultPool();
-        _addDefaultDstBridge();
-
-        MockUSDC(address(s_usdc)).mint(address(lancaCanonicalBridgePool), AMOUNT);
+        _beforeConceroReceive();
 
         uint256 userBalanceBefore = s_usdc.balanceOf(s_user);
         uint256 poolBalanceBefore = s_usdc.balanceOf(address(lancaCanonicalBridgePool));
@@ -62,7 +60,12 @@ contract ConceroReceiveL1Test is LCBridgeL1Base {
 
         vm.prank(s_conceroRouter);
         lancaCanonicalBridgeL1.conceroReceive(
-            messageRequest.toMessageReceiptBytes(SRC_CHAIN_SELECTOR, invalidBridgeL1, NONCE, new bytes[](0)),
+            messageRequest.toMessageReceiptBytes(
+                SRC_CHAIN_SELECTOR,
+                invalidBridgeL1,
+                NONCE,
+                new bytes[](0)
+            ),
             s_validationChecks,
             s_validatorLibs,
             s_relayerLib
@@ -70,10 +73,7 @@ contract ConceroReceiveL1Test is LCBridgeL1Base {
     }
 
     function test_conceroReceive_EmitsBridgeDelivered() public {
-        _addDefaultPool();
-        _addDefaultDstBridge();
-
-        MockUSDC(address(s_usdc)).mint(address(lancaCanonicalBridgePool), AMOUNT);
+        _beforeConceroReceive();
 
         vm.expectEmit(false, false, false, true);
         emit LancaCanonicalBridgeBase.BridgeDelivered(DEFAULT_MESSAGE_ID, AMOUNT);
@@ -91,24 +91,30 @@ contract ConceroReceiveL1Test is LCBridgeL1Base {
         _conceroReceive(s_user, s_user, AMOUNT, 0, ZERO_BYTES);
     }
 
-    function test_conceroReceive_WithCall_RevertsIfInvalidConceroMessage() public {
-        _addDefaultPool();
-        _addDefaultDstBridge();
+    // --- Tests for conceroReceive with call ---
+
+    function test_conceroReceive_WithCall_DeliversTokensWithoutHookWhenReceiverHasNoCode() public {
+        _beforeConceroReceive();
 
         address invalidLCBridgeClient = makeAddr("InvalidLCBridgeClient");
 
-        vm.expectRevert(
-            abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidConceroMessage.selector)
-        );
-
         _conceroReceive(s_user, invalidLCBridgeClient, AMOUNT, GAS_LIMIT, "0x01");
+
+        assertEq(s_usdc.balanceOf(invalidLCBridgeClient), AMOUNT);
+    }
+
+    function test_conceroReceive_WithCall_DeliversTokensWhenReceiverLacksInterface() public {
+        _beforeConceroReceive();
+
+        MockInvalidClient invalidReceiverContract = new MockInvalidClient();
+
+        _conceroReceive(s_user, address(invalidReceiverContract), AMOUNT, GAS_LIMIT, "0x01");
+
+        assertEq(s_usdc.balanceOf(address(invalidReceiverContract)), AMOUNT);
     }
 
     function test_conceroReceive_WithCall() public {
-        _addDefaultPool();
-        _addDefaultDstBridge();
-
-        MockUSDC(address(s_usdc)).mint(address(lancaCanonicalBridgePool), AMOUNT);
+        _beforeConceroReceive();
 
         string memory testString = "LancaCanonicalBridgeL1";
 
@@ -118,5 +124,14 @@ contract ConceroReceiveL1Test is LCBridgeL1Base {
         assertEq(BridgeCodec.toAddress(lcBridgeClient.tokenSender()), s_user);
         assertEq(lcBridgeClient.tokenAmount(), AMOUNT);
         assertEq(lcBridgeClient.testString(), testString);
+    }
+
+    // --- Helper Functions ---
+
+    function _beforeConceroReceive() internal {
+        _addDefaultPool();
+        _addDefaultDstBridge();
+
+        MockUSDC(address(s_usdc)).mint(address(lancaCanonicalBridgePool), AMOUNT);
     }
 }

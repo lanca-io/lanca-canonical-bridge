@@ -57,7 +57,11 @@ const deployLancaCanonicalBridgeProxy: DeploymentFunction = async function (
 	});
 
 	log(
-		`Deployed at: ${lancaProxyDeployment.address}. Initial impl: ${initialImplementationAlias}, Proxy admin: ${proxyAdminAlias}`,
+		`Deployed at: ${lancaProxyDeployment.address}. 
+		 Initial impl: ${initialImplementationAlias}, 
+		 Proxy admin: ${proxyAdminAlias},
+		 Hash: ${lancaProxyDeployment.transactionHash}, 
+		 Initialize data: ${initializeData}`,
 		`deployLancaCanonicalBridgeProxy: ${proxyType}`,
 		name,
 	);

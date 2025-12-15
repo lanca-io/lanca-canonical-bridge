@@ -7,7 +7,7 @@ import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../u
 export async function monitorBridgeDelivered(
 	messageId: string,
 	dstChain: string,
-	timeoutMs: number = 300000, // 5 minutes default
+	timeoutMs: number = 3600000, // 1 hour default
 ): Promise<void> {
 	const dstNetwork = conceroNetworks[dstChain];
 	if (!dstNetwork) {

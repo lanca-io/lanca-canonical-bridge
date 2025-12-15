@@ -69,7 +69,7 @@ export async function addDstBridge(dstChainName: string): Promise<void> {
 			srcChainName,
 		);
 
-		const dstBridgeBytes32 = pad(dstBridgeAddress as `0x${string}`, { size: 32 });
+		const dstBridgeBytes32 = pad(dstBridgeAddress as `0x${string}`, { size: 32, dir: "right" });
 
 		const txHash = await walletClient.writeContract({
 			address: bridgeAddress as `0x${string}`,

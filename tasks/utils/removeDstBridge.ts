@@ -12,12 +12,10 @@ export async function removeDstBridge(dstChainName: string): Promise<void> {
 	const srcChain = conceroNetworks[srcChainName as keyof typeof conceroNetworks];
 	const { viemChain } = srcChain;
 
-	const bridgeAddress = getEnvVar(
-		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(srcChainName)}`,
-	);
+	const bridgeAddress = getEnvVar(`LC_BRIDGE_PROXY_${getNetworkEnvKey(srcChainName)}`);
 	if (!bridgeAddress) {
 		err(
-			`SRC Bridge address not found. Set LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(srcChainName)} in .env.deployments.${networkType} variables.`,
+			`SRC Bridge address not found. Set LC_BRIDGE_PROXY_${getNetworkEnvKey(srcChainName)} in .env.deployments.${networkType} variables.`,
 			"addDstBridge",
 			srcChainName,
 		);

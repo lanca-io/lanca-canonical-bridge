@@ -13,23 +13,19 @@ export async function addDstBridge(dstChainName: string): Promise<void> {
 	const srcChain = conceroNetworks[srcChainName as keyof typeof conceroNetworks];
 	const { viemChain } = srcChain;
 
-	const bridgeAddress = getEnvVar(
-		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(srcChainName)}`,
-	);
+	const bridgeAddress = getEnvVar(`LC_BRIDGE_PROXY_${getNetworkEnvKey(srcChainName)}`);
 	if (!bridgeAddress) {
 		err(
-			`SRC Bridge address not found. Set LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(srcChainName)} in .env.deployments.${networkType} variables.`,
+			`SRC Bridge address not found. Set LC_BRIDGE_PROXY_${getNetworkEnvKey(srcChainName)} in .env.deployments.${networkType} variables.`,
 			"addDstBridge",
 			srcChainName,
 		);
 	}
 
-	const dstBridgeAddress = getEnvVar(
-		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChainName)}`,
-	);
+	const dstBridgeAddress = getEnvVar(`LC_BRIDGE_PROXY_${getNetworkEnvKey(dstChainName)}`);
 	if (!dstBridgeAddress) {
 		err(
-			`DST Bridge address not found. Set LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChainName)} in .env.deployments.${networkType} variables.`,
+			`DST Bridge address not found. Set LC_BRIDGE_PROXY_${getNetworkEnvKey(dstChainName)} in .env.deployments.${networkType} variables.`,
 			"addDstBridge",
 			dstChainName,
 		);
@@ -43,7 +39,7 @@ export async function addDstBridge(dstChainName: string): Promise<void> {
 		"../../artifacts/contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol/LancaCanonicalBridgeL1.json"
 	);
 
-	const viemAccount = getViemAccount(networkType, "proxyDeployer");
+	const viemAccount = getViemAccount(networkType, "deployer");
 	const { walletClient, publicClient } = getFallbackClients(srcChain, viemAccount);
 
 	const currentDstBridge = await publicClient.readContract({

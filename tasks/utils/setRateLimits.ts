@@ -60,9 +60,7 @@ export async function setRateLimits(
 		return;
 	}
 
-	const contractAddress = getEnvVar(
-		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(srcChainName)}`,
-	);
+	const contractAddress = getEnvVar(`LC_BRIDGE_PROXY_${getNetworkEnvKey(srcChainName)}`);
 
 	if (!contractAddress) {
 		err(`Contract address not found for ${srcChainName}`, "setRateLimits", srcChainName);
@@ -77,7 +75,7 @@ export async function setRateLimits(
 				"../../artifacts/contracts/LancaCanonicalBridge/LancaCanonicalBridge.sol/LancaCanonicalBridge.json"
 			);
 
-	const viemAccount = getViemAccount(networkType, "rateLimitAdmin");
+	const viemAccount = getViemAccount(networkType, "deployer");
 	const { walletClient, publicClient } = getFallbackClients(srcChain, viemAccount);
 
 	// Get current rate info using the new utility

@@ -18,7 +18,7 @@ export async function configureMinter(srcChainName: string, amount?: string): Pr
 	const { walletClient, publicClient } = getFallbackClients(srcChain, viemAccount);
 
 	const lancaCanonicalBridgeAddress = getEnvVar(
-		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(srcChainName)}`,
+		`LC_BRIDGE_PROXY_${getNetworkEnvKey(srcChainName)}`,
 	);
 	if (!lancaCanonicalBridgeAddress) {
 		err(`LancaCanonicalBridge address not found`, "configureMinter", srcChainName);

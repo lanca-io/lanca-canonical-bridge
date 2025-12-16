@@ -1,7 +1,6 @@
 export { changeProxyAdminOwner } from "./changeProxyAdminOwner";
 export { setLibs } from "./setLibs";
 export { upgradeLancaProxyImplementation } from "./upgradeLancaProxy";
-export { upgradeLancaPoolProxyImplementation } from "./upgradeLancaPool";
 export { configureMinter } from "./configureMinter";
 export { addPool } from "./addPool";
 export { addDstBridge } from "./addDstBridge";

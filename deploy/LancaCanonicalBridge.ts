@@ -46,12 +46,11 @@ const deployLancaCanonicalBridge: DeploymentFunction = async function (
 			networkType === "testnet" ? conceroNetworks.ethereumSepolia : conceroNetworks.ethereum
 		) as ConceroNetwork;
 
-		l1BridgeAddress =
-			getEnvVar(`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChain.name)}`) || "";
+		l1BridgeAddress = getEnvVar(`LC_BRIDGE_PROXY_${getNetworkEnvKey(dstChain.name)}`) || "";
 		l1ChainSelector = BigInt(dstChain.chainId);
 		if (!l1BridgeAddress || !l1ChainSelector) {
 			err(
-				`L1 Bridge address of L1 chain selector ${l1ChainSelector} not found. Set LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChain.name)} in .env.deployments.${networkType} variables.`,
+				`L1 Bridge address of L1 chain selector ${l1ChainSelector} not found. Set LC_BRIDGE_PROXY_${getNetworkEnvKey(dstChain.name)} in .env.deployments.${networkType} variables.`,
 				"deployLancaCanonicalBridge",
 				name,
 			);
@@ -124,7 +123,7 @@ const deployLancaCanonicalBridge: DeploymentFunction = async function (
 	log(`Deployed at: ${deployment.address}`, "deployLancaCanonicalBridge", name);
 
 	updateEnvVariable(
-		`LANCA_CANONICAL_BRIDGE_${getNetworkEnvKey(name)}`,
+		`LC_BRIDGE_${getNetworkEnvKey(name)}`,
 		deployment.address,
 		`deployments.${networkType}`,
 	);

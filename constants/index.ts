@@ -2,6 +2,7 @@ import { accessControlAbi } from "./accessControlAbi";
 import { conceroNetworks } from "./conceroNetworks";
 import {
 	ADDRESS_ZERO,
+	ADMIN_SLOT,
 	EMPTY_BYTES,
 	ProxyEnum,
 	envPrefixes,
@@ -23,6 +24,7 @@ export {
 	getViemReceiptConfig,
 	ADDRESS_ZERO,
 	EMPTY_BYTES,
+	ADMIN_SLOT,
 	fiatTokenV2Abi,
 	accessControlAbi,
 	proxyAbi,

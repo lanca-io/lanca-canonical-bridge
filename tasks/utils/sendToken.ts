@@ -32,7 +32,7 @@ export async function sendToken(params: SendTokenParams): Promise<void> {
 		srcChain,
 	);
 
-	const bridgeAddress = getEnvVar(`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(srcChain)}`);
+	const bridgeAddress = getEnvVar(`LC_BRIDGE_PROXY_${getNetworkEnvKey(srcChain)}`);
 	if (!bridgeAddress) {
 		err(`Bridge address not found for ${srcChain}`, "sendToken");
 	}
@@ -42,9 +42,7 @@ export async function sendToken(params: SendTokenParams): Promise<void> {
 		err(`USDC address not found for ${srcChain}`, "sendToken");
 	}
 
-	const dstBridgeAddress = getEnvVar(
-		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChain)}`,
-	);
+	const dstBridgeAddress = getEnvVar(`LC_BRIDGE_PROXY_${getNetworkEnvKey(dstChain)}`);
 	if (!dstBridgeAddress) {
 		err(`Destination bridge address not found for ${dstChain}`, "sendToken");
 	}
@@ -62,9 +60,7 @@ export async function sendToken(params: SendTokenParams): Promise<void> {
 
 	if (isEthereumChain) {
 		// For Ethereum chains, approve to the pool
-		const poolAddress = getEnvVar(
-			`LC_BRIDGE_POOL_PROXY_${getNetworkEnvKey(srcChain)}_${getNetworkEnvKey(dstChain)}` as any,
-		);
+		const poolAddress = getEnvVar(`LC_BRIDGE_POOL_PROXY_${getNetworkEnvKey(dstChain)}` as any);
 		if (!poolAddress) return;
 
 		approvalTarget = poolAddress;

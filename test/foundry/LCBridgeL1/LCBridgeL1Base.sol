@@ -6,7 +6,7 @@
  */
 pragma solidity 0.8.28;
 
-import {LCBTransparentUpgradeableProxy} from "../../../contracts/Proxy/LCBTransparentUpgradeableProxy.sol";
+import {TransparentUpgradeableProxy} from "../../../contracts/Proxy/TransparentUpgradeableProxy.sol";
 import {BridgeCodec} from "contracts/common/libraries/BridgeCodec.sol";
 import {IConceroRouter} from "@concero/v2-contracts/contracts/interfaces/IConceroRouter.sol";
 import {LCBTest} from "../helpers/LCBTest.sol";
@@ -27,7 +27,7 @@ abstract contract LCBridgeL1Base is LCBTest {
     function setUp() public virtual {
         lancaCanonicalBridgeL1 = LancaCanonicalBridgeL1(
             address(
-                new LCBTransparentUpgradeableProxy(
+                new TransparentUpgradeableProxy(
                     address(new LancaCanonicalBridgeL1(s_conceroRouter, address(s_usdc))),
                     s_proxyDeployer,
                     abi.encodeWithSelector(LancaCanonicalBridgeBase.initialize.selector, s_deployer)

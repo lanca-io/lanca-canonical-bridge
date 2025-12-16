@@ -12,7 +12,7 @@ task("update-all-bridge-implementations")
 	.setAction(async (taskArgs, hre) => {
 		for (const network in conceroNetworks) {
 			if (network === taskArgs.l1chain) continue;
-			if (getEnvVar(`LANCA_CANONICAL_BRIDGE_${getNetworkEnvKey(network)}`)) {
+			if (getEnvVar(`LC_BRIDGE_${getNetworkEnvKey(network)}`)) {
 				console.log(`Updating bridge implementation for ${network}`);
 				execSync(`yarn hardhat deploy-bridge --implementation --network ${network}`, {
 					encoding: "utf8",

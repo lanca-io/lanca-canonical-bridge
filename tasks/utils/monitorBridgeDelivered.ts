@@ -15,9 +15,7 @@ export async function monitorBridgeDelivered(
 		return;
 	}
 
-	const dstBridgeAddress = getEnvVar(
-		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChain)}`,
-	);
+	const dstBridgeAddress = getEnvVar(`LC_BRIDGE_PROXY_${getNetworkEnvKey(dstChain)}`);
 	if (!dstBridgeAddress) return;
 
 	// Determine if target network is L1 or L2

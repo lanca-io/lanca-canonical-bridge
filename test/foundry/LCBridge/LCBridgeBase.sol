@@ -16,7 +16,7 @@ import {BridgeCodec} from "contracts/common/libraries/BridgeCodec.sol";
 
 import {MockUSDCe} from "../mocks/MockUSDCe.sol";
 import {LCBTest} from "../helpers/LCBTest.sol";
-import {LCBTransparentUpgradeableProxy} from "../../../contracts/Proxy/LCBTransparentUpgradeableProxy.sol";
+import {TransparentUpgradeableProxy} from "../../../contracts/Proxy/TransparentUpgradeableProxy.sol";
 
 abstract contract LCBridgeBase is LCBTest {
     using MessageCodec for IConceroRouter.MessageRequest;
@@ -27,7 +27,7 @@ abstract contract LCBridgeBase is LCBTest {
     function setUp() public virtual {
         lancaCanonicalBridge = LancaCanonicalBridge(
             address(
-                new LCBTransparentUpgradeableProxy(
+                new TransparentUpgradeableProxy(
                     address(
                         new LancaCanonicalBridge(
                             SRC_CHAIN_SELECTOR,

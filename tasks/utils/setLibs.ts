@@ -7,9 +7,7 @@ export async function setLibs(srcChainName: string): Promise<void> {
 	const srcChain = conceroNetworks[srcChainName as keyof typeof conceroNetworks];
 	const { viemChain, type: networkType } = srcChain;
 
-	const contractAddress = getEnvVar(
-		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(srcChainName)}`,
-	);
+	const contractAddress = getEnvVar(`LC_BRIDGE_PROXY_${getNetworkEnvKey(srcChainName)}`);
 
 	if (!contractAddress) {
 		err(`Contract address not found for ${srcChainName}`, "setLibs", srcChainName);
@@ -20,7 +18,7 @@ export async function setLibs(srcChainName: string): Promise<void> {
 		"../../artifacts/contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol/LancaCanonicalBridgeBase.json"
 	);
 
-	const viemAccount = getViemAccount(networkType, "proxyDeployer");
+	const viemAccount = getViemAccount(networkType, "deployer");
 	const { walletClient, publicClient } = getFallbackClients(srcChain, viemAccount);
 
 	const currentValidatorLib = await publicClient.readContract({

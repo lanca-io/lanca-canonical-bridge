@@ -8,7 +8,7 @@
 pragma solidity 0.8.28;
 
 import {LancaCanonicalBridge} from "../../../contracts/LancaCanonicalBridge/LancaCanonicalBridge.sol";
-import {LCBTransparentUpgradeableProxy} from "../../../contracts/Proxy/LCBTransparentUpgradeableProxy.sol";
+import {TransparentUpgradeableProxy} from "../../../contracts/Proxy/TransparentUpgradeableProxy.sol";
 import {BaseTest} from "../helpers/BaseTest.sol";
 import {ClientStorage as cs} from "@concero/v2-contracts/contracts/ConceroClient/libraries/ClientStorage.sol";
 import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
@@ -45,7 +45,7 @@ contract ManageLibsTest is BaseTest {
     function setUp() public {
         lancaCanonicalBridgeBase = LancaCanonicalBridgeBaseWrapper(
             address(
-                new LCBTransparentUpgradeableProxy(
+                new TransparentUpgradeableProxy(
                     address(new LancaCanonicalBridgeBaseWrapper(s_conceroRouter, address(s_usdcE))),
                     s_proxyDeployer,
                     abi.encodeWithSelector(LancaCanonicalBridgeBase.initialize.selector, s_deployer)

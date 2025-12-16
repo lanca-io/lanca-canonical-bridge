@@ -1,13 +1,13 @@
 import { task } from "hardhat/config";
 
 import { type HardhatRuntimeEnvironment } from "hardhat/types";
+import { encodeFunctionData } from "viem";
 
-import { ProxyEnum, envPrefixes } from "../../constants";
+import { ProxyEnum, proxyAbi } from "../../constants";
 import { deployLancaCanonicalBridge } from "../../deploy/LancaCanonicalBridge";
-import { deployLancaCanonicalBridgeProxy } from "../../deploy/LancaCanonicalBridgeProxy";
-import { deployProxyAdmin } from "../../deploy/ProxyAdmin";
+import { deployTransparentProxy } from "../../deploy/TransparentProxy";
 import { compileContracts } from "../../utils";
-import { configureMinter, setRateLimits, upgradeLancaProxyImplementation, setLibs } from "../utils";
+import { configureMinter, setLibs, setRateLimits, upgradeLancaProxyImplementation } from "../utils";
 
 async function deployBridgeTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	compileContracts({ quiet: true });
@@ -20,12 +20,17 @@ async function deployBridgeTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	}
 
 	if (taskArgs.proxy) {
-		await deployProxyAdmin(hre, envPrefixes.lcBridgeProxyAdmin, taskArgs.owner);
-		await deployLancaCanonicalBridgeProxy(hre, ProxyEnum.lcBridgeProxy);
+		const [deployer] = await hre.ethers.getSigners();
+		const callData = encodeFunctionData({
+			abi: proxyAbi,
+			functionName: "initialize",
+			args: [deployer.address],
+		});
+		await deployTransparentProxy(hre, ProxyEnum.lcBridgeProxy, callData);
 	}
 
 	if (taskArgs.implementation) {
-		await upgradeLancaProxyImplementation(hre.network.name, ProxyEnum.lcBridgeProxy, false);
+		await upgradeLancaProxyImplementation(hre, ProxyEnum.lcBridgeProxy, false);
 	}
 
 	if (taskArgs.proxy && !isL1Deployment && !taskArgs.pause) {
@@ -35,11 +40,11 @@ async function deployBridgeTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	}
 
 	if (taskArgs.pause) {
-		await upgradeLancaProxyImplementation(hre.network.name, ProxyEnum.lcBridgeProxy, true);
+		await upgradeLancaProxyImplementation(hre, ProxyEnum.lcBridgeProxy, true);
 	}
 }
 
-// yarn hardhat deploy-bridge [--implementation] [--proxy] [--pause] [--owner <address>] --network <network_name>
+// yarn hardhat deploy-bridge [--implementation] [--proxy] [--pause] --network <network_name>
 task("deploy-bridge", "Deploy LancaCanonicalBridge")
 	.addFlag("implementation", "Deploy implementation")
 	.addFlag("proxy", "Deploy proxy and proxy admin")

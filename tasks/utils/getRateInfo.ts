@@ -59,9 +59,7 @@ export async function getRateInfo(
 		return {} as RateLimitInfo;
 	}
 
-	const contractAddress = getEnvVar(
-		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(srcChain.name)}`,
-	);
+	const contractAddress = getEnvVar(`LC_BRIDGE_PROXY_${getNetworkEnvKey(srcChain.name)}`);
 
 	if (!contractAddress) {
 		err(`Contract address not found for ${srcChain.name}`, "getRateInfo", srcChain.name);

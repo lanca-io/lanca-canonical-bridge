@@ -110,12 +110,7 @@ contract InboundRateLimitsTest is LCBridgeBase {
 
         // Next receive should fail
         IConceroRouter.MessageRequest memory messageRequest = _buildMessageRequest(
-            BridgeCodec.encodeBridgeData(
-                s_user,
-                400 * 1e6,
-                MessageCodec.encodeEvmDstChainData(s_user, 0),
-                ""
-            ),
+            BridgeCodec.encodeBridgeData(s_user, s_user, 400 * 1e6, ""),
             SRC_CHAIN_SELECTOR,
             address(lancaCanonicalBridge)
         );
@@ -126,7 +121,12 @@ contract InboundRateLimitsTest is LCBridgeBase {
 
         vm.prank(s_conceroRouter);
         lancaCanonicalBridge.conceroReceive(
-            messageRequest.toMessageReceiptBytes(SRC_CHAIN_SELECTOR, s_lancaBridgeL1Mock, NONCE, new bytes[](0)),
+            messageRequest.toMessageReceiptBytes(
+                SRC_CHAIN_SELECTOR,
+                s_lancaBridgeL1Mock,
+                NONCE,
+                new bytes[](0)
+            ),
             s_validationChecks,
             s_validatorLibs,
             s_relayerLib
@@ -179,12 +179,7 @@ contract InboundRateLimitsTest is LCBridgeBase {
 
         // Transfers should be blocked when maxAmount = 0 (soft pause)
         IConceroRouter.MessageRequest memory messageRequest = _buildMessageRequest(
-            BridgeCodec.encodeBridgeData(
-                s_user,
-                1000 * 1e6,
-                MessageCodec.encodeEvmDstChainData(s_user, 0),
-                ""
-            ),
+            BridgeCodec.encodeBridgeData(s_user, s_user, 1000 * 1e6, ""),
             SRC_CHAIN_SELECTOR,
             address(lancaCanonicalBridge)
         );
@@ -195,7 +190,12 @@ contract InboundRateLimitsTest is LCBridgeBase {
 
         vm.prank(s_conceroRouter);
         lancaCanonicalBridge.conceroReceive(
-            messageRequest.toMessageReceiptBytes(SRC_CHAIN_SELECTOR, s_lancaBridgeL1Mock, NONCE, new bytes[](0)),
+            messageRequest.toMessageReceiptBytes(
+                SRC_CHAIN_SELECTOR,
+                s_lancaBridgeL1Mock,
+                NONCE,
+                new bytes[](0)
+            ),
             s_validationChecks,
             s_validatorLibs,
             s_relayerLib
@@ -317,19 +317,19 @@ contract InboundRateLimitsTest is LCBridgeBase {
 
     function _performReceive(uint256 amount) internal {
         IConceroRouter.MessageRequest memory messageRequest = _buildMessageRequest(
-            BridgeCodec.encodeBridgeData(
-                s_user,
-                amount,
-                MessageCodec.encodeEvmDstChainData(s_user, 0),
-                ""
-            ),
+            BridgeCodec.encodeBridgeData(s_user, s_user, amount, ""),
             SRC_CHAIN_SELECTOR,
             address(lancaCanonicalBridge)
         );
 
         vm.prank(s_conceroRouter);
         lancaCanonicalBridge.conceroReceive(
-            messageRequest.toMessageReceiptBytes(SRC_CHAIN_SELECTOR, s_lancaBridgeL1Mock, NONCE, new bytes[](0)),
+            messageRequest.toMessageReceiptBytes(
+                SRC_CHAIN_SELECTOR,
+                s_lancaBridgeL1Mock,
+                NONCE,
+                new bytes[](0)
+            ),
             s_validationChecks,
             s_validatorLibs,
             s_relayerLib

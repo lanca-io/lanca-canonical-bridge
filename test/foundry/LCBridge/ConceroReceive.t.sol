@@ -42,8 +42,8 @@ contract ConceroReceiveTest is LCBridgeBase {
         IConceroRouter.MessageRequest memory messageRequest = _buildMessageRequest(
             BridgeCodec.encodeBridgeData(
                 s_user,
+                s_user,
                 AMOUNT,
-                MessageCodec.encodeEvmDstChainData(s_user, 0),
                 ""
             ),
             SRC_CHAIN_SELECTOR,

@@ -6,7 +6,7 @@
  */
 pragma solidity 0.8.28;
 
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
 import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
@@ -25,6 +25,7 @@ import {Storage as s} from "./libraries/Storage.sol";
 /// - Enforces rate limits via RateLimiter and access control via ConceroOwnable.
 /// - Manages validator and relayer libraries used by the Concero router.
 abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter {
+    using ERC165Checker for address;
     using BridgeCodec for bytes32;
     using s for s.Base;
 
@@ -178,7 +179,7 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter {
     function _isValidContractReceiver(address tokenReceiver) internal view returns (bool) {
         if (
             tokenReceiver.code.length == 0 ||
-            !IERC165(tokenReceiver).supportsInterface(type(ILancaCanonicalBridgeClient).interfaceId)
+            !tokenReceiver.supportsInterface(type(ILancaCanonicalBridgeClient).interfaceId)
         ) {
             return false;
         }

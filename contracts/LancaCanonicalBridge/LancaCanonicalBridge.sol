@@ -19,6 +19,7 @@ import {ILancaCanonicalBridge} from "../interfaces/ILancaCanonicalBridge.sol";
 contract LancaCanonicalBridge is ILancaCanonicalBridge, LancaCanonicalBridgeBase {
     using BridgeCodec for address;
     using BridgeCodec for bytes;
+    using BridgeCodec for bytes32;
     using MessageCodec for bytes;
 
     /// @notice Chain selector that uniquely identifies the L1 chain where the canonical bridge resides.
@@ -83,20 +84,19 @@ contract LancaCanonicalBridge is ILancaCanonicalBridge, LancaCanonicalBridgeBase
         bytes32 messageId = keccak256(messageReceipt);
 
         (
-            bytes32 tokenSender,
             uint256 tokenAmount,
-            bytes calldata dstChainData,
+            bytes32 tokenSender,
+            bytes32 tokenReceiver,
             bytes memory payload
         ) = messageData.decodeBridgeData();
 
-        (address tokenReceiver, uint32 dstGasLimit) = dstChainData.decodeEvmDstChainData();
-
         _consumeRate(srcChainSelector, tokenAmount, false);
 
-        i_usdc.mint(tokenReceiver, tokenAmount);
+        address receiver = tokenReceiver.toAddress();
+        i_usdc.mint(receiver, tokenAmount);
 
-        if (_shouldCallReceiverHook(dstGasLimit, tokenReceiver, payload)) {
-            ILancaCanonicalBridgeClient(tokenReceiver).lancaCanonicalBridgeReceive(
+        if (_shouldCallReceiverHook(receiver, payload)) {
+            ILancaCanonicalBridgeClient(receiver).lancaCanonicalBridgeReceive(
                 messageId,
                 srcChainSelector,
                 tokenSender,

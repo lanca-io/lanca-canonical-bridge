@@ -42,12 +42,7 @@ contract ConceroReceiveL1Test is LCBridgeL1Base {
 
     function test_conceroReceive_RevertsInvalidSenderBridge() public {
         IConceroRouter.MessageRequest memory messageRequest = _buildMessageRequest(
-            BridgeCodec.encodeBridgeData(
-                s_user,
-                AMOUNT,
-                MessageCodec.encodeEvmDstChainData(s_user, 0),
-                ZERO_BYTES
-            ),
+            BridgeCodec.encodeBridgeData(s_user, s_user, AMOUNT, ZERO_BYTES),
             SRC_CHAIN_SELECTOR,
             address(lancaCanonicalBridgeL1)
         );

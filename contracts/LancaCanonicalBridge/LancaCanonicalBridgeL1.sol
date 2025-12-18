@@ -81,20 +81,19 @@ contract LancaCanonicalBridgeL1 is ILancaCanonicalBridgeL1, LancaCanonicalBridge
         bytes32 messageId = keccak256(messageReceipt);
 
         (
-            bytes32 tokenSender,
             uint256 tokenAmount,
-            bytes calldata dstChainData,
+            bytes32 tokenSender,
+            bytes32 tokenReceiver,
             bytes memory payload
         ) = messageData.decodeBridgeData();
 
-        (address tokenReceiver, uint32 dstGasLimit) = dstChainData.decodeEvmDstChainData();
-
         _consumeRate(srcChainSelector, tokenAmount, false);
 
-        ILancaCanonicalBridgePool(pool).withdraw(tokenReceiver, tokenAmount);
+        address receiver = tokenReceiver.toAddress();
+        ILancaCanonicalBridgePool(pool).withdraw(receiver, tokenAmount);
 
-        if (_shouldCallReceiverHook(dstGasLimit, tokenReceiver, payload)) {
-            ILancaCanonicalBridgeClient(tokenReceiver).lancaCanonicalBridgeReceive(
+        if (_shouldCallReceiverHook(receiver, payload)) {
+            ILancaCanonicalBridgeClient(receiver).lancaCanonicalBridgeReceive(
                 messageId,
                 srcChainSelector,
                 tokenSender,

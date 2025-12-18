@@ -44,7 +44,6 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter {
 
     error InvalidBridgeSender();
     error InvalidDstGasLimitOrCallData();
-    error InvalidConceroMessage();
     error InvalidReceiver();
     error RelayerLibAlreadySet(address relayerLib);
     error RelayerIsNotSet();
@@ -154,36 +153,39 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter {
             );
     }
 
-    /// @notice Validates destination bridge parameters and determines whether a hook should be called.
+    /// @notice Determines whether the bridge should call the receiver hook on the destination.
     /// @dev
     /// - If `payload` indicate a hook call, the receiver must:
     ///   * be a contract, and
     ///   * support the `ILancaCanonicalBridgeClient` interface via ERC-165.
     /// @param receiver Address of the intended token receiver / hook target.
     /// @param payload Arbitrary payload that might be passed to the receiver.
-    /// @return shouldCallHook True if the bridge should invoke the receiver hook on destination.
-    function _validateBridgeParams(
+    /// @return True if the bridge should call the receiver hook on the destination.
+    function _shouldCallReceiverHook(
         address receiver,
         bytes memory payload
     ) internal view returns (bool) {
         bool shouldCallHook = !(payload.length == 0);
 
         if (shouldCallHook && !_isValidContractReceiver(receiver)) {
-            revert InvalidConceroMessage();
+            shouldCallHook = false;
         }
 
         return shouldCallHook;
     }
 
     function _isValidContractReceiver(address tokenReceiver) internal view returns (bool) {
-        if (
-            tokenReceiver.code.length == 0 ||
-            !IERC165(tokenReceiver).supportsInterface(type(ILancaCanonicalBridgeClient).interfaceId)
-        ) {
+        if (tokenReceiver.code.length == 0) {
             return false;
         }
 
-        return true;
+        try
+            IERC165(tokenReceiver).supportsInterface(type(ILancaCanonicalBridgeClient).interfaceId)
+        returns (bool supported) {
+            return supported;
+        } catch {
+            return false;
+        }
     }
 
     function _getBridgeNativeFee(

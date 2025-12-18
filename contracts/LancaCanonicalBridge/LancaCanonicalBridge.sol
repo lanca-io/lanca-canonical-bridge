@@ -93,11 +93,9 @@ contract LancaCanonicalBridge is ILancaCanonicalBridge, LancaCanonicalBridgeBase
         _consumeRate(srcChainSelector, tokenAmount, false);
 
         address receiver = tokenReceiver.toAddress();
-        bool shouldCallHook = _validateBridgeParams(receiver, payload);
-
         i_usdc.mint(receiver, tokenAmount);
 
-        if (shouldCallHook) {
+        if (_shouldCallReceiverHook(receiver, payload)) {
             ILancaCanonicalBridgeClient(receiver).lancaCanonicalBridgeReceive(
                 messageId,
                 srcChainSelector,

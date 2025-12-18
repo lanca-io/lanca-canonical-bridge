@@ -90,11 +90,9 @@ contract LancaCanonicalBridgeL1 is ILancaCanonicalBridgeL1, LancaCanonicalBridge
         _consumeRate(srcChainSelector, tokenAmount, false);
 
         address receiver = tokenReceiver.toAddress();
-        bool shouldCallHook = _validateBridgeParams(receiver, payload);
-
         ILancaCanonicalBridgePool(pool).withdraw(receiver, tokenAmount);
 
-        if (shouldCallHook) {
+        if (_shouldCallReceiverHook(receiver, payload)) {
             ILancaCanonicalBridgeClient(receiver).lancaCanonicalBridgeReceive(
                 messageId,
                 srcChainSelector,

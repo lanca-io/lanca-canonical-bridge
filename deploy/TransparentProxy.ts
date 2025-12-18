@@ -54,8 +54,8 @@ export const deployTransparentProxy: (
 		hre,
 		args: [initialImplementation, deployer.address, callData ?? "0x"],
 		publicClient,
-		proxy: true,
 		gasLimit,
+		log: true
 	});
 
 	updateEnvAddress(

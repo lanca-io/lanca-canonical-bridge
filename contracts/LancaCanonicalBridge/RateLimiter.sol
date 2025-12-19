@@ -63,16 +63,17 @@ abstract contract RateLimiter is AccessControlUpgradeable {
             ? s.rateLimits().outboundRates[dstChainSelector]
             : s.rateLimits().inboundRates[dstChainSelector];
 
+        uint32 prevLastUpdate = rate.lastUpdate;
+
         // Update available volume based on time elapsed since last update
-        if (rate.lastUpdate > 0) {
-            (uint128 newAvailable, uint32 newLastUpdate) = _getRefillRate(
+        if (prevLastUpdate > 0) {
+            (uint128 newAvailable, ) = _getRefillRate(
                 rate.availableVolume,
                 rate.refillSpeed,
                 rate.maxAmount,
                 rate.lastUpdate
             );
             rate.availableVolume = newAvailable;
-            rate.lastUpdate = newLastUpdate;
         }
 
         rate.maxAmount = maxAmount;
@@ -86,7 +87,7 @@ abstract contract RateLimiter is AccessControlUpgradeable {
         }
 
         // Initialize available volume for first-time setup
-        if (rate.availableVolume == 0 && maxAmount > 0) {
+        if (rate.availableVolume == 0 && maxAmount > 0 && prevLastUpdate == 0) {
             rate.availableVolume = maxAmount;
         }
 

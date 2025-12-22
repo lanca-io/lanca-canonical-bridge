@@ -14,7 +14,7 @@ export async function configureMinter(srcChainName: string, amount?: string): Pr
 	}
 
 	// viemAccount should be master minter address
-	const viemAccount = getViemAccount(type, "proxyDeployer");
+	const viemAccount = getViemAccount(type, "deployer");
 	const { walletClient, publicClient } = getFallbackClients(srcChain, viemAccount);
 
 	const lancaCanonicalBridgeAddress = getEnvVar(

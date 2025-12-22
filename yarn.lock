@@ -1987,7 +1987,7 @@
 
 "@lanca/stablecoin-evm@github:lanca-io/lcb-stablecoin-evm":
   version "1.0.0"
-  resolved "https://codeload.github.com/lanca-io/lcb-stablecoin-evm/tar.gz/df4de3eab875070e3c84c4f51c6d0efd76445c29"
+  resolved "https://codeload.github.com/lanca-io/lcb-stablecoin-evm/tar.gz/3d7a9249c4fbd19ef58a2a5bb58844f8447a03a2"
   dependencies:
     "@openzeppelin/contracts" "3.4.2"
 

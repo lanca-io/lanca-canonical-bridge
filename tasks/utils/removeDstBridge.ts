@@ -26,7 +26,7 @@ export async function removeDstBridge(dstChainName: string): Promise<void> {
 		"../../artifacts/contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol/LancaCanonicalBridgeL1.json"
 	);
 
-	const viemAccount = getViemAccount(networkType, "proxyDeployer");
+	const viemAccount = getViemAccount(networkType, "deployer");
 	const { walletClient, publicClient } = getFallbackClients(srcChain, viemAccount);
 
 	try {

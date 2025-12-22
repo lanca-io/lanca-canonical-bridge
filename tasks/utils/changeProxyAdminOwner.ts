@@ -29,7 +29,7 @@ export async function changeProxyAdminOwner(
 		return;
 	}
 
-	const viemAccount = getViemAccount(networkType, "proxyDeployer");
+	const viemAccount = getViemAccount(networkType, "deployer");
 	const { walletClient, publicClient } = getFallbackClients(chain, viemAccount);
 
 	const { abi: proxyAdminAbi } = await import(

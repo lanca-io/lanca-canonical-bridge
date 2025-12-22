@@ -117,14 +117,10 @@ abstract contract LCBridgeL1Base is LCBTest {
         bytes memory payload
     ) internal {
         IConceroRouter.MessageRequest memory messageRequest = _buildMessageRequest(
-            BridgeCodec.encodeBridgeData(
-                tokenSender,
-                tokenAmount,
-                MessageCodec.encodeEvmDstChainData(tokenReceiver, dstGasLimit),
-                payload
-            ),
+            BridgeCodec.encodeBridgeData(tokenSender, tokenReceiver, tokenAmount, payload),
             SRC_CHAIN_SELECTOR,
-            address(lancaCanonicalBridgeL1)
+            address(lancaCanonicalBridgeL1),
+            dstGasLimit
         );
 
         vm.prank(s_conceroRouter);

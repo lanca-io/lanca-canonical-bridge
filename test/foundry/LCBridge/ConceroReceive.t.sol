@@ -13,6 +13,7 @@ import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/Mes
 import {LancaCanonicalBridgeBase} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
 import {BridgeCodec} from "contracts/common/libraries/BridgeCodec.sol";
 
+import {MockInvalidClient} from "../mocks/MockInvalidClient.sol";
 import {MockUSDCe} from "../mocks/MockUSDCe.sol";
 import {LCBridgeBase} from "./LCBridgeBase.sol";
 
@@ -42,8 +43,8 @@ contract ConceroReceiveTest is LCBridgeBase {
         IConceroRouter.MessageRequest memory messageRequest = _buildMessageRequest(
             BridgeCodec.encodeBridgeData(
                 s_user,
+                s_user,
                 AMOUNT,
-                MessageCodec.encodeEvmDstChainData(s_user, 0),
                 ""
             ),
             SRC_CHAIN_SELECTOR,
@@ -92,14 +93,20 @@ contract ConceroReceiveTest is LCBridgeBase {
 
     // --- Tests for conceroReceive with call ---
 
-    function test_conceroReceive_WithCall_RevertsCallFiled() public {
+    function test_conceroReceive_WithCall_DeliversTokensWithoutHookWhenReceiverHasNoCode() public {
         address invalidLCBridgeClient = makeAddr("InvalidLCBridgeClient");
 
-        vm.expectRevert(
-            abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidConceroMessage.selector)
-        );
-
         _conceroReceive(s_user, invalidLCBridgeClient, AMOUNT, GAS_LIMIT, "0x01");
+
+        assertEq(s_usdcE.balanceOf(invalidLCBridgeClient), AMOUNT);
+    }
+
+    function test_conceroReceive_WithCall_DeliversTokensWhenReceiverLacksInterface() public {
+        MockInvalidClient invalidReceiverContract = new MockInvalidClient();
+
+        _conceroReceive(s_user, address(invalidReceiverContract), AMOUNT, GAS_LIMIT, "0x01");
+
+        assertEq(s_usdcE.balanceOf(address(invalidReceiverContract)), AMOUNT);
     }
 
     function test_conceroReceive_WithCall() public {

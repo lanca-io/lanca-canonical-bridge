@@ -6,7 +6,7 @@
  */
 pragma solidity 0.8.28;
 
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
 import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
@@ -25,6 +25,7 @@ import {Storage as s} from "./libraries/Storage.sol";
 /// - Enforces rate limits via RateLimiter and access control via ConceroOwnable.
 /// - Manages validator and relayer libraries used by the Concero router.
 abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter {
+    using ERC165Checker for address;
     using BridgeCodec for bytes32;
     using s for s.Base;
 
@@ -44,7 +45,6 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter {
 
     error InvalidBridgeSender();
     error InvalidDstGasLimitOrCallData();
-    error InvalidConceroMessage();
     error InvalidReceiver();
     error RelayerLibAlreadySet(address relayerLib);
     error RelayerIsNotSet();
@@ -93,37 +93,54 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter {
         address[] memory validatorLibs = new address[](1);
         validatorLibs[0] = s_base.validatorLib;
 
-        IConceroRouter.MessageRequest memory messageRequest = IConceroRouter.MessageRequest({
-            dstChainSelector: dstChainSelector,
-            srcBlockConfirmations: type(uint64).max,
-            feeToken: address(0),
-            dstChainData: _buildDstChainData(userDstChainData, dstBridge, payload.length),
-            validatorLibs: validatorLibs,
-            relayerLib: s_base.relayerLib,
-            validatorConfigs: new bytes[](1),
-            relayerConfig: new bytes(0),
-            payload: BridgeCodec.encodeBridgeData(
-                msg.sender,
-                tokenAmount,
-                userDstChainData,
-                payload
-            )
-        });
+        IConceroRouter.MessageRequest memory messageRequest = _buildMessageRequest(
+            s_base,
+            tokenAmount,
+            dstChainSelector,
+            userDstChainData,
+            payload,
+            dstBridge
+        );
 
         return IConceroRouter(i_conceroRouter).conceroSend{value: msg.value}(messageRequest);
     }
 
-    function _buildDstChainData(
+    function _buildMessageRequest(
+        s.Base storage s_base,
+        uint256 tokenAmount,
+        uint24 dstChainSelector,
         bytes calldata userDstChainData,
-        bytes32 dstBridge,
-        uint256 payloadLength
-    ) internal pure returns (bytes memory) {
+        bytes calldata payload,
+        bytes32 dstBridge
+    ) private view returns (IConceroRouter.MessageRequest memory) {
+        address[] memory validatorLibs = new address[](1);
+        validatorLibs[0] = s_base.validatorLib;
+
         (address receiver, uint32 userDstChainGasLimit) = MessageCodec.decodeEvmDstChainData(
             userDstChainData
         );
 
         require(receiver != address(0), InvalidReceiver());
 
+        return
+            IConceroRouter.MessageRequest({
+                dstChainSelector: dstChainSelector,
+                srcBlockConfirmations: type(uint64).max,
+                feeToken: address(0),
+                dstChainData: _buildDstChainData(userDstChainGasLimit, dstBridge, payload.length),
+                validatorLibs: validatorLibs,
+                relayerLib: s_base.relayerLib,
+                validatorConfigs: new bytes[](1),
+                relayerConfig: new bytes(0),
+                payload: BridgeCodec.encodeBridgeData(msg.sender, receiver, tokenAmount, payload)
+            });
+    }
+
+    function _buildDstChainData(
+        uint32 userDstChainGasLimit,
+        bytes32 dstBridge,
+        uint256 payloadLength
+    ) internal pure returns (bytes memory) {
         require(
             (userDstChainGasLimit == 0 && payloadLength == 0) ||
                 (userDstChainGasLimit > 0 && payloadLength > 0),
@@ -137,24 +154,22 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter {
             );
     }
 
-    /// @notice Validates destination bridge parameters and determines whether a hook should be called.
+    /// @notice Determines whether the bridge should call the receiver hook on the destination.
     /// @dev
-    /// - If `dstGasLimit` and `payload` indicate a hook call, the receiver must:
+    /// - If `payload` indicate a hook call, the receiver must:
     ///   * be a contract, and
     ///   * support the `ILancaCanonicalBridgeClient` interface via ERC-165.
-    /// @param dstGasLimit Gas limit allocated for the destination hook call.
     /// @param receiver Address of the intended token receiver / hook target.
     /// @param payload Arbitrary payload that might be passed to the receiver.
-    /// @return shouldCallHook True if the bridge should invoke the receiver hook on destination.
-    function _validateBridgeParams(
-        uint32 dstGasLimit,
+    /// @return True if the bridge should call the receiver hook on the destination.
+    function _shouldCallReceiverHook(
         address receiver,
         bytes memory payload
     ) internal view returns (bool) {
-        bool shouldCallHook = !(dstGasLimit == 0 && payload.length == 0);
+        bool shouldCallHook = !(payload.length == 0);
 
         if (shouldCallHook && !_isValidContractReceiver(receiver)) {
-            revert InvalidConceroMessage();
+            shouldCallHook = false;
         }
 
         return shouldCallHook;
@@ -163,7 +178,7 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter {
     function _isValidContractReceiver(address tokenReceiver) internal view returns (bool) {
         if (
             tokenReceiver.code.length == 0 ||
-            !IERC165(tokenReceiver).supportsInterface(type(ILancaCanonicalBridgeClient).interfaceId)
+            !tokenReceiver.supportsInterface(type(ILancaCanonicalBridgeClient).interfaceId)
         ) {
             return false;
         }
@@ -182,16 +197,20 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter {
         address[] memory validatorLibs = new address[](1);
         validatorLibs[0] = s_base.validatorLib;
 
+        (address receiver, uint32 userDstChainGasLimit) = MessageCodec.decodeEvmDstChainData(
+            userDstChainData
+        );
+
         IConceroRouter.MessageRequest memory messageRequest = IConceroRouter.MessageRequest({
             dstChainSelector: dstChainSelector,
             srcBlockConfirmations: type(uint64).max,
             feeToken: address(0),
-            dstChainData: _buildDstChainData(userDstChainData, dstBridge, payload.length),
+            dstChainData: _buildDstChainData(userDstChainGasLimit, dstBridge, payload.length),
             validatorLibs: validatorLibs,
             relayerLib: s_base.relayerLib,
             validatorConfigs: new bytes[](1),
             relayerConfig: new bytes(0),
-            payload: BridgeCodec.encodeBridgeData(msg.sender, 1, userDstChainData, payload)
+            payload: BridgeCodec.encodeBridgeData(msg.sender, receiver, 1, payload)
         });
 
         return IConceroRouter(i_conceroRouter).getMessageFee(messageRequest);

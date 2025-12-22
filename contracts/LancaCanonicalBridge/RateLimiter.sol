@@ -63,16 +63,17 @@ abstract contract RateLimiter is AccessControlUpgradeable {
             ? s.rateLimits().outboundRates[dstChainSelector]
             : s.rateLimits().inboundRates[dstChainSelector];
 
+        uint32 prevLastUpdate = rate.lastUpdate;
+
         // Update available volume based on time elapsed since last update
-        if (rate.lastUpdate > 0) {
-            (uint128 newAvailable, uint32 newLastUpdate) = _getRefillRate(
+        if (prevLastUpdate > 0) {
+            (uint128 newAvailable, ) = _getRefillRate(
                 rate.availableVolume,
                 rate.refillSpeed,
                 rate.maxAmount,
                 rate.lastUpdate
             );
             rate.availableVolume = newAvailable;
-            rate.lastUpdate = newLastUpdate;
         }
 
         rate.maxAmount = maxAmount;
@@ -86,7 +87,7 @@ abstract contract RateLimiter is AccessControlUpgradeable {
         }
 
         // Initialize available volume for first-time setup
-        if (rate.availableVolume == 0 && maxAmount > 0) {
+        if (rate.availableVolume == 0 && maxAmount > 0 && prevLastUpdate == 0) {
             rate.availableVolume = maxAmount;
         }
 
@@ -107,9 +108,6 @@ abstract contract RateLimiter is AccessControlUpgradeable {
         RateLimit storage rate = isOutbound
             ? s.rateLimits().outboundRates[dstChainSelector]
             : s.rateLimits().inboundRates[dstChainSelector];
-        RateLimit storage oppositeRate = isOutbound
-            ? s.rateLimits().inboundRates[dstChainSelector]
-            : s.rateLimits().outboundRates[dstChainSelector];
 
         uint128 maxAmount = rate.maxAmount;
         uint32 lastUpdate = rate.lastUpdate;
@@ -134,13 +132,15 @@ abstract contract RateLimiter is AccessControlUpgradeable {
 
         // Consume the requested amount from available rate
         newAvailable -= uint128(amount);
-        oppositeRate.availableVolume += uint128(amount);
 
         // Write back only the changed values
         rate.availableVolume = newAvailable;
         if (newLastUpdate != lastUpdate) {
             rate.lastUpdate = newLastUpdate;
         }
+
+        // Backfill the opposite rate
+        _backfillOppositeRate(dstChainSelector, amount, isOutbound);
     }
 
     /// @notice Calculates the refilled available volume for a rate bucket.
@@ -171,6 +171,30 @@ abstract contract RateLimiter is AccessControlUpgradeable {
         // Cap at maximum amount to prevent overflow and maintain limits
         newAvailable = uint128(totalAvailable > maxAmount ? maxAmount : totalAvailable);
         newLastUpdate = uint32(block.timestamp);
+    }
+
+    /// @notice Backfills the opposite rate limit with the amount consumed.
+    /// @dev
+    /// - Calculates the amount to add based on the amount consumed and the maximum amount of the opposite rate.
+    /// - Adds the amount to the available volume of the opposite rate.
+    /// - Caps the available volume at the maximum amount of the opposite rate.
+    /// @param dstChainSelector Chain selector the rate limit applies to.
+    /// @param amount Amount to backfill from the opposite rate.
+    /// @param isOutbound True to backfill from the outbound bucket, false from the inbound bucket.
+    function _backfillOppositeRate(
+        uint24 dstChainSelector,
+        uint256 amount,
+        bool isOutbound
+    ) internal {
+        RateLimit storage oppositeRate = isOutbound
+            ? s.rateLimits().inboundRates[dstChainSelector]
+            : s.rateLimits().outboundRates[dstChainSelector];
+
+        uint128 maxAmount = oppositeRate.maxAmount;
+        uint128 toAdd = uint128(amount > maxAmount ? maxAmount : amount);
+        uint128 newVolume = oppositeRate.availableVolume + toAdd;
+
+        oppositeRate.availableVolume = newVolume > maxAmount ? maxAmount : newVolume;
     }
 
     /// @notice Returns the current rate limit information for a given chain and direction.

@@ -96,13 +96,17 @@ contract LancaCanonicalBridge is ILancaCanonicalBridge, LancaCanonicalBridgeBase
         i_usdc.mint(receiver, tokenAmount);
 
         if (_shouldCallReceiverHook(receiver, payload)) {
-            ILancaCanonicalBridgeClient(receiver).lancaCanonicalBridgeReceive(
-                messageId,
-                srcChainSelector,
-                tokenSender,
-                tokenAmount,
-                payload
-            );
+            try
+                ILancaCanonicalBridgeClient(receiver).lancaCanonicalBridgeReceive(
+                    messageId,
+                    srcChainSelector,
+                    tokenSender,
+                    tokenAmount,
+                    payload
+                )
+            {} catch (bytes memory reason) {
+                emit HookCallFailed(messageId, receiver, reason);
+            }
         }
 
         emit BridgeDelivered(messageId, tokenAmount);

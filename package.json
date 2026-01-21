@@ -30,7 +30,7 @@
     "devDependencies": {
         "@chainlink/env-enc": "1.0.5",
         "@chainlink/solhint-plugin-chainlink-solidity": "1.0.1",
-        "@concero/contract-utils": "github:concero/contract-utils#feature/deploy-wrapper",
+        "@concero/contract-utils": "https://github.com/concero/contract-utils#feature/v3/export-generic-deploy",
         "@concero/rpcs": "github:concero/rpcs",
         "@concero/v2-networks": "github:concero/v2-networks",
         "@lanca/stablecoin-evm": "github:lanca-io/lcb-stablecoin-evm",

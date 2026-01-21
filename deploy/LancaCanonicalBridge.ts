@@ -1,18 +1,9 @@
-import { getNetworkEnvKey } from "@concero/contract-utils";
-import { hardhatDeployWrapper } from "@concero/contract-utils";
-import { Deployment } from "hardhat-deploy/types";
+import type { ConceroNetwork, IDeployResult } from "@concero/contract-utils";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { conceroNetworks } from "../constants";
-import { ConceroNetwork } from "../types/ConceroNetwork";
-import {
-	err,
-	getEnvVar,
-	getFallbackClients,
-	getViemAccount,
-	log,
-	updateEnvVariable,
-} from "../utils/";
+import { EnvFileName } from "../types/deploymentVariables";
+import { err, genericDeploy, getEnvVar, getNetworkEnvKey, updateEnvVariable } from "../utils/";
 
 type DeployArgs = {
 	l1ChainSelector?: bigint;
@@ -24,12 +15,12 @@ type DeployArgs = {
 type DeploymentFunction = (
 	hre: HardhatRuntimeEnvironment,
 	overrideArgs?: Partial<DeployArgs>,
-) => Promise<Deployment>;
+) => Promise<IDeployResult>;
 
-const deployLancaCanonicalBridge: DeploymentFunction = async function (
+export const deployLancaCanonicalBridge: DeploymentFunction = async (
 	hre: HardhatRuntimeEnvironment,
 	overrideArgs?: Partial<DeployArgs>,
-): Promise<Deployment> {
+): Promise<IDeployResult> => {
 	const { name } = hre.network;
 
 	const srcChain = conceroNetworks[name as keyof typeof conceroNetworks];
@@ -79,7 +70,7 @@ const deployLancaCanonicalBridge: DeploymentFunction = async function (
 	}
 
 	if (!conceroRouter || !usdcAddress) {
-		return {} as Deployment;
+		return {} as IDeployResult;
 	}
 
 	const defaultArgs: DeployArgs = {
@@ -110,28 +101,19 @@ const deployLancaCanonicalBridge: DeploymentFunction = async function (
 		constructorArgs = [args.conceroRouter, args.usdcAddress];
 	}
 
-	const viemAccount = getViemAccount(networkType, "deployer");
-	const { publicClient } = getFallbackClients(srcChain, viemAccount);
-
-	const deployment = await hardhatDeployWrapper(constructorName, {
-		hre,
-		args: constructorArgs,
-		publicClient,
-		log: true,
-	});
-
-	log(`Deployed at: ${deployment.address}`, "deployLancaCanonicalBridge", name);
+	const deployment = await genericDeploy(
+		{
+			hre,
+			contractName: constructorName,
+		},
+		...constructorArgs,
+	);
 
 	updateEnvVariable(
-		`LC_BRIDGE_${getNetworkEnvKey(name)}`,
+		`LC_BRIDGE_${getNetworkEnvKey(deployment.chainName)}`,
 		deployment.address,
-		`deployments.${networkType}`,
+		`deployments.${deployment.chainType}` as EnvFileName,
 	);
 
 	return deployment;
 };
-
-(deployLancaCanonicalBridge as any).tags = ["LancaCanonicalBridge"];
-
-export default deployLancaCanonicalBridge;
-export { deployLancaCanonicalBridge };

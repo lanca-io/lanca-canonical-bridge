@@ -1,18 +1,10 @@
-import { getNetworkEnvKey } from "@concero/contract-utils";
-import { hardhatDeployWrapper } from "@concero/contract-utils";
-import { Deployment } from "hardhat-deploy/types";
+import { IDeployResult } from "@concero/contract-utils";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { conceroNetworks } from "../constants";
 import { DEPLOY_CONFIG_TESTNET } from "../constants/deployConfigTestnet";
-import {
-	err,
-	getEnvVar,
-	getFallbackClients,
-	getViemAccount,
-	log,
-	updateEnvVariable,
-} from "../utils/";
+import { EnvFileName } from "../types/deploymentVariables";
+import { err, genericDeploy, getEnvVar, getNetworkEnvKey, updateEnvVariable } from "../utils/";
 
 type DeployArgs = {
 	usdcAddress: string;
@@ -24,18 +16,14 @@ type DeploymentFunction = (
 	hre: HardhatRuntimeEnvironment,
 	dstChainName: string,
 	overrideArgs?: Partial<DeployArgs>,
-) => Promise<Deployment>;
+) => Promise<IDeployResult>;
 
-const deployLancaCanonicalBridgePool: DeploymentFunction = async function (
+export const deployLancaCanonicalBridgePool: DeploymentFunction = async (
 	hre: HardhatRuntimeEnvironment,
 	dstChainName: string,
 	overrideArgs?: Partial<DeployArgs>,
-): Promise<Deployment> {
+): Promise<IDeployResult> => {
 	const { name: srcChainName } = hre.network;
-
-	const srcChain = conceroNetworks[srcChainName as keyof typeof conceroNetworks];
-	const { type: networkType } = srcChain;
-
 	const dstChain = conceroNetworks[dstChainName as keyof typeof conceroNetworks];
 
 	if (!dstChain) {
@@ -68,7 +56,7 @@ const deployLancaCanonicalBridgePool: DeploymentFunction = async function (
 	}
 
 	if (!dstChain || !usdcAddress || !lancaCanonicalBridgeAddress) {
-		return {} as Deployment;
+		return {} as IDeployResult;
 	}
 
 	const defaultArgs: DeployArgs = {
@@ -82,32 +70,30 @@ const deployLancaCanonicalBridgePool: DeploymentFunction = async function (
 		...overrideArgs,
 	};
 
-	const viemAccount = getViemAccount(networkType, "deployer");
-	const { publicClient } = getFallbackClients(srcChain, viemAccount);
-
 	let gasLimit = 0;
 	const config = DEPLOY_CONFIG_TESTNET[srcChainName];
 	if (config) {
 		gasLimit = config.pool?.gasLimit || 0;
 	}
 
-	const deployment = await hardhatDeployWrapper("LancaCanonicalBridgePool", {
-		hre,
-		args: [args.usdcAddress, args.lancaCanonicalBridgeAddress, args.dstChainSelector],
-		publicClient,
-		gasLimit,
-	});
-
-	log(`Deployed at: ${deployment.address}`, "deployLancaCanonicalBridgePool", srcChainName);
+	const deployment = await genericDeploy(
+		{
+			hre,
+			contractName: "LancaCanonicalBridgePool",
+			txParams: {
+				gasLimit: BigInt(gasLimit),
+			},
+		},
+		args.usdcAddress,
+		args.lancaCanonicalBridgeAddress,
+		args.dstChainSelector,
+	);
 
 	updateEnvVariable(
-		`LC_BRIDGE_POOL_${getNetworkEnvKey(dstChainName)}`,
+		`LC_BRIDGE_POOL_${getNetworkEnvKey(deployment.chainName)}`,
 		deployment.address,
-		`deployments.${networkType}`,
+		`deployments.${deployment.chainType}` as EnvFileName,
 	);
 
 	return deployment;
 };
-
-export default deployLancaCanonicalBridgePool;
-export { deployLancaCanonicalBridgePool };

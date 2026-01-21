@@ -51,11 +51,7 @@ export async function changeProxyAdminOwner(
 	log(` New owner: ${newOwner}`, "changeProxyAdminOwner", networkName);
 
 	if (owner && owner.toLowerCase() === newOwner.toLowerCase()) {
-		err(
-			`Owner is already set to the same address`,
-			"changeProxyAdminOwner",
-			networkName,
-		);
+		err(`Owner is already set to the same address`, "changeProxyAdminOwner", networkName);
 		return;
 	}
 

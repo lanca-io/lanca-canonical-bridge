@@ -34,7 +34,7 @@ async function deployPoolTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 		);
 	}
 
-	if (taskArgs.proxy) {
+	if (taskArgs.vars) {
 		await addPool(taskArgs.dstchain);
 		await addDstBridge(taskArgs.dstchain);
 		await setRateLimits(hre.network.name, taskArgs.dstchain);
@@ -51,10 +51,11 @@ async function deployPoolTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	}
 }
 
-// yarn hardhat deploy-pool [--implementation] [--proxy] [--pause] [--owner <address>] --dstchain <chain_name> --network <network_name>
+// yarn hardhat deploy-pool --implementation --proxy --vars --network ethereumSepolia --dstchain <network_name>
 task("deploy-pool", "Deploy LancaCanonicalBridgePool with proxy")
 	.addFlag("implementation", "Deploy pool implementation")
 	.addFlag("proxy", "Deploy proxy and proxy admin for pool")
+	.addFlag("vars", "Set variables")
 	.addFlag("pause", "Pause pool")
 	.addOptionalParam("owner", "Override proxy admin owner address")
 	.addParam("dstchain", "Destination chain name for the pool")

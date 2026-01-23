@@ -5,7 +5,7 @@ import { Hex } from "viem";
 import { ProxyEnum } from "../constants";
 import { DEPLOY_CONFIG_TESTNET } from "../constants/deployConfigTestnet";
 import { EnvFileName, EnvPrefixes, IProxyType } from "../types/deploymentVariables";
-import { getEnvAddress, log, updateEnvAddress } from "../utils";
+import { extractProxyAdminAddress, getEnvAddress, log, updateEnvAddress } from "../utils";
 
 export const deployTransparentProxy = async (
 	hre: HardhatRuntimeEnvironment,
@@ -56,15 +56,17 @@ export const deployTransparentProxy = async (
 		envChainName,
 	);
 
+	const proxyAdminAddress = extractProxyAdminAddress(deployment.receipt);
+
 	log(
-		`Deployed at: ${deployment.proxyAdminAddress}. initialOwner: ${deployer.address}`,
+		`Deployed at: ${proxyAdminAddress}. initialOwner: ${deployer.address}`,
 		`deployProxyAdmin: ${proxyType}`,
 		deployment.chainName,
 	);
 
 	updateEnvAddress(
 		`${proxyType}Admin`,
-		deployment.proxyAdminAddress as Hex,
+		proxyAdminAddress as Hex,
 		`deployments.${deployment.chainType}` as EnvFileName,
 		envChainName,
 	);

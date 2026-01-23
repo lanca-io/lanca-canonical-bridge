@@ -90,7 +90,7 @@ export const deployLancaCanonicalBridgePool: DeploymentFunction = async (
 	);
 
 	updateEnvVariable(
-		`LC_BRIDGE_POOL_${getNetworkEnvKey(deployment.chainName)}`,
+		`LC_BRIDGE_POOL_${getNetworkEnvKey(dstChainName)}`,
 		deployment.address,
 		`deployments.${deployment.chainType}` as EnvFileName,
 	);

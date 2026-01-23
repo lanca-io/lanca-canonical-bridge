@@ -3,14 +3,10 @@ import * as dotenv from "dotenv";
 
 const ENV_FILES = [
 	".env",
-	".env.clf",
-	".env.clccip",
-	".env.tokens",
 	".env.deployments.mainnet",
 	".env.deployments.testnet",
 	".env.deployments.localhost",
 	".env.wallets",
-	".env.usdc",
 	"node_modules/@concero/v2-contracts/.env.deployments.testnet",
 	"node_modules/@lanca/stablecoin-evm/.env.deployments.testnet",
 ];

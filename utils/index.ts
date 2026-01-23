@@ -1,17 +1,22 @@
-export { compileContracts } from "./compileContracts";
-export { configureDotEnv } from "./configureDotEnv";
-export { createViemChain } from "./createViemChain";
-export { getGasParameters } from "./getGasParameters";
-export { getViemAccount } from "./getViemClients";
-export { getEnvVar, getEnvAddress } from "./getEnvVar";
-export { getWallet } from "./getWallet";
 export {
+	compileContracts,
+	createViemChain,
+	err,
+	ethersSignerCallContract,
+	extractProxyAdminAddress,
+	genericDeploy,
 	getClients,
+	getEnvVar,
 	getFallbackClients,
+	getNetworkEnvKey,
 	getTestClient,
-	type ExtendedTestClient,
-} from "./getViemClients";
-export { localhostViemChain, hardhatViemChain } from "./localhostViemChain";
-export { updateEnvVariable, updateEnvAddress } from "./updateEnvVariable";
-export { default as updateEnvVariableDefault } from "./updateEnvVariable";
-export { log, warn, err } from "./log";
+	getTrezorDeployEnabled,
+	localhostViemChain,
+	log,
+	warn,
+} from "@concero/contract-utils";
+
+export { configureDotEnv } from "./configureDotEnv";
+export { getEnvAddress } from "./createEnvAddressGetter";
+export { getWallet, getViemAccount } from "./createViemAccountAndWalletGetter";
+export { updateEnvAddress, updateEnvVariable } from "./createEnvUpdater";

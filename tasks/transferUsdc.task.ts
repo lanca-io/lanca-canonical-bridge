@@ -7,7 +7,7 @@ import {
 	ConceroMainnetNetworkNames,
 	ConceroTestnetNetworkNames,
 	conceroNetworks,
-} from "../constants/conceroNetworks";
+} from "../constants";
 import { getEnvVar, getFallbackClients } from "../utils";
 
 async function sendTokenTask(

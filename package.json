@@ -25,12 +25,13 @@
         "update:rpcs": "yarn cache clean @concero/rpcs && yarn upgrade @concero/rpcs",
         "update:v2-networks": "yarn cache clean @concero/v2-networks && yarn upgrade @concero/v2-networks",
         "update:v2-contracts": "yarn cache clean @concero/v2-contracts && yarn upgrade @concero/v2-contracts",
-        "update:stablecoin": "yarn cache clean @lanca/stablecoin-evm && yarn upgrade @lanca/stablecoin-evm"
+        "update:stablecoin": "yarn cache clean @lanca/stablecoin-evm && yarn upgrade @lanca/stablecoin-evm",
+        "upgrade:contract-utils": "yarn cache clean @concero/contract-utils && yarn upgrade @concero/contract-utils"
     },
     "devDependencies": {
         "@chainlink/env-enc": "1.0.5",
         "@chainlink/solhint-plugin-chainlink-solidity": "1.0.1",
-        "@concero/contract-utils": "github:concero/contract-utils#feature/deploy-wrapper",
+        "@concero/contract-utils": "https://github.com/concero/contract-utils#feature/v3/export-generic-deploy",
         "@concero/rpcs": "github:concero/rpcs",
         "@concero/v2-networks": "github:concero/v2-networks",
         "@lanca/stablecoin-evm": "github:lanca-io/lcb-stablecoin-evm",

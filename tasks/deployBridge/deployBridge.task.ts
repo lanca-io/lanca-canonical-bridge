@@ -33,7 +33,7 @@ async function deployBridgeTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 		await upgradeLancaProxyImplementation(hre, ProxyEnum.lcBridgeProxy, false);
 	}
 
-	if (taskArgs.proxy && !isL1Deployment && !taskArgs.pause) {
+	if (taskArgs.vars && !isL1Deployment) {
 		await setRateLimits(hre.network.name);
 		await setLibs(hre.network.name);
 		await configureMinter(hre.network.name);
@@ -44,10 +44,11 @@ async function deployBridgeTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	}
 }
 
-// yarn hardhat deploy-bridge [--implementation] [--proxy] [--pause] --network <network_name>
+// yarn hardhat deploy-bridge --implementation --proxy --vars --network <network_name>
 task("deploy-bridge", "Deploy LancaCanonicalBridge")
 	.addFlag("implementation", "Deploy implementation")
 	.addFlag("proxy", "Deploy proxy and proxy admin")
+	.addFlag("vars", "Set variables")
 	.addOptionalParam("owner", "Override proxy admin owner address")
 	.addFlag("pause", "Pause bridge")
 	.setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {

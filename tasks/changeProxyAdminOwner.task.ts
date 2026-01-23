@@ -3,8 +3,8 @@ import { task } from "hardhat/config";
 import { type HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { envPrefixes } from "../constants";
-import { changeProxyAdminOwner } from "./utils/changeProxyAdminOwner";
 import { err } from "../utils";
+import { changeProxyAdminOwner } from "./utils/changeProxyAdminOwner";
 
 async function changeProxyAdminOwnerTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	const { type, newowner, dstchain } = taskArgs;
@@ -20,12 +20,20 @@ async function changeProxyAdminOwnerTask(taskArgs: any, hre: HardhatRuntimeEnvir
 			envPrefix = envPrefixes.lcBridgePoolProxyAdmin;
 			dstChainName = dstchain;
 			if (!dstChainName) {
-				err(`dstchain parameter is required for pool type`, "changeProxyAdminOwnerTask", hre.network.name);
+				err(
+					`dstchain parameter is required for pool type`,
+					"changeProxyAdminOwnerTask",
+					hre.network.name,
+				);
 				return;
 			}
 			break;
 		default:
-			err(`Invalid type: ${type}. Valid types are: bridge, pool`, "changeProxyAdminOwnerTask", hre.network.name);
+			err(
+				`Invalid type: ${type}. Valid types are: bridge, pool`,
+				"changeProxyAdminOwnerTask",
+				hre.network.name,
+			);
 			return;
 	}
 

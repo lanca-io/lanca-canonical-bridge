@@ -7,7 +7,7 @@ import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../u
 export async function monitorBridgeDelivered(
 	messageId: string,
 	dstChain: string,
-	timeoutMs: number = 300000, // 5 minutes default
+	timeoutMs: number = 3600000, // 1 hour default
 ): Promise<void> {
 	const dstNetwork = conceroNetworks[dstChain];
 	if (!dstNetwork) {
@@ -15,9 +15,7 @@ export async function monitorBridgeDelivered(
 		return;
 	}
 
-	const dstBridgeAddress = getEnvVar(
-		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChain)}`,
-	);
+	const dstBridgeAddress = getEnvVar(`LC_BRIDGE_PROXY_${getNetworkEnvKey(dstChain)}`);
 	if (!dstBridgeAddress) return;
 
 	// Determine if target network is L1 or L2

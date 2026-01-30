@@ -8,50 +8,47 @@
 pragma solidity 0.8.28;
 
 import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
-import {LCBridgePoolTest} from "./base/LCBridgePoolTest.sol";
+
 import {MockUSDC} from "../mocks/MockUSDC.sol";
+import {LCBridgePoolBase} from "./LCBridgePoolBase.sol";
 
-contract LancaCanonicalBridgePoolTest is LCBridgePoolTest {
-    function setUp() public override {
-        super.setUp();
-    }
-
+contract LancaCanonicalBridgePoolTest is LCBridgePoolBase {
     function test_deposit_RevertsUnauthorized() public {
         vm.expectRevert(CommonErrors.Unauthorized.selector);
 
-        vm.prank(user);
-        lancaCanonicalBridgePool.deposit(user, AMOUNT);
+        vm.prank(s_user);
+        lancaCanonicalBridgePool.deposit(s_user, AMOUNT);
     }
 
     function test_deposit_Success() public {
         _approvePool(AMOUNT);
 
-        vm.prank(lancaBridgeL1Mock);
-        lancaCanonicalBridgePool.deposit(deployer, AMOUNT);
+        vm.prank(s_lancaBridgeL1Mock);
+        lancaCanonicalBridgePool.deposit(s_deployer, AMOUNT);
 
-        assertEq(MockUSDC(usdc).balanceOf(address(lancaCanonicalBridgePool)), AMOUNT);
+        assertEq(s_usdc.balanceOf(address(lancaCanonicalBridgePool)), AMOUNT);
     }
 
     function test_withdraw_RevertsUnauthorized() public {
         vm.expectRevert(CommonErrors.Unauthorized.selector);
 
-        vm.prank(user);
-        lancaCanonicalBridgePool.withdraw(user, AMOUNT);
+        vm.prank(s_user);
+        lancaCanonicalBridgePool.withdraw(s_user, AMOUNT);
     }
 
     function test_withdraw_Success() public {
         _approvePool(AMOUNT);
 
-        vm.prank(lancaBridgeL1Mock);
-        lancaCanonicalBridgePool.deposit(deployer, AMOUNT);
+        vm.prank(s_lancaBridgeL1Mock);
+        lancaCanonicalBridgePool.deposit(s_deployer, AMOUNT);
 
-        uint256 deployerBalanceBefore = MockUSDC(usdc).balanceOf(deployer);
+        uint256 deployerBalanceBefore = s_usdc.balanceOf(s_deployer);
 
-        vm.prank(lancaBridgeL1Mock);
-        lancaCanonicalBridgePool.withdraw(deployer, AMOUNT);
+        vm.prank(s_lancaBridgeL1Mock);
+        lancaCanonicalBridgePool.withdraw(s_deployer, AMOUNT);
 
-        assertEq(MockUSDC(usdc).balanceOf(deployer), deployerBalanceBefore + AMOUNT);
-        assertEq(MockUSDC(usdc).balanceOf(address(lancaCanonicalBridgePool)), 0);
+        assertEq(s_usdc.balanceOf(s_deployer), deployerBalanceBefore + AMOUNT);
+        assertEq(s_usdc.balanceOf(address(lancaCanonicalBridgePool)), 0);
     }
 
     function test_getPoolInfo() public {

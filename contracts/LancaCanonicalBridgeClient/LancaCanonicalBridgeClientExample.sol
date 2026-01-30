@@ -6,31 +6,39 @@
  */
 pragma solidity 0.8.28;
 
-import {IERC20} from "@openzeppelin/contracts-v5/token/ERC20/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import {LancaCanonicalBridgeClient} from "./LancaCanonicalBridgeClient.sol";
 
 contract LancaCanonicalBridgeClientExample is LancaCanonicalBridgeClient {
-	address public immutable usdc;
+    address public immutable usdc;
 
     bytes32 public messageId;
-	uint24 public srcChainSelector;
-    address public tokenSender;
+    uint24 public srcChainSelector;
+    bytes32 public tokenSender;
     uint256 public tokenAmount;
     string public testString;
 
-
     error TransferFailed();
-    event TokensReceived(bytes32 messageId, uint24 srcChainSelector, address tokenSender, uint256 tokenAmount, string testString);
+    event TokensReceived(
+        bytes32 messageId,
+        uint24 srcChainSelector,
+        bytes32 tokenSender,
+        uint256 tokenAmount,
+        string testString
+    );
 
-    constructor(address lancaCanonicalBridge, address _usdc) LancaCanonicalBridgeClient(lancaCanonicalBridge) {
-		usdc = _usdc;
-	}
+    constructor(
+        address lancaCanonicalBridge,
+        address _usdc
+    ) LancaCanonicalBridgeClient(lancaCanonicalBridge) {
+        usdc = _usdc;
+    }
 
     function _lancaCanonicalBridgeReceive(
         bytes32 _messageId,
         uint24 _srcChainSelector,
-        address _from,	
+        bytes32 _from,
         uint256 _value,
         bytes memory _data
     ) internal override {

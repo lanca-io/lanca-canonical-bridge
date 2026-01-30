@@ -6,18 +6,29 @@
  */
 pragma solidity 0.8.28;
 
-import {ReentrancyGuard} from "@openzeppelin/contracts-v5/utils/ReentrancyGuard.sol";
-
-import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
-
+import {ILancaCanonicalBridgeL1} from "../interfaces/ILancaCanonicalBridgeL1.sol";
 import {
     LancaCanonicalBridgeBase,
     ILancaCanonicalBridgeClient
 } from "./LancaCanonicalBridgeBase.sol";
-import {Storage as s} from "./libraries/Storage.sol";
+import {BridgeCodec} from "../common/libraries/BridgeCodec.sol";
+import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
+import {IConceroRouter} from "@concero/v2-contracts/contracts/interfaces/IConceroRouter.sol";
 import {ILancaCanonicalBridgePool} from "../interfaces/ILancaCanonicalBridgePool.sol";
+import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {Storage as s} from "./libraries/Storage.sol";
 
-contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
+/// @title LancaCanonicalBridgeL1
+/// @notice L1-side canonical bridge for USDC that coordinates liquidity pools and remote L2 bridges.
+/// @dev
+/// - Uses per-chain pools to custody USDC for each destination chain.
+/// - Sends Concero messages to destination bridges and releases liquidity on inbound messages.
+/// - Enforces rate limits and uses ADMIN role for configuration.
+contract LancaCanonicalBridgeL1 is ILancaCanonicalBridgeL1, LancaCanonicalBridgeBase {
+    using BridgeCodec for bytes32;
+    using BridgeCodec for bytes;
+    using MessageCodec for bytes;
     using s for s.L1Bridge;
 
     error InvalidDstBridge();
@@ -27,83 +38,72 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
 
     constructor(
         address conceroRouter,
-        address usdcAddress,
-        address rateLimitAdmin
-    ) LancaCanonicalBridgeBase(usdcAddress, rateLimitAdmin, conceroRouter) {}
+        address usdcAddress
+    ) LancaCanonicalBridgeBase(usdcAddress, conceroRouter) {}
 
     /* ------- Main Functions ------- */
 
+    /// @inheritdoc ILancaCanonicalBridgeL1
     function sendToken(
-        address tokenReceiver,
         uint256 tokenAmount,
         uint24 dstChainSelector,
-        uint256 dstGasLimit,
-        bytes calldata dstCallData
-    ) external payable nonReentrant returns (bytes32 messageId) {
+        bytes calldata dstChainData,
+        bytes calldata payload
+    ) external payable returns (bytes32 messageId) {
         require(tokenAmount > 0, CommonErrors.InvalidAmount());
 
-        s.L1Bridge storage bridge = s.l1Bridge();
+        s.L1Bridge storage s_bridge = s.l1Bridge();
 
-        address pool = bridge.pools[dstChainSelector];
-        address dstBridge = bridge.dstBridges[dstChainSelector];
+        address pool = s_bridge.pools[dstChainSelector];
+        bytes32 dstBridge = s_bridge.dstBridges[dstChainSelector];
         require(pool != address(0), PoolNotFound(dstChainSelector));
-        require(dstBridge != address(0), InvalidDstBridge());
+        require(dstBridge != bytes32(0), InvalidDstBridge());
 
         _consumeRate(dstChainSelector, tokenAmount, true);
 
         ILancaCanonicalBridgePool(pool).deposit(msg.sender, tokenAmount);
 
-        messageId = _sendMessage(
-            tokenReceiver,
-            tokenAmount,
-            dstChainSelector,
-            dstGasLimit,
-            dstCallData,
-            dstBridge
-        );
+        messageId = _sendMessage(tokenAmount, dstChainSelector, payload, dstChainData, dstBridge);
 
-        emit TokenSent(messageId, msg.sender, tokenReceiver, dstChainSelector, tokenAmount);
+        emit TokenSent(messageId, dstChainSelector, dstChainData, msg.sender, tokenAmount);
     }
 
-    function _conceroReceive(
-        bytes32 messageId,
-        uint24 srcChainSelector,
-        bytes calldata sender,
-        bytes calldata message
-    ) internal override nonReentrant {
-        require(
-            abi.decode(sender, (address)) == getBridgeAddress(srcChainSelector),
-            InvalidBridgeSender()
-        );
+    function _conceroReceive(bytes calldata messageReceipt) internal override {
+        (address sender, ) = messageReceipt.evmSrcChainData();
+        uint24 srcChainSelector = messageReceipt.srcChainSelector();
 
-        address pool = s.l1Bridge().pools[srcChainSelector];
+        require(sender == getBridgeAddress(srcChainSelector).toAddress(), InvalidBridgeSender());
+
+        address pool = getPool(srcChainSelector);
         require(pool != address(0), PoolNotFound(srcChainSelector));
 
+        bytes calldata messageData = messageReceipt.calldataPayload();
+        bytes32 messageId = keccak256(messageReceipt);
+
         (
-            address tokenSender,
-            address tokenReceiver,
             uint256 tokenAmount,
-            uint256 dstGasLimit,
-            bytes memory dstCallData
-        ) = abi.decode(message, (address, address, uint256, uint256, bytes));
-
-        bool shouldCallHook = !(dstGasLimit == 0 && dstCallData.length == 0);
-
-        if (shouldCallHook && !_isValidContractReceiver(tokenReceiver)) {
-            revert InvalidConceroMessage();
-        }
+            bytes32 tokenSender,
+            bytes32 tokenReceiver,
+            bytes memory payload
+        ) = messageData.decodeBridgeData();
 
         _consumeRate(srcChainSelector, tokenAmount, false);
-        ILancaCanonicalBridgePool(pool).withdraw(tokenReceiver, tokenAmount);
 
-        if (shouldCallHook) {
-            ILancaCanonicalBridgeClient(tokenReceiver).lancaCanonicalBridgeReceive(
-                messageId,
-                srcChainSelector,
-                tokenSender,
-                tokenAmount,
-                dstCallData
-            );
+        address receiver = tokenReceiver.toAddress();
+        ILancaCanonicalBridgePool(pool).withdraw(receiver, tokenAmount);
+
+        if (_shouldCallReceiverHook(receiver, payload)) {
+            try
+                ILancaCanonicalBridgeClient(receiver).lancaCanonicalBridgeReceive(
+                    messageId,
+                    srcChainSelector,
+                    tokenSender,
+                    tokenAmount,
+                    payload
+                )
+            {} catch (bytes memory reason) {
+                emit HookCallFailed(messageId, receiver, reason);
+            }
         }
 
         emit BridgeDelivered(messageId, tokenAmount);
@@ -114,8 +114,11 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
     function addPools(
         uint24[] calldata dstChainSelectors,
         address[] calldata pools
-    ) external onlyOwner {
-        require(dstChainSelectors.length == pools.length, CommonErrors.LengthMismatch());
+    ) external onlyRole(ADMIN) {
+        require(
+            dstChainSelectors.length == pools.length,
+            CommonErrors.LengthMismatch(dstChainSelectors.length, pools.length)
+        );
 
         s.L1Bridge storage l1BridgeStorage = s.l1Bridge();
 
@@ -130,42 +133,61 @@ contract LancaCanonicalBridgeL1 is LancaCanonicalBridgeBase, ReentrancyGuard {
 
     function addDstBridges(
         uint24[] calldata dstChainSelectors,
-        address[] calldata dstBridges
-    ) external onlyOwner {
-        require(dstChainSelectors.length == dstBridges.length, CommonErrors.LengthMismatch());
+        bytes32[] calldata dstBridges
+    ) external onlyRole(ADMIN) {
+        require(
+            dstChainSelectors.length == dstBridges.length,
+            CommonErrors.LengthMismatch(dstChainSelectors.length, dstBridges.length)
+        );
 
-        s.L1Bridge storage l1BridgeStorage = s.l1Bridge();
+        s.L1Bridge storage s_l1BridgeStorage = s.l1Bridge();
 
         for (uint256 i = 0; i < dstChainSelectors.length; i++) {
             require(
-                l1BridgeStorage.dstBridges[dstChainSelectors[i]] == address(0),
+                s_l1BridgeStorage.dstBridges[dstChainSelectors[i]] == bytes32(0),
                 DstBridgeAlreadyExists(dstChainSelectors[i])
             );
-            l1BridgeStorage.dstBridges[dstChainSelectors[i]] = dstBridges[i];
+            s_l1BridgeStorage.dstBridges[dstChainSelectors[i]] = dstBridges[i];
         }
     }
 
-    function removePools(uint24[] calldata dstChainSelectors) external onlyOwner {
-        s.L1Bridge storage l1BridgeStorage = s.l1Bridge();
+    function removePools(uint24[] calldata dstChainSelectors) external onlyRole(ADMIN) {
+        s.L1Bridge storage s_l1BridgeStorage = s.l1Bridge();
         for (uint256 i = 0; i < dstChainSelectors.length; i++) {
-            delete l1BridgeStorage.pools[dstChainSelectors[i]];
+            delete s_l1BridgeStorage.pools[dstChainSelectors[i]];
         }
     }
 
-    function removeDstBridges(uint24[] calldata dstChainSelectors) external onlyOwner {
-        s.L1Bridge storage l1BridgeStorage = s.l1Bridge();
+    function removeDstBridges(uint24[] calldata dstChainSelectors) external onlyRole(ADMIN) {
+        s.L1Bridge storage s_l1BridgeStorage = s.l1Bridge();
         for (uint256 i = 0; i < dstChainSelectors.length; i++) {
-            delete l1BridgeStorage.dstBridges[dstChainSelectors[i]];
+            delete s_l1BridgeStorage.dstBridges[dstChainSelectors[i]];
         }
     }
 
     /* ------- View Functions ------- */
 
-    function getPool(uint24 dstChainSelector) external view returns (address) {
+    function getPool(uint24 dstChainSelector) public view returns (address) {
         return s.l1Bridge().pools[dstChainSelector];
     }
 
-    function getBridgeAddress(uint24 dstChainSelector) public view returns (address) {
+    function getBridgeAddress(uint24 dstChainSelector) public view returns (bytes32) {
         return s.l1Bridge().dstBridges[dstChainSelector];
+    }
+
+    /// @inheritdoc ILancaCanonicalBridgeL1
+    function getBridgeNativeFee(
+        uint256 /* tokenAmount */,
+        uint24 dstChainSelector,
+        bytes calldata dstChainData,
+        bytes calldata payload
+    ) external view returns (uint256) {
+        return
+            _getBridgeNativeFee(
+                dstChainSelector,
+                dstChainData,
+                payload,
+                s.l1Bridge().dstBridges[dstChainSelector]
+            );
     }
 }

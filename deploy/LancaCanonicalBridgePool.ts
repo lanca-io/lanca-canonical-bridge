@@ -47,12 +47,12 @@ const deployLancaCanonicalBridgePool: DeploymentFunction = async function (
 	}
 
 	const lancaCanonicalBridgeAddress = getEnvVar(
-		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(srcChainName)}`,
+		`LC_BRIDGE_PROXY_${getNetworkEnvKey(srcChainName)}`,
 	);
 
 	if (!lancaCanonicalBridgeAddress) {
 		err(
-			`LancaCanonicalBridge address not found. Set LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(srcChainName)} in environment variables.`,
+			`LancaCanonicalBridge address not found. Set LC_BRIDGE_PROXY_${getNetworkEnvKey(srcChainName)} in environment variables.`,
 			"deployLancaCanonicalBridgePool",
 			srcChainName,
 		);
@@ -101,7 +101,7 @@ const deployLancaCanonicalBridgePool: DeploymentFunction = async function (
 	log(`Deployed at: ${deployment.address}`, "deployLancaCanonicalBridgePool", srcChainName);
 
 	updateEnvVariable(
-		`LC_BRIDGE_POOL_${getNetworkEnvKey(srcChainName)}_${getNetworkEnvKey(dstChainName)}`,
+		`LC_BRIDGE_POOL_${getNetworkEnvKey(dstChainName)}`,
 		deployment.address,
 		`deployments.${networkType}`,
 	);

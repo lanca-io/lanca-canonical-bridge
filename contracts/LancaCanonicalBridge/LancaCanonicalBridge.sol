@@ -6,39 +6,48 @@
  */
 pragma solidity 0.8.28;
 
-import {ReentrancyGuard} from "@openzeppelin/contracts-v5/utils/ReentrancyGuard.sol";
-import {SafeERC20} from "@openzeppelin/contracts-v5/token/ERC20/utils/SafeERC20.sol";
-
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
 import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
-
+import {BridgeCodec} from "../common/libraries/BridgeCodec.sol";
 import {
     LancaCanonicalBridgeBase,
     ILancaCanonicalBridgeClient
 } from "./LancaCanonicalBridgeBase.sol";
+import {ILancaCanonicalBridge} from "../interfaces/ILancaCanonicalBridge.sol";
 
-contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
+contract LancaCanonicalBridge is ILancaCanonicalBridge, LancaCanonicalBridgeBase {
+    using BridgeCodec for address;
+    using BridgeCodec for bytes;
+    using BridgeCodec for bytes32;
+    using MessageCodec for bytes;
+
+    /// @notice Chain selector that uniquely identifies the L1 chain where the canonical bridge resides.
+    /// @dev Used for both sending messages to L1 and validating messages coming from L1.
     uint24 internal immutable i_l1ChainSelector;
+
+    // @notice Address of the L1 LancaCanonicalBridge contract.
+    /// @dev Only messages originating from this address and chain selector are trusted.
     address internal immutable i_lancaCanonicalBridgeL1;
 
     constructor(
         uint24 l1ChainSelector,
         address conceroRouter,
         address usdcAddress,
-        address lancaCanonicalBridgeL1,
-        address rateLimitAdmin
-    ) LancaCanonicalBridgeBase(usdcAddress, rateLimitAdmin, conceroRouter) {
+        address lancaCanonicalBridgeL1
+    ) LancaCanonicalBridgeBase(usdcAddress, conceroRouter) {
         i_l1ChainSelector = l1ChainSelector;
         i_lancaCanonicalBridgeL1 = lancaCanonicalBridgeL1;
     }
 
     /* ------- Main Functions ------- */
 
+    /// @inheritdoc ILancaCanonicalBridge
     function sendToken(
-        address tokenReceiver,
         uint256 tokenAmount,
-        uint256 dstGasLimit,
-        bytes calldata dstCallData
-    ) external payable nonReentrant returns (bytes32 messageId) {
+        bytes calldata dstChainData,
+        bytes calldata payload
+    ) external payable returns (bytes32 messageId) {
         require(tokenAmount > 0, CommonErrors.InvalidAmount());
 
         _consumeRate(i_l1ChainSelector, tokenAmount, true);
@@ -47,53 +56,57 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
         i_usdc.burn(tokenAmount);
 
         messageId = _sendMessage(
-            tokenReceiver,
             tokenAmount,
             i_l1ChainSelector,
-            dstGasLimit,
-            dstCallData,
-            i_lancaCanonicalBridgeL1
+            payload,
+            dstChainData,
+            i_lancaCanonicalBridgeL1.toBytes32()
         );
 
-        emit TokenSent(messageId, msg.sender, tokenReceiver, i_l1ChainSelector, tokenAmount);
+        emit TokenSent(messageId, i_l1ChainSelector, dstChainData, msg.sender, tokenAmount);
     }
 
-    function _conceroReceive(
-        bytes32 messageId,
-        uint24 srcChainSelector,
-        bytes calldata sender,
-        bytes calldata message
-    ) internal override nonReentrant {
+    /// @dev
+    /// - Called by the Concero router when a message from L1 is delivered.
+    /// - Validates that the message originates from `i_lancaCanonicalBridgeL1` on `i_l1ChainSelector`.
+    /// - Decodes bridge data, consumes inbound rate, mints USDC to the recipient, and optionally
+    ///   invokes the `lancaCanonicalBridgeReceive` hook on the receiver contract.
+    function _conceroReceive(bytes calldata messageReceipt) internal override {
+        (address sender, ) = messageReceipt.evmSrcChainData();
+        uint24 srcChainSelector = messageReceipt.srcChainSelector();
+
         require(
-            abi.decode(sender, (address)) == i_lancaCanonicalBridgeL1 &&
-                srcChainSelector == i_l1ChainSelector,
+            sender == i_lancaCanonicalBridgeL1 && srcChainSelector == i_l1ChainSelector,
             InvalidBridgeSender()
         );
+
+        bytes calldata messageData = messageReceipt.calldataPayload();
+        bytes32 messageId = keccak256(messageReceipt);
+
         (
-            address tokenSender,
-            address tokenReceiver,
             uint256 tokenAmount,
-            uint256 dstGasLimit,
-            bytes memory dstCallData
-        ) = abi.decode(message, (address, address, uint256, uint256, bytes));
-
-        bool shouldCallHook = !(dstGasLimit == 0 && dstCallData.length == 0);
-
-        if (shouldCallHook && !_isValidContractReceiver(tokenReceiver)) {
-            revert InvalidConceroMessage();
-        }
+            bytes32 tokenSender,
+            bytes32 tokenReceiver,
+            bytes memory payload
+        ) = messageData.decodeBridgeData();
 
         _consumeRate(srcChainSelector, tokenAmount, false);
-        i_usdc.mint(tokenReceiver, tokenAmount);
 
-        if (shouldCallHook) {
-            ILancaCanonicalBridgeClient(tokenReceiver).lancaCanonicalBridgeReceive(
-                messageId,
-                srcChainSelector,
-                tokenSender,
-                tokenAmount,
-                dstCallData
-            );
+        address receiver = tokenReceiver.toAddress();
+        i_usdc.mint(receiver, tokenAmount);
+
+        if (_shouldCallReceiverHook(receiver, payload)) {
+            try
+                ILancaCanonicalBridgeClient(receiver).lancaCanonicalBridgeReceive(
+                    messageId,
+                    srcChainSelector,
+                    tokenSender,
+                    tokenAmount,
+                    payload
+                )
+            {} catch (bytes memory reason) {
+                emit HookCallFailed(messageId, receiver, reason);
+            }
         }
 
         emit BridgeDelivered(messageId, tokenAmount);
@@ -101,7 +114,19 @@ contract LancaCanonicalBridge is LancaCanonicalBridgeBase, ReentrancyGuard {
 
     /* ------- View Functions ------- */
 
-    function getBridgeNativeFee(uint256 dstGasLimit) external view returns (uint256) {
-        return getBridgeNativeFee(i_l1ChainSelector, i_lancaCanonicalBridgeL1, dstGasLimit);
+    /// @inheritdoc ILancaCanonicalBridge
+    function getBridgeNativeFee(
+        uint256 /* tokenAmount */,
+        uint24 dstChainSelector,
+        bytes calldata dstChainData,
+        bytes calldata payload
+    ) external view returns (uint256) {
+        return
+            _getBridgeNativeFee(
+                dstChainSelector,
+                dstChainData,
+                payload,
+                i_lancaCanonicalBridgeL1.toBytes32()
+            );
     }
 }

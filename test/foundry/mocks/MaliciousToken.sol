@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.28;
 
-import {MockUSDCe} from "./MockUSDCe.sol";
+import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
+
 import {LancaCanonicalBridge} from "contracts/LancaCanonicalBridge/LancaCanonicalBridge.sol";
+
+import {MockUSDCe} from "./MockUSDCe.sol";
 
 contract MaliciousToken is MockUSDCe {
     bool public shouldAttack;
@@ -19,7 +22,9 @@ contract MaliciousToken is MockUSDCe {
         if (shouldAttack) {
             shouldAttack = false;
 
-            LancaCanonicalBridge(attackTarget).sendToken(address(this), amount, 0, "");
+            bytes memory dstChainData = MessageCodec.encodeEvmDstChainData(address(this), 0);
+
+            LancaCanonicalBridge(attackTarget).sendToken(amount, dstChainData, "");
         }
 
         return super.transferFrom(from, to, amount);

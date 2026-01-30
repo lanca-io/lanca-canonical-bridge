@@ -12,23 +12,19 @@ export async function addPool(dstChainName: string): Promise<void> {
 	const srcChain = conceroNetworks[srcChainName as keyof typeof conceroNetworks];
 	const { viemChain } = srcChain;
 
-	const l1BridgeAddress = getEnvVar(
-		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(srcChainName)}`,
-	);
+	const l1BridgeAddress = getEnvVar(`LC_BRIDGE_PROXY_${getNetworkEnvKey(srcChainName)}`);
 	if (!l1BridgeAddress) {
 		err(
-			`L1 Bridge address not found. Set LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(srcChainName)} in .env.deployments.${networkType} variables.`,
+			`L1 Bridge address not found. Set LC_BRIDGE_PROXY_${getNetworkEnvKey(srcChainName)} in .env.deployments.${networkType} variables.`,
 			"addPool",
 			srcChainName,
 		);
 	}
 
-	const poolAddress = getEnvVar(
-		`LC_BRIDGE_POOL_PROXY_${getNetworkEnvKey(srcChainName)}_${getNetworkEnvKey(dstChainName)}`,
-	);
+	const poolAddress = getEnvVar(`LC_BRIDGE_POOL_PROXY_${getNetworkEnvKey(dstChainName)}`);
 	if (!poolAddress) {
 		err(
-			`Pool address not found. Set LC_BRIDGE_POOL_PROXY_${getNetworkEnvKey(srcChainName)}_${getNetworkEnvKey(dstChainName)} in .env.deployments.${networkType} variables.`,
+			`Pool address not found. Set LC_BRIDGE_POOL_PROXY_${getNetworkEnvKey(dstChainName)} in .env.deployments.${networkType} variables.`,
 			"addPool",
 			srcChainName,
 		);

@@ -7,11 +7,19 @@
  */
 pragma solidity 0.8.28;
 
-import {LCBridgeTest} from "./base/LCBridgeTest.sol";
-import {MockUSDCe} from "../mocks/MockUSDCe.sol";
-import {LancaCanonicalBridgeBase} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
+import {IConceroRouter} from "@concero/v2-contracts/contracts/interfaces/IConceroRouter.sol";
+import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
 
-contract ConceroReceiveTest is LCBridgeTest {
+import {LancaCanonicalBridgeBase} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
+import {BridgeCodec} from "contracts/common/libraries/BridgeCodec.sol";
+
+import {MockInvalidClient} from "../mocks/MockInvalidClient.sol";
+import {MockUSDCe} from "../mocks/MockUSDCe.sol";
+import {LCBridgeBase} from "./LCBridgeBase.sol";
+
+contract ConceroReceiveTest is LCBridgeBase {
+    using MessageCodec for IConceroRouter.MessageRequest;
+
     function setUp() public override {
         super.setUp();
     }
@@ -19,122 +27,95 @@ contract ConceroReceiveTest is LCBridgeTest {
     // --- Tests for conceroReceive with no call ---
 
     function test_conceroReceive_Success() public {
-        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, 0, "");
-        uint256 userBalanceBefore = MockUSDCe(usdcE).balanceOf(user);
-        uint256 totalSupplyBefore = MockUSDCe(usdcE).totalSupply();
+        uint256 userBalanceBefore = s_usdcE.balanceOf(s_user);
+        uint256 totalSupplyBefore = s_usdcE.totalSupply();
 
-        vm.prank(conceroRouter);
-        lancaCanonicalBridge.conceroReceive(
-            DEFAULT_MESSAGE_ID,
-            SRC_CHAIN_SELECTOR,
-            abi.encode(lancaBridgeL1Mock),
-            message
-        );
+        _conceroReceive(s_user, s_user, AMOUNT, 0, "");
 
-        uint256 userBalanceAfter = MockUSDCe(usdcE).balanceOf(user);
-        uint256 totalSupplyAfter = MockUSDCe(usdcE).totalSupply();
+        uint256 userBalanceAfter = s_usdcE.balanceOf(s_user);
+        uint256 totalSupplyAfter = s_usdcE.totalSupply();
 
         assertEq(userBalanceAfter, userBalanceBefore + AMOUNT);
         assertEq(totalSupplyAfter, totalSupplyBefore + AMOUNT);
     }
 
     function test_conceroReceive_RevertsInvalidSenderBridge() public {
-        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, 0, "");
-
-        vm.expectRevert(
-            abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidBridgeSender.selector)
-        );
-
-        vm.prank(conceroRouter);
-        lancaCanonicalBridge.conceroReceive(
-            DEFAULT_MESSAGE_ID,
+        IConceroRouter.MessageRequest memory messageRequest = _buildMessageRequest(
+            BridgeCodec.encodeBridgeData(
+                s_user,
+                s_user,
+                AMOUNT,
+                ""
+            ),
             SRC_CHAIN_SELECTOR,
-            abi.encode(address(0)),
-            message
+            address(lancaCanonicalBridge)
+        );
+
+        address invalidBridgeL1 = address(999);
+        uint24 invalidSrcChainSelector = 999;
+
+        vm.expectRevert(
+            abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidBridgeSender.selector)
+        );
+
+        vm.prank(s_conceroRouter);
+        lancaCanonicalBridge.conceroReceive(
+            messageRequest.toMessageReceiptBytes(SRC_CHAIN_SELECTOR, invalidBridgeL1, NONCE, new bytes[](0)),
+            s_validationChecks,
+            s_validatorLibs,
+            s_relayerLib
         );
 
         vm.expectRevert(
             abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidBridgeSender.selector)
         );
 
-        vm.prank(conceroRouter);
+        vm.prank(s_conceroRouter);
         lancaCanonicalBridge.conceroReceive(
-            DEFAULT_MESSAGE_ID,
-            SRC_CHAIN_SELECTOR + 1,
-            abi.encode(lancaBridgeL1Mock),
-            message
+            messageRequest.toMessageReceiptBytes(
+                invalidSrcChainSelector,
+                s_lancaBridgeL1Mock,
+                NONCE,
+                new bytes[](0)
+            ),
+            s_validationChecks,
+            s_validatorLibs,
+            s_relayerLib
         );
     }
 
     function test_conceroReceive_EmitsBridgeDelivered() public {
-        bytes memory message = _encodeBridgeParams(user, user, AMOUNT, 0, "");
+        vm.expectEmit(false, false, false, true);
+        emit LancaCanonicalBridgeBase.BridgeDelivered(DEFAULT_MESSAGE_ID, AMOUNT);
 
-        vm.expectEmit(true, true, true, true);
-        emit LancaCanonicalBridgeBase.BridgeDelivered(
-            DEFAULT_MESSAGE_ID,
-            SRC_CHAIN_SELECTOR,
-            user,
-            user,
-            AMOUNT
-        );
-
-        vm.prank(conceroRouter);
-        lancaCanonicalBridge.conceroReceive(
-            DEFAULT_MESSAGE_ID,
-            SRC_CHAIN_SELECTOR,
-            abi.encode(lancaBridgeL1Mock),
-            message
-        );
+        _conceroReceive(s_user, s_user, AMOUNT, 0, "");
     }
 
     // --- Tests for conceroReceive with call ---
 
-    function test_conceroReceive_WithCall_RevertsCallFiled() public {
+    function test_conceroReceive_WithCall_DeliversTokensWithoutHookWhenReceiverHasNoCode() public {
         address invalidLCBridgeClient = makeAddr("InvalidLCBridgeClient");
 
-        bytes memory message = _encodeBridgeParams(
-            user,
-            invalidLCBridgeClient,
-            AMOUNT,
-            GAS_LIMIT,
-            "0x01"
-        );
+        _conceroReceive(s_user, invalidLCBridgeClient, AMOUNT, GAS_LIMIT, "0x01");
 
-        vm.expectRevert(
-            abi.encodeWithSelector(LancaCanonicalBridgeBase.InvalidConceroMessage.selector)
-        );
+        assertEq(s_usdcE.balanceOf(invalidLCBridgeClient), AMOUNT);
+    }
 
-        vm.prank(conceroRouter);
-        lancaCanonicalBridge.conceroReceive(
-            DEFAULT_MESSAGE_ID,
-            SRC_CHAIN_SELECTOR,
-            abi.encode(lancaBridgeL1Mock),
-            message
-        );
+    function test_conceroReceive_WithCall_DeliversTokensWhenReceiverLacksInterface() public {
+        MockInvalidClient invalidReceiverContract = new MockInvalidClient();
+
+        _conceroReceive(s_user, address(invalidReceiverContract), AMOUNT, GAS_LIMIT, "0x01");
+
+        assertEq(s_usdcE.balanceOf(address(invalidReceiverContract)), AMOUNT);
     }
 
     function test_conceroReceive_WithCall() public {
         string memory testString = "LancaCanonicalBridge";
 
-        bytes memory message = _encodeBridgeParams(
-            user,
-            address(lcBridgeClient),
-            AMOUNT,
-            GAS_LIMIT,
-            abi.encode(testString)
-        );
+        _conceroReceive(s_user, address(lcBridgeClient), AMOUNT, GAS_LIMIT, abi.encode(testString));
 
-        vm.prank(conceroRouter);
-        lancaCanonicalBridge.conceroReceive(
-            DEFAULT_MESSAGE_ID,
-            SRC_CHAIN_SELECTOR,
-            abi.encode(lancaBridgeL1Mock),
-            message
-        );
-
-        assertEq(lcBridgeClient.messageId(), DEFAULT_MESSAGE_ID);
         assertEq(lcBridgeClient.srcChainSelector(), SRC_CHAIN_SELECTOR);
-        assertEq(lcBridgeClient.tokenSender(), user);
+        assertEq(BridgeCodec.toAddress(lcBridgeClient.tokenSender()), s_user);
         assertEq(lcBridgeClient.tokenAmount(), AMOUNT);
         assertEq(lcBridgeClient.testString(), testString);
     }

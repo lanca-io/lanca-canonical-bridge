@@ -2,16 +2,16 @@ import { task } from "hardhat/config";
 
 import { type HardhatRuntimeEnvironment } from "hardhat/types";
 
-import { envPrefixes } from "../../constants";
+import { ProxyEnum } from "../../constants";
 import { deployLancaCanonicalBridgePool } from "../../deploy/LancaCanonicalBridgePool";
-import { deployLancaCanonicalBridgePoolProxy } from "../../deploy/LancaCanonicalBridgePoolProxy";
-import { deployProxyAdmin } from "../../deploy/ProxyAdmin";
+import { deployTransparentProxy } from "../../deploy/TransparentProxy";
 import { compileContracts } from "../../utils";
 import {
 	addDstBridge,
 	addPool,
+	setLibs,
 	setRateLimits,
-	upgradeLancaPoolProxyImplementation,
+	upgradeLancaProxyImplementation,
 } from "../utils";
 
 async function deployPoolTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
@@ -22,27 +22,32 @@ async function deployPoolTask(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	}
 
 	if (taskArgs.proxy) {
-		await deployProxyAdmin(
-			hre,
-			envPrefixes.lcBridgePoolProxyAdmin,
-			taskArgs.owner,
-			taskArgs.dstchain,
-		);
-		await deployLancaCanonicalBridgePoolProxy(hre, taskArgs.dstchain);
+		await deployTransparentProxy(hre, ProxyEnum.lcBridgePoolProxy, "0x", taskArgs.dstchain);
 	}
 
 	if (taskArgs.implementation) {
-		await upgradeLancaPoolProxyImplementation(hre.network.name, taskArgs.dstchain);
+		await upgradeLancaProxyImplementation(
+			hre,
+			ProxyEnum.lcBridgePoolProxy,
+			false,
+			taskArgs.dstchain,
+		);
 	}
 
 	if (taskArgs.proxy) {
 		await addPool(taskArgs.dstchain);
 		await addDstBridge(taskArgs.dstchain);
 		await setRateLimits(hre.network.name, taskArgs.dstchain);
+		await setLibs(hre.network.name);
 	}
 
 	if (taskArgs.pause) {
-		await upgradeLancaPoolProxyImplementation(hre.network.name, taskArgs.dstchain, true);
+		await upgradeLancaProxyImplementation(
+			hre,
+			ProxyEnum.lcBridgePoolProxy,
+			true,
+			taskArgs.dstchain,
+		);
 	}
 }
 

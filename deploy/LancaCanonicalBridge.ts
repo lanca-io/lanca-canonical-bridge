@@ -19,7 +19,6 @@ type DeployArgs = {
 	conceroRouter: string;
 	usdcAddress: string;
 	l1BridgeAddress?: string;
-	rateLimitAdmin: string;
 };
 
 type DeploymentFunction = (
@@ -47,12 +46,11 @@ const deployLancaCanonicalBridge: DeploymentFunction = async function (
 			networkType === "testnet" ? conceroNetworks.ethereumSepolia : conceroNetworks.ethereum
 		) as ConceroNetwork;
 
-		l1BridgeAddress =
-			getEnvVar(`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChain.name)}`) || "";
+		l1BridgeAddress = getEnvVar(`LC_BRIDGE_PROXY_${getNetworkEnvKey(dstChain.name)}`) || "";
 		l1ChainSelector = BigInt(dstChain.chainId);
 		if (!l1BridgeAddress || !l1ChainSelector) {
 			err(
-				`L1 Bridge address of L1 chain selector ${l1ChainSelector} not found. Set LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChain.name)} in .env.deployments.${networkType} variables.`,
+				`L1 Bridge address of L1 chain selector ${l1ChainSelector} not found. Set LC_BRIDGE_PROXY_${getNetworkEnvKey(dstChain.name)} in .env.deployments.${networkType} variables.`,
 				"deployLancaCanonicalBridge",
 				name,
 			);
@@ -80,16 +78,7 @@ const deployLancaCanonicalBridge: DeploymentFunction = async function (
 		);
 	}
 
-	const rateLimitAdmin = getEnvVar(`TESTNET_RATE_LIMIT_ADMIN_ADDRESS`);
-	if (!rateLimitAdmin) {
-		err(
-			`Rate limit admin address not found. Set ${getNetworkEnvKey(networkType)}_RATE_LIMIT_ADMIN_ADDRESS in environment variables.`,
-			"deployLancaCanonicalBridge",
-			name,
-		);
-	}
-
-	if (!conceroRouter || !usdcAddress || !rateLimitAdmin) {
+	if (!conceroRouter || !usdcAddress) {
 		return {} as Deployment;
 	}
 
@@ -98,7 +87,6 @@ const deployLancaCanonicalBridge: DeploymentFunction = async function (
 		conceroRouter,
 		usdcAddress,
 		l1BridgeAddress,
-		rateLimitAdmin,
 	};
 
 	const args: DeployArgs = {
@@ -116,11 +104,10 @@ const deployLancaCanonicalBridge: DeploymentFunction = async function (
 			args.conceroRouter,
 			args.usdcAddress,
 			args.l1BridgeAddress,
-			args.rateLimitAdmin,
 		];
 	} else {
 		constructorName = "LancaCanonicalBridgeL1";
-		constructorArgs = [args.conceroRouter, args.usdcAddress, args.rateLimitAdmin];
+		constructorArgs = [args.conceroRouter, args.usdcAddress];
 	}
 
 	const viemAccount = getViemAccount(networkType, "deployer");
@@ -136,7 +123,7 @@ const deployLancaCanonicalBridge: DeploymentFunction = async function (
 	log(`Deployed at: ${deployment.address}`, "deployLancaCanonicalBridge", name);
 
 	updateEnvVariable(
-		`LANCA_CANONICAL_BRIDGE_${getNetworkEnvKey(name)}`,
+		`LC_BRIDGE_${getNetworkEnvKey(name)}`,
 		deployment.address,
 		`deployments.${networkType}`,
 	);

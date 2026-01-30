@@ -1,6 +1,6 @@
 import { getNetworkEnvKey } from "@concero/contract-utils";
 
-import { conceroNetworks, getViemReceiptConfig } from "../../constants";
+import { conceroNetworks, fiatTokenV2Abi, getViemReceiptConfig } from "../../constants";
 import { defaultMinterAllowedAmount } from "../../constants/deploymentVariables";
 import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils";
 
@@ -13,16 +13,12 @@ export async function configureMinter(srcChainName: string, amount?: string): Pr
 		err(`FiatToken address not found`, "configureMinter", srcChainName);
 	}
 
-	const { abi: fiatTokenAbi } = await import(
-		"../../artifacts/contracts/usdc/v2/FiatTokenV2_2.sol/FiatTokenV2_2.json"
-	);
-
 	// viemAccount should be master minter address
-	const viemAccount = getViemAccount(type, "proxyDeployer");
+	const viemAccount = getViemAccount(type, "deployer");
 	const { walletClient, publicClient } = getFallbackClients(srcChain, viemAccount);
 
 	const lancaCanonicalBridgeAddress = getEnvVar(
-		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(srcChainName)}`,
+		`LC_BRIDGE_PROXY_${getNetworkEnvKey(srcChainName)}`,
 	);
 	if (!lancaCanonicalBridgeAddress) {
 		err(`LancaCanonicalBridge address not found`, "configureMinter", srcChainName);
@@ -40,18 +36,19 @@ export async function configureMinter(srcChainName: string, amount?: string): Pr
 
 		const isMinter = await publicClient.readContract({
 			address: fiatTokenProxyAddress,
-			abi: fiatTokenAbi,
+			abi: fiatTokenV2Abi,
 			functionName: "isMinter",
 			args: [lancaCanonicalBridgeAddress],
 		});
 
 		if (isMinter) {
 			log("LancaCanonicalBridge is already a minter", "configureFiatToken", srcChainName);
+			return;
 		}
 
 		const configTxHash = await walletClient.writeContract({
 			address: fiatTokenProxyAddress as `0x${string}`,
-			abi: fiatTokenAbi,
+			abi: fiatTokenV2Abi,
 			functionName: "configureMinter",
 			account: viemAccount,
 			args: [lancaCanonicalBridgeAddress, minterAllowedAmount],

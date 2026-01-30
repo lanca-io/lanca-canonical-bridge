@@ -7,13 +7,16 @@
 pragma solidity 0.8.28;
 
 import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
-
 import {Storage as s} from "./libraries/Storage.sol";
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
-abstract contract RateLimiter {
+/// @title RateLimiter
+/// @notice Token transfer rate limiter for inbound and outbound bridge traffic per chain.
+/// @dev
+/// - Implements a token bucket–style rate limiting mechanism per `dstChainSelector`.
+/// - Maintains separate limits for outbound and inbound directions.
+abstract contract RateLimiter is AccessControlUpgradeable {
     using s for s.RateLimits;
-
-    address public immutable i_rateLimitAdmin;
 
     event RateLimitSet(
         uint24 indexed dstChainSelector,
@@ -32,23 +35,24 @@ abstract contract RateLimiter {
         uint32 lastUpdate; // Last update timestamp for refill calculations
     }
 
-    modifier onlyRateLimitAdmin() {
-        if (msg.sender != i_rateLimitAdmin) {
-            revert CommonErrors.Unauthorized();
-        }
-        _;
-    }
+    bytes32 public constant RATE_LIMIT_ADMIN = keccak256("RATE_LIMIT_ADMIN");
 
-    constructor(address _rateLimitAdmin) {
-        i_rateLimitAdmin = _rateLimitAdmin;
-    }
-
+    /// @notice Configures or updates the rate limit for a specific chain and direction.
+    /// @dev
+    /// - If `maxAmount == 0`, transfers are effectively disabled (soft pause).
+    /// - Ensures `refillSpeed <= maxAmount` (when `maxAmount > 0`) to avoid overflow.
+    /// - Recalculates `availableVolume` based on elapsed time before applying new limits.
+    /// - Caps `availableVolume` to `maxAmount` when reducing limits.
+    /// @param dstChainSelector Chain selector the rate limit applies to.
+    /// @param maxAmount Maximum bucket size (cap on available volume). `0` disables transfers.
+    /// @param refillSpeed Refill amount per second, up to `maxAmount`.
+    /// @param isOutbound True to configure outbound rate, false for inbound rate.
     function setRateLimit(
         uint24 dstChainSelector,
         uint128 maxAmount,
         uint128 refillSpeed,
         bool isOutbound
-    ) external onlyRateLimitAdmin {
+    ) external onlyRole(RATE_LIMIT_ADMIN) {
         // Validate: refill speed cannot exceed max amount to prevent overflow
         // Only validate if maxAmount > 0, since 0 means transfers are disabled
         if (maxAmount > 0 && refillSpeed > maxAmount) {
@@ -59,16 +63,17 @@ abstract contract RateLimiter {
             ? s.rateLimits().outboundRates[dstChainSelector]
             : s.rateLimits().inboundRates[dstChainSelector];
 
+        uint32 prevLastUpdate = rate.lastUpdate;
+
         // Update available volume based on time elapsed since last update
-        if (rate.lastUpdate > 0) {
-            (uint128 newAvailable, uint32 newLastUpdate) = _getRefillRate(
+        if (prevLastUpdate > 0) {
+            (uint128 newAvailable, ) = _getRefillRate(
                 rate.availableVolume,
                 rate.refillSpeed,
                 rate.maxAmount,
                 rate.lastUpdate
             );
             rate.availableVolume = newAvailable;
-            rate.lastUpdate = newLastUpdate;
         }
 
         rate.maxAmount = maxAmount;
@@ -82,13 +87,21 @@ abstract contract RateLimiter {
         }
 
         // Initialize available volume for first-time setup
-        if (rate.availableVolume == 0 && maxAmount > 0) {
+        if (rate.availableVolume == 0 && maxAmount > 0 && prevLastUpdate == 0) {
             rate.availableVolume = maxAmount;
         }
 
         emit RateLimitSet(dstChainSelector, isOutbound, maxAmount, refillSpeed);
     }
 
+    /// @notice Consumes rate limit volume for a specific chain and direction.
+    /// @dev
+    /// - Recomputes `availableVolume` using `_getRefillRate` based on elapsed time.
+    /// - Reverts with `RateLimitExceeded` if `amount` exceeds updated `availableVolume`.
+    /// - If `maxAmount == 0`, the rate limit is treated as disabled and always reverts.
+    /// @param dstChainSelector Chain selector the rate limit applies to.
+    /// @param amount Amount to consume from the available volume.
+    /// @param isOutbound True to consume from outbound bucket, false from inbound bucket.
     function _consumeRate(uint24 dstChainSelector, uint256 amount, bool isOutbound) internal {
         if (amount == 0) return;
 
@@ -125,8 +138,21 @@ abstract contract RateLimiter {
         if (newLastUpdate != lastUpdate) {
             rate.lastUpdate = newLastUpdate;
         }
+
+        // Backfill the opposite rate
+        _backfillOppositeRate(dstChainSelector, amount, isOutbound);
     }
 
+    /// @notice Calculates the refilled available volume for a rate bucket.
+    /// @dev
+    /// - Uses `block.timestamp - lastUpdate` to compute the elapsed time.
+    /// - Adds `timeElapsed * refillSpeed` to `availableVolume`, capped at `maxAmount`.
+    /// @param availableVolume Current available volume before refill.
+    /// @param refillSpeed Refill speed (tokens per second).
+    /// @param maxAmount Maximum bucket capacity.
+    /// @param lastUpdate Timestamp of the last update.
+    /// @return newAvailable Updated available volume after applying refill.
+    /// @return newLastUpdate Updated timestamp (current block timestamp).
     function _getRefillRate(
         uint128 availableVolume,
         uint128 refillSpeed,
@@ -147,6 +173,41 @@ abstract contract RateLimiter {
         newLastUpdate = uint32(block.timestamp);
     }
 
+    /// @notice Backfills the opposite rate limit with the amount consumed.
+    /// @dev
+    /// - Calculates the amount to add based on the amount consumed and the maximum amount of the opposite rate.
+    /// - Adds the amount to the available volume of the opposite rate.
+    /// - Caps the available volume at the maximum amount of the opposite rate.
+    /// @param dstChainSelector Chain selector the rate limit applies to.
+    /// @param amount Amount to backfill from the opposite rate.
+    /// @param isOutbound True to backfill from the outbound bucket, false from the inbound bucket.
+    function _backfillOppositeRate(
+        uint24 dstChainSelector,
+        uint256 amount,
+        bool isOutbound
+    ) internal {
+        RateLimit storage oppositeRate = isOutbound
+            ? s.rateLimits().inboundRates[dstChainSelector]
+            : s.rateLimits().outboundRates[dstChainSelector];
+
+        uint128 maxAmount = oppositeRate.maxAmount;
+        uint128 toAdd = uint128(amount > maxAmount ? maxAmount : amount);
+        uint128 newVolume = oppositeRate.availableVolume + toAdd;
+
+        oppositeRate.availableVolume = newVolume > maxAmount ? maxAmount : newVolume;
+    }
+
+    /// @notice Returns the current rate limit information for a given chain and direction.
+    /// @dev
+    /// - Recomputes `availableVolume` at query time using `_getRefillRate`.
+    /// - `isActive` is true when `maxAmount > 0` (non-paused).
+    /// @param dstChainSelector Chain selector to query.
+    /// @param isOutbound True to query the outbound bucket, false for inbound.
+    /// @return availableVolume Updated available volume after refill.
+    /// @return maxAmount Configured maximum bucket size.
+    /// @return refillSpeed Configured refill speed (tokens per second).
+    /// @return lastUpdate Effective last update timestamp after refill computation.
+    /// @return isActive True if the limit is active (`maxAmount > 0`), false otherwise.
     function getRateInfo(
         uint24 dstChainSelector,
         bool isOutbound

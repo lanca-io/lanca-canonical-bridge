@@ -6,13 +6,17 @@
  */
 pragma solidity 0.8.28;
 
-import {IERC20} from "@openzeppelin/contracts-v5/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts-v5/token/ERC20/utils/SafeERC20.sol";
-
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {CommonErrors} from "@concero/v2-contracts/contracts/common/CommonErrors.sol";
-
 import {ILancaCanonicalBridgePool} from "../interfaces/ILancaCanonicalBridgePool.sol";
 
+/// @title LancaCanonicalBridgePool
+/// @notice Liquidity pool contract holding USDC for a specific destination chain.
+/// @dev
+/// - Custodies USDC on L1 on behalf of the canonical bridge.
+/// - Only the L1 LancaCanonicalBridge contract can deposit and withdraw.
+/// - Each pool is associated with a single L2 `dstChainSelector`.
 contract LancaCanonicalBridgePool is ILancaCanonicalBridgePool {
     using SafeERC20 for IERC20;
 
@@ -31,14 +35,17 @@ contract LancaCanonicalBridgePool is ILancaCanonicalBridgePool {
         i_dstChainSelector = dstChainSelector;
     }
 
+    /// @inheritdoc ILancaCanonicalBridgePool
     function deposit(address from, uint256 amount) external onlyLancaCanonicalBridge {
         i_usdc.safeTransferFrom(from, address(this), amount);
     }
 
+    /// @inheritdoc ILancaCanonicalBridgePool
     function withdraw(address to, uint256 amount) external onlyLancaCanonicalBridge {
         i_usdc.safeTransfer(to, amount);
     }
 
+    /// @inheritdoc ILancaCanonicalBridgePool
     function getPoolInfo() external view returns (uint24 dstChainSelector, uint256 lockedUsdc) {
         dstChainSelector = i_dstChainSelector;
         lockedUsdc = i_usdc.balanceOf(address(this));

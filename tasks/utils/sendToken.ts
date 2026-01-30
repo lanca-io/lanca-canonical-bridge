@@ -1,5 +1,5 @@
 import { getNetworkEnvKey } from "@concero/contract-utils";
-import { decodeEventLog, formatEther, parseUnits } from "viem";
+import { decodeEventLog, encodePacked, formatEther, parseUnits } from "viem";
 
 import { conceroNetworks, getViemReceiptConfig } from "../../constants";
 import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils";
@@ -32,7 +32,7 @@ export async function sendToken(params: SendTokenParams): Promise<void> {
 		srcChain,
 	);
 
-	const bridgeAddress = getEnvVar(`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(srcChain)}`);
+	const bridgeAddress = getEnvVar(`LC_BRIDGE_PROXY_${getNetworkEnvKey(srcChain)}`);
 	if (!bridgeAddress) {
 		err(`Bridge address not found for ${srcChain}`, "sendToken");
 	}
@@ -42,9 +42,7 @@ export async function sendToken(params: SendTokenParams): Promise<void> {
 		err(`USDC address not found for ${srcChain}`, "sendToken");
 	}
 
-	const dstBridgeAddress = getEnvVar(
-		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChain)}`,
-	);
+	const dstBridgeAddress = getEnvVar(`LC_BRIDGE_PROXY_${getNetworkEnvKey(dstChain)}`);
 	if (!dstBridgeAddress) {
 		err(`Destination bridge address not found for ${dstChain}`, "sendToken");
 	}
@@ -62,9 +60,7 @@ export async function sendToken(params: SendTokenParams): Promise<void> {
 
 	if (isEthereumChain) {
 		// For Ethereum chains, approve to the pool
-		const poolAddress = getEnvVar(
-			`LC_BRIDGE_POOL_PROXY_${getNetworkEnvKey(srcChain)}_${getNetworkEnvKey(dstChain)}` as any,
-		);
+		const poolAddress = getEnvVar(`LC_BRIDGE_POOL_PROXY_${getNetworkEnvKey(dstChain)}` as any);
 		if (!poolAddress) return;
 
 		approvalTarget = poolAddress;
@@ -85,14 +81,16 @@ export async function sendToken(params: SendTokenParams): Promise<void> {
 		bridgeAbi = l2BridgeArtifact.abi;
 	}
 
-	const { abi: usdcAbi } = await import(
-		"../../artifacts/contracts/usdc/v2/FiatTokenV2_2.sol/FiatTokenV2_2.json"
+	const { abi: erc20Abi } = await import(
+		"../../artifacts/@openzeppelin/contracts/token/ERC20/IERC20.sol/IERC20.json"
 	);
 
 	const viemAccount = getViemAccount(type, accountType);
 	const { walletClient, publicClient } = getFallbackClients(srcNetwork, viemAccount);
 
 	const amountInWei = parseUnits(amount, 6);
+	const tokenReceiver = receiver ? receiver : viemAccount.address;
+	const dstChainData = encodePacked(["address", "uint32"], [tokenReceiver as `0x${string}`, 0]);
 
 	try {
 		log("Getting message fee...", "sendToken", srcChain);
@@ -102,9 +100,10 @@ export async function sendToken(params: SendTokenParams): Promise<void> {
 			abi: bridgeAbi,
 			functionName: "getBridgeNativeFee",
 			args: [
+				amountInWei,
 				dstChainSelector,
-				dstBridgeAddress as `0x${string}`,
-				BigInt(0), // dstGasLimit (not needed for simple transfer)
+				dstChainData,
+				"0x", // dstCallData (empty for simple transfer)
 			],
 		});
 
@@ -119,7 +118,7 @@ export async function sendToken(params: SendTokenParams): Promise<void> {
 		log(`Approving ${amount} USDC to ${approvalTargetName}...`, "sendToken", srcChain);
 		const approveTxHash = await walletClient.writeContract({
 			address: usdcAddress as `0x${string}`,
-			abi: usdcAbi,
+			abi: erc20Abi,
 			functionName: "approve",
 			account: viemAccount,
 			args: [approvalTarget, amountInWei],
@@ -140,24 +139,20 @@ export async function sendToken(params: SendTokenParams): Promise<void> {
 			srcChain,
 		);
 
-		const tokenReceiver = receiver ? receiver : viemAccount.address;
-
 		let sendTokenArgs: any[];
 		if (isEthereumChain) {
 			// L1 contract: sendToken(tokenReceiver, tokenAmount, dstChainSelector, isTokenReceiverContract, dstGasLimit, dstCallData)
 			sendTokenArgs = [
-				tokenReceiver, // tokenReceiver
 				amountInWei, // tokenAmount
 				dstChainSelector, // dstChainSelector
-				BigInt(0), // dstGasLimit (not needed for simple transfer)
+				dstChainData, // dstChainData with receiver and gas limit
 				"0x", // dstCallData (empty for simple transfer)
 			];
 		} else {
 			// L2 contract: sendToken(tokenReceiver, tokenAmount)
 			sendTokenArgs = [
-				tokenReceiver, // tokenReceiver
 				amountInWei, // tokenAmount
-				BigInt(0), // dstGasLimit (not needed for simple transfer)
+				dstChainData, // dstChainData with receiver and gas limit
 				"0x", // dstCallData (empty for simple transfer)
 			];
 		}

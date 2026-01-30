@@ -9,12 +9,12 @@ cache_path = "cache/foundry"
 test = "test/foundry"
 via_ir = false
 
-libs = ["node_modules", "./contracts/"]
-allow_paths = ["node_modules", "./contracts/"]
+libs = ["node_modules", "./src/contracts/"]
+allow_paths = ["node_modules", "./src/contracts/"]
 
 remappings = [
-	"@openzeppelin/contracts-v5/=node_modules/@openzeppelin/contracts-v5/",
 	"@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/",
+	"@openzeppelin/contracts-upgradeable/=node_modules/@openzeppelin/contracts-upgradeable/",
     "@concero/=node_modules/@concero",
     "@chainlink/=node_modules/@chainlink/",
     "@uniswap/=node_modules/@uniswap/",

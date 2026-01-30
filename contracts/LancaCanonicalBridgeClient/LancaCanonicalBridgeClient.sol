@@ -6,7 +6,7 @@
  */
 pragma solidity 0.8.28;
 
-import {ERC165} from "@openzeppelin/contracts-v5/utils/introspection/ERC165.sol";
+import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 import {ILancaCanonicalBridgeClient} from "../interfaces/ILancaCanonicalBridgeClient.sol";
 
@@ -30,9 +30,9 @@ abstract contract LancaCanonicalBridgeClient is ILancaCanonicalBridgeClient, ERC
     }
 
     function lancaCanonicalBridgeReceive(
-		bytes32 messageId,
-		uint24 srcChainSelector,
-        address from,
+        bytes32 messageId,
+        uint24 srcChainSelector,
+        bytes32 from,
         uint256 value,
         bytes memory data
     ) external {
@@ -41,9 +41,9 @@ abstract contract LancaCanonicalBridgeClient is ILancaCanonicalBridgeClient, ERC
     }
 
     function _lancaCanonicalBridgeReceive(
-		bytes32 messageId,
-		uint24 srcChainSelector,
-        address from,
+        bytes32 messageId,
+        uint24 srcChainSelector,
+        bytes32 from,
         uint256 value,
         bytes memory data
     ) internal virtual;

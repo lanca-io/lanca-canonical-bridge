@@ -1,0 +1,91 @@
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.28;
+
+import {IConceroRouter} from "@concero/v2-contracts/contracts/interfaces/IConceroRouter.sol";
+import {MessageCodec} from "@concero/v2-contracts/contracts/common/libraries/MessageCodec.sol";
+import {StringsUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
+import {LancaCanonicalBridgeBase} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeBase.sol";
+import {BaseTest} from "./BaseTest.sol";
+
+abstract contract LCBTest is BaseTest {
+    function _buildMessageRequest(
+        bytes memory messagePayload,
+        uint24 dstChainSelector,
+        address dstBridge
+    ) internal view returns (IConceroRouter.MessageRequest memory) {
+        return
+            _buildMessageRequest(
+                messagePayload,
+                dstChainSelector,
+                dstBridge,
+                300_000,
+                type(uint64).max,
+                address(0)
+            );
+    }
+
+    function _buildMessageRequest(
+        bytes memory messagePayload,
+        uint24 dstChainSelector,
+        address dstBridge,
+        uint32 dstChainClientGasLimit
+    ) internal view returns (IConceroRouter.MessageRequest memory) {
+        return
+            _buildMessageRequest(
+                messagePayload,
+                dstChainSelector,
+                dstBridge,
+                300_000 + dstChainClientGasLimit,
+                type(uint64).max,
+                address(0)
+            );
+    }
+
+    function _buildMessageRequest(
+        bytes memory payload,
+        uint24 dstChainSelector,
+        address dstBridge,
+        uint32 dstChainGasLimit,
+        uint64 srcBlockConfirmations,
+        address feeToken
+    ) internal view returns (IConceroRouter.MessageRequest memory) {
+        address[] memory validatorLibs = new address[](1);
+        validatorLibs[0] = s_validatorLib;
+
+        return
+            IConceroRouter.MessageRequest({
+                dstChainSelector: dstChainSelector,
+                srcBlockConfirmations: srcBlockConfirmations,
+                feeToken: feeToken,
+                dstChainData: MessageCodec.encodeEvmDstChainData(dstBridge, dstChainGasLimit),
+                validatorLibs: validatorLibs,
+                relayerLib: s_relayerLib,
+                validatorConfigs: new bytes[](1),
+                relayerConfig: new bytes(0),
+                payload: payload
+            });
+    }
+
+    function _setRelayerLib(address client) internal {
+        vm.prank(s_deployer);
+        LancaCanonicalBridgeBase(client).setRelayerLib(s_relayerLib);
+    }
+
+    function _setValidatorLibs(address client) internal {
+        vm.prank(s_deployer);
+        LancaCanonicalBridgeBase(client).setValidatorLib(s_validatorLib);
+    }
+
+    function _constructAccessControlError(
+        address account,
+        bytes32 role
+    ) internal pure returns (bytes memory) {
+        return
+            abi.encodePacked(
+                "AccessControl: account ",
+                StringsUpgradeable.toHexString(uint160(account), 20),
+                " is missing role ",
+                StringsUpgradeable.toHexString(uint256(role), 32)
+            );
+    }
+}

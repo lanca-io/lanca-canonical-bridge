@@ -1,6 +1,7 @@
 import { getNetworkEnvKey } from "@concero/contract-utils";
+import { pad } from "viem";
 
-import { ADDRESS_ZERO, conceroNetworks, getViemReceiptConfig } from "../../constants";
+import { EMPTY_BYTES, conceroNetworks, getViemReceiptConfig } from "../../constants";
 import { err, getEnvVar, getFallbackClients, getViemAccount, log } from "../../utils";
 
 export async function addDstBridge(dstChainName: string): Promise<void> {
@@ -12,23 +13,19 @@ export async function addDstBridge(dstChainName: string): Promise<void> {
 	const srcChain = conceroNetworks[srcChainName as keyof typeof conceroNetworks];
 	const { viemChain } = srcChain;
 
-	const bridgeAddress = getEnvVar(
-		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(srcChainName)}`,
-	);
+	const bridgeAddress = getEnvVar(`LC_BRIDGE_PROXY_${getNetworkEnvKey(srcChainName)}`);
 	if (!bridgeAddress) {
 		err(
-			`SRC Bridge address not found. Set LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(srcChainName)} in .env.deployments.${networkType} variables.`,
+			`SRC Bridge address not found. Set LC_BRIDGE_PROXY_${getNetworkEnvKey(srcChainName)} in .env.deployments.${networkType} variables.`,
 			"addDstBridge",
 			srcChainName,
 		);
 	}
 
-	const dstBridgeAddress = getEnvVar(
-		`LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChainName)}`,
-	);
+	const dstBridgeAddress = getEnvVar(`LC_BRIDGE_PROXY_${getNetworkEnvKey(dstChainName)}`);
 	if (!dstBridgeAddress) {
 		err(
-			`DST Bridge address not found. Set LANCA_CANONICAL_BRIDGE_PROXY_${getNetworkEnvKey(dstChainName)} in .env.deployments.${networkType} variables.`,
+			`DST Bridge address not found. Set LC_BRIDGE_PROXY_${getNetworkEnvKey(dstChainName)} in .env.deployments.${networkType} variables.`,
 			"addDstBridge",
 			dstChainName,
 		);
@@ -52,7 +49,7 @@ export async function addDstBridge(dstChainName: string): Promise<void> {
 		args: [dstChain.chainSelector],
 	});
 
-	if (currentDstBridge && currentDstBridge.toString() !== ADDRESS_ZERO) {
+	if (currentDstBridge && currentDstBridge.toString() !== EMPTY_BYTES) {
 		err(
 			`Destination bridge already exists for chain ${dstChainName}`,
 			"addDstBridge",
@@ -68,12 +65,14 @@ export async function addDstBridge(dstChainName: string): Promise<void> {
 			srcChainName,
 		);
 
+		const dstBridgeBytes32 = pad(dstBridgeAddress as `0x${string}`, { size: 32, dir: "right" });
+
 		const txHash = await walletClient.writeContract({
 			address: bridgeAddress as `0x${string}`,
 			abi: bridgeAbi,
 			functionName: "addDstBridges",
 			account: viemAccount,
-			args: [[dstChain.chainSelector], [dstBridgeAddress]],
+			args: [[dstChain.chainSelector], [dstBridgeBytes32]],
 			chain: viemChain,
 		});
 

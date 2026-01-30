@@ -28,6 +28,8 @@ const defaultRateLimits = {
 const defaultMinterAllowedAmount = 1000000e6;
 
 const ADDRESS_ZERO = "0x0000000000000000000000000000000000000000";
+const EMPTY_BYTES = "0x0000000000000000000000000000000000000000000000000000000000000000";
+const ADMIN_SLOT = "0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103";
 
 function getViemReceiptConfig(chain: ConceroNetwork): Partial<WaitForTransactionReceiptParameters> {
 	return {
@@ -37,9 +39,9 @@ function getViemReceiptConfig(chain: ConceroNetwork): Partial<WaitForTransaction
 }
 
 const envPrefixes: EnvPrefixes = {
-	lcBridge: "LANCA_CANONICAL_BRIDGE",
-	lcBridgeProxy: "LANCA_CANONICAL_BRIDGE_PROXY",
-	lcBridgeProxyAdmin: "LANCA_CANONICAL_BRIDGE_PROXY_ADMIN",
+	lcBridge: "LC_BRIDGE",
+	lcBridgeProxy: "LC_BRIDGE_PROXY",
+	lcBridgeProxyAdmin: "LC_BRIDGE_PROXY_ADMIN",
 	lcBridgePool: "LC_BRIDGE_POOL",
 	lcBridgePoolProxy: "LC_BRIDGE_POOL_PROXY",
 	lcBridgePoolProxyAdmin: "LC_BRIDGE_POOL_PROXY_ADMIN",
@@ -55,4 +57,6 @@ export {
 	defaultRateLimits,
 	defaultMinterAllowedAmount,
 	ADDRESS_ZERO,
+	EMPTY_BYTES,
+	ADMIN_SLOT,
 };

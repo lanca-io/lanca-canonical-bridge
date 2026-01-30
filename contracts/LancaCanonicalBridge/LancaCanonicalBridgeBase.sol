@@ -42,6 +42,7 @@ abstract contract LancaCanonicalBridgeBase is ConceroClient, RateLimiter {
         uint256 tokenAmount
     );
     event BridgeDelivered(bytes32 indexed messageId, uint256 tokenAmountWithFee);
+    event HookCallFailed(bytes32 indexed messageId, address indexed tokenReceiver, bytes reason);
 
     error InvalidBridgeSender();
     error InvalidDstGasLimitOrCallData();

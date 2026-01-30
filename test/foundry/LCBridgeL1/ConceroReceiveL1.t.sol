@@ -15,6 +15,7 @@ import {LancaCanonicalBridgeBase} from "contracts/LancaCanonicalBridge/LancaCano
 import {LancaCanonicalBridgeL1} from "contracts/LancaCanonicalBridge/LancaCanonicalBridgeL1.sol";
 
 import {MockInvalidClient} from "../mocks/MockInvalidClient.sol";
+import {LancaCanonicalBridgeClientMock} from "../mocks/LancaCanonicalBridgeClientMock.sol";
 import {MockUSDC} from "../mocks/MockUSDC.sol";
 import {LCBridgeL1Base} from "./LCBridgeL1Base.sol";
 
@@ -121,6 +122,55 @@ contract ConceroReceiveL1Test is LCBridgeL1Base {
         assertEq(lcBridgeClient.testString(), testString);
     }
 
+    function test_conceroReceive_WithCall_HookReverts_EmitHookCallFailed() public {
+        _beforeConceroReceive();
+
+        LancaCanonicalBridgeClientMock lcBridgeClientMock = new LancaCanonicalBridgeClientMock(
+            address(lancaCanonicalBridgeL1)
+        );
+
+        string memory revertReason = "Test revert";
+        lcBridgeClientMock.setShouldRevert(true, revertReason);
+
+        uint256 bridgeAmount = 1e6;
+        uint32 dstGasLimit = 200_000;
+        bytes memory dstCallData = abi.encode("test call data");
+
+        IConceroRouter.MessageRequest memory messageRequest = _buildMessageRequest(
+            BridgeCodec.encodeBridgeData(
+                s_user,
+                address(lcBridgeClientMock),
+                bridgeAmount,
+                dstCallData
+            ),
+            SRC_CHAIN_SELECTOR,
+            address(lancaCanonicalBridgeL1),
+            dstGasLimit
+        );
+
+        vm.expectEmit(false, true, false, true);
+        emit LancaCanonicalBridgeBase.HookCallFailed(
+            DEFAULT_MESSAGE_ID,
+            address(lcBridgeClientMock),
+            abi.encodeWithSignature("Error(string)", revertReason)
+        );
+
+        vm.expectEmit(false, false, false, true);
+        emit LancaCanonicalBridgeBase.BridgeDelivered(DEFAULT_MESSAGE_ID, bridgeAmount);
+
+        vm.prank(s_conceroRouter);
+        lancaCanonicalBridgeL1.conceroReceive(
+            messageRequest.toMessageReceiptBytes(
+                DST_CHAIN_SELECTOR,
+                s_lancaBridgeMock,
+                NONCE,
+                new bytes[](0)
+            ),
+            s_validationChecks,
+            s_validatorLibs,
+            s_relayerLib
+        );
+    }
     // --- Helper Functions ---
 
     function _beforeConceroReceive() internal {

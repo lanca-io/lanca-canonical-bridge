@@ -93,13 +93,17 @@ contract LancaCanonicalBridgeL1 is ILancaCanonicalBridgeL1, LancaCanonicalBridge
         ILancaCanonicalBridgePool(pool).withdraw(receiver, tokenAmount);
 
         if (_shouldCallReceiverHook(receiver, payload)) {
-            ILancaCanonicalBridgeClient(receiver).lancaCanonicalBridgeReceive(
-                messageId,
-                srcChainSelector,
-                tokenSender,
-                tokenAmount,
-                payload
-            );
+            try
+                ILancaCanonicalBridgeClient(receiver).lancaCanonicalBridgeReceive(
+                    messageId,
+                    srcChainSelector,
+                    tokenSender,
+                    tokenAmount,
+                    payload
+                )
+            {} catch (bytes memory reason) {
+                emit HookCallFailed(messageId, receiver, reason);
+            }
         }
 
         emit BridgeDelivered(messageId, tokenAmount);
